@@ -1,0 +1,35 @@
+<section class="dashboard">
+  @if (loading()) {
+    <p>{{ 'dashboard.loading' | translate }}</p>
+  } @else if (errorKey()) {
+    <p class="error">{{ errorKey() | translate }}</p>
+  } @else if (status(); as s) {
+    <div class="cards">
+      <div class="card">
+        <span class="label">{{ 'dashboard.batterySoc' | translate }}</span>
+        <span class="value">{{ s.batterySocPercent }}%</span>
+      </div>
+      <div class="card" [class.cheap]="s.tariffRate === 'CHEAP'">
+        <span class="label">{{ 'dashboard.tariffNow' | translate }}</span>
+        <span class="value">{{ (s.tariffRate === 'CHEAP' ? 'dashboard.tariffCheap' : 'dashboard.tariffExpensive') | translate }}</span>
+      </div>
+    </div>
+
+    <div class="last-decision">
+      <h2>{{ 'dashboard.lastDecision' | translate }}</h2>
+      @if (s.lastDecision; as d) {
+        <p class="decided-at">{{ d.decidedAt | date: 'medium' }}</p>
+        <p class="charge" [class.on]="d.chargeFromGrid">
+          {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
+        </p>
+        <p class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</p>
+      } @else {
+        <p>{{ 'dashboard.noDecision' | translate }}</p>
+      }
+    </div>
+
+    <button (click)="runNow()" [disabled]="running()">
+      {{ (running() ? 'dashboard.running' : 'dashboard.runNow') | translate }}
+    </button>
+  }
+</section>

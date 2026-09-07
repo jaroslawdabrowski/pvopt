@@ -1,0 +1,88 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 40rem;
+}
+
+.cards {
+  display: flex;
+  gap: 1rem;
+}
+
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.6rem;
+  background: #1e293b;
+  color: #e2e8f0;
+
+  .label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .value {
+    font-size: 1.6rem;
+    font-weight: 600;
+  }
+
+  &.cheap .value {
+    color: #22c55e;
+  }
+}
+
+.last-decision {
+  padding: 1rem 1.25rem;
+  border-radius: 0.6rem;
+  background: #1e293b;
+  color: #e2e8f0;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .decided-at {
+    margin: 0 0 0.25rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  .charge {
+    font-weight: 600;
+    color: #f87171;
+
+    &.on {
+      color: #22c55e;
+    }
+  }
+
+  .reasoning {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+  }
+}
+
+button {
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: #22c55e;
+  color: #052e16;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.error {
+  color: #f87171;
+}

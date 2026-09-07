@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "history": "Historia",
+    "logout": "Wyloguj"
+  },
+  "login": {
+    "title": "PV Opt",
+    "subtitle": "Zaloguj się, aby zobaczyć harmonogram ładowania",
+    "username": "Login",
+    "password": "Hasło",
+    "submit": "Zaloguj",
+    "submitting": "Logowanie...",
+    "error": "Nieprawidłowy login lub hasło."
+  },
+  "dashboard": {
+    "loading": "Ładowanie...",
+    "error": "Nie udało się pobrać statusu z backendu.",
+    "runError": "Nie udało się uruchomić planowania.",
+    "batterySoc": "SOC baterii",
+    "tariffNow": "Taryfa teraz",
+    "tariffCheap": "Tania",
+    "tariffExpensive": "Droga",
+    "lastDecision": "Ostatnia decyzja",
+    "noDecision": "Brak dotychczasowych decyzji - uruchom planowanie ręcznie.",
+    "chargeOn": "Ładowanie z sieci: WŁĄCZONE, cel {{targetSoc}}%",
+    "chargeOff": "Ładowanie z sieci: WYŁĄCZONE",
+    "runNow": "Uruchom planowanie teraz",
+    "running": "Uruchamianie..."
+  },
+  "history": {
+    "title": "Historia decyzji",
+    "loading": "Ładowanie...",
+    "error": "Nie udało się pobrać historii.",
+    "empty": "Brak historii z ostatnich 7 dni.",
+    "columnDate": "Data",
+    "columnGridCharge": "Ładowanie z sieci",
+    "columnTargetSoc": "Docelowy SOC",
+    "columnReason": "Uzasadnienie",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "reason": {
+    "OUTSIDE_CHEAP_WINDOW": "Poza tanim oknem taryfowym - nie zmieniamy trybu ładowania z sieci.",
+    "ALREADY_AT_TARGET_SOC": "Magazyn już naładowany do poziomu docelowego ({{targetSoc}}%).",
+    "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
+    "FORECAST_SUFFICIENT": "Prognoza produkcji na jutro ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
+    "FORECAST_INSUFFICIENT": "Prognoza produkcji na jutro ({{forecastKwh}} kWh) niewystarczająca (wymagane {{requiredKwh}} kWh) - ładujemy do {{targetSoc}}% tanim prądem z sieci."
+  },
+  "language": {
+    "label": "Język",
+    "en": "English",
+    "pl": "Polski"
+  }
+}

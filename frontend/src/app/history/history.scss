@@ -1,0 +1,43 @@
+.history {
+  max-width: 60rem;
+
+  h1 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #334155;
+  font-size: 0.9rem;
+}
+
+th {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+td.on {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+td.reasoning {
+  color: #cbd5e1;
+}
+
+.error {
+  color: #f87171;
+}

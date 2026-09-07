@@ -1,0 +1,13 @@
+@if (authService.isAuthenticated()) {
+  <nav class="topnav">
+    <span class="brand">PV Opt</span>
+    <a routerLink="/dashboard" routerLinkActive="active">{{ 'nav.dashboard' | translate }}</a>
+    <a routerLink="/history" routerLinkActive="active">{{ 'nav.history' | translate }}</a>
+    <app-language-switcher class="language-switcher" />
+    <button class="logout" (click)="logout()">{{ 'nav.logout' | translate }}</button>
+  </nav>
+}
+
+<main>
+  <router-outlet />
+</main>

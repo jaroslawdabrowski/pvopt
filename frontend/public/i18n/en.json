@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "history": "History",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "PV Opt",
+    "subtitle": "Log in to see the charging schedule",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Log in",
+    "submitting": "Logging in...",
+    "error": "Invalid username or password."
+  },
+  "dashboard": {
+    "loading": "Loading...",
+    "error": "Failed to fetch status from the backend.",
+    "runError": "Failed to trigger planning.",
+    "batterySoc": "Battery SOC",
+    "tariffNow": "Tariff now",
+    "tariffCheap": "Cheap",
+    "tariffExpensive": "Expensive",
+    "lastDecision": "Last decision",
+    "noDecision": "No decisions yet - trigger planning manually.",
+    "chargeOn": "Grid charging: ON, target {{targetSoc}}%",
+    "chargeOff": "Grid charging: OFF",
+    "runNow": "Run planning now",
+    "running": "Running..."
+  },
+  "history": {
+    "title": "Decision history",
+    "loading": "Loading...",
+    "error": "Failed to fetch history.",
+    "empty": "No history in the last 7 days.",
+    "columnDate": "Date",
+    "columnGridCharge": "Grid charge",
+    "columnTargetSoc": "Target SOC",
+    "columnReason": "Reason",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "reason": {
+    "OUTSIDE_CHEAP_WINDOW": "Outside the cheap tariff window - leaving the grid-charge mode as is.",
+    "ALREADY_AT_TARGET_SOC": "Battery is already at the target level ({{targetSoc}}%).",
+    "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
+    "FORECAST_SUFFICIENT": "Tomorrow's production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
+    "FORECAST_INSUFFICIENT": "Tomorrow's production forecast ({{forecastKwh}} kWh) is insufficient (required {{requiredKwh}} kWh) - charging to {{targetSoc}}% with cheap grid power."
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "pl": "Polski"
+  }
+}
