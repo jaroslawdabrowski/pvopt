@@ -2,8 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+export type ChargeWindow = 'OVERNIGHT' | 'AFTERNOON';
+
 export interface ChargeDecisionDto {
   decidedAt: string;
+  window: ChargeWindow;
   chargeFromGrid: boolean;
   targetSocPercent: number;
   reasonCode: string;
@@ -31,7 +34,11 @@ export class EnergyPlanningApi {
     return this.http.get<ChargeDecisionDto[]>('/api/history', { params });
   }
 
-  runNow(): Observable<ChargeDecisionDto> {
-    return this.http.post<ChargeDecisionDto>('/api/schedule/run-now', {});
+  runOvernightNow(): Observable<ChargeDecisionDto> {
+    return this.http.post<ChargeDecisionDto>('/api/schedule/run-now/overnight', {});
+  }
+
+  runAfternoonNow(): Observable<ChargeDecisionDto> {
+    return this.http.post<ChargeDecisionDto>('/api/schedule/run-now/afternoon', {});
   }
 }

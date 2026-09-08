@@ -14,6 +14,9 @@ public class ChargeDecisionEntity extends PanacheEntity {
     @Column(name = "decided_at", nullable = false)
     public Instant decidedAt;
 
+    @Column(name = "window", nullable = false, length = 20)
+    public String window;
+
     @Column(name = "charge_from_grid", nullable = false)
     public boolean chargeFromGrid;
 

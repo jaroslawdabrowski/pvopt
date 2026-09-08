@@ -67,8 +67,12 @@
   }
 }
 
+.run-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
 button {
-  align-self: flex-start;
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 0.4rem;

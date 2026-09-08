@@ -9,7 +9,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
-import io.github.jaroslawdabrowski.energyplanning.port.in.PlanEnergyUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,13 +20,16 @@ import java.util.List;
 @Authenticated
 public class EnergyPlanningResource {
 
-    private final PlanEnergyUseCase planEnergyUseCase;
+    private final PlanOvernightChargeUseCase planOvernightChargeUseCase;
+    private final PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase;
     private final GetEnergyStatusUseCase getEnergyStatusUseCase;
     private final GetPlanningHistoryUseCase getPlanningHistoryUseCase;
 
-    public EnergyPlanningResource(PlanEnergyUseCase planEnergyUseCase, GetEnergyStatusUseCase getEnergyStatusUseCase,
+    public EnergyPlanningResource(PlanOvernightChargeUseCase planOvernightChargeUseCase,
+            PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetEnergyStatusUseCase getEnergyStatusUseCase,
             GetPlanningHistoryUseCase getPlanningHistoryUseCase) {
-        this.planEnergyUseCase = planEnergyUseCase;
+        this.planOvernightChargeUseCase = planOvernightChargeUseCase;
+        this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getEnergyStatusUseCase = getEnergyStatusUseCase;
         this.getPlanningHistoryUseCase = getPlanningHistoryUseCase;
     }
@@ -47,8 +51,14 @@ public class EnergyPlanningResource {
     }
 
     @POST
-    @Path("/schedule/run-now")
-    public ChargeDecisionResponse runNow() {
-        return ChargeDecisionResponse.from(planEnergyUseCase.planAndApply());
+    @Path("/schedule/run-now/overnight")
+    public ChargeDecisionResponse runOvernightNow() {
+        return ChargeDecisionResponse.from(planOvernightChargeUseCase.planOvernightCharge());
+    }
+
+    @POST
+    @Path("/schedule/run-now/afternoon")
+    public ChargeDecisionResponse runAfternoonNow() {
+        return ChargeDecisionResponse.from(planAfternoonTopUpUseCase.planAfternoonTopUp());
     }
 }

@@ -1,9 +1,8 @@
 package io.github.jaroslawdabrowski.energyplanning.adapter.out.inverter.solarman;
 
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
@@ -19,7 +18,7 @@ class SolarmanInverterAdapterTest {
     @Test
     void doesNotTouchTheNetworkWhenWriteIsDisabled() {
         var adapter = new SolarmanInverterAdapter(fakeConfig(false));
-        var schedule = new ChargeSchedule(true, LocalTime.of(22, 0), LocalTime.of(6, 0), 80);
+        var schedule = new ChargeSchedule(ChargeWindow.OVERNIGHT, true, 80);
 
         assertThatNoException().isThrownBy(() -> adapter.applyChargeSchedule(schedule));
     }
@@ -52,13 +51,18 @@ class SolarmanInverterAdapterTest {
             }
 
             @Override
-            public int gridChargeEnableRegister() {
-                return 145;
+            public int touTimeBaseRegister() {
+                return 148;
             }
 
             @Override
-            public int gridChargeTargetSocRegister() {
-                return 146;
+            public int touBattTargetBaseRegister() {
+                return 166;
+            }
+
+            @Override
+            public int touGridChargeEnableBaseRegister() {
+                return 172;
             }
 
             @Override

@@ -13,7 +13,8 @@ import { EnergyPlanningApi, EnergyStatusDto } from '../core/energy-planning-api.
 export class Dashboard implements OnInit {
   readonly status = signal<EnergyStatusDto | null>(null);
   readonly loading = signal(true);
-  readonly running = signal(false);
+  readonly runningOvernight = signal(false);
+  readonly runningAfternoon = signal(false);
   /** Holds a translation key (not a rendered message) so the template can localize it. */
   readonly errorKey = signal<string | null>(null);
 
@@ -38,15 +39,29 @@ export class Dashboard implements OnInit {
     });
   }
 
-  runNow(): void {
-    this.running.set(true);
-    this.api.runNow().subscribe({
+  runOvernightNow(): void {
+    this.runningOvernight.set(true);
+    this.api.runOvernightNow().subscribe({
       next: () => {
-        this.running.set(false);
+        this.runningOvernight.set(false);
         this.loadStatus();
       },
       error: () => {
-        this.running.set(false);
+        this.runningOvernight.set(false);
+        this.errorKey.set('dashboard.runError');
+      }
+    });
+  }
+
+  runAfternoonNow(): void {
+    this.runningAfternoon.set(true);
+    this.api.runAfternoonNow().subscribe({
+      next: () => {
+        this.runningAfternoon.set(false);
+        this.loadStatus();
+      },
+      error: () => {
+        this.runningAfternoon.set(false);
         this.errorKey.set('dashboard.runError');
       }
     });

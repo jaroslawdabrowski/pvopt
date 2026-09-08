@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public record ChargeDecision(
         Instant decidedAt,
+        ChargeWindow window,
         boolean chargeFromGrid,
         int targetSocPercent,
         DecisionReason reason,

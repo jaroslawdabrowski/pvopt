@@ -5,9 +5,9 @@ import io.smallrye.config.WithDefault;
 
 /**
  * Connection parameters for the Deye/Solarman logger and the Modbus register map.
- * {@code batterySocRegister} is confirmed against real hardware (see
- * {@code RegisterScannerManualTest}); the grid-charge registers are still TODO -
- * register addresses differ between Deye inverter models/firmware.
+ * {@code batterySocRegister} and the TOU (Time-of-Use) register bases are confirmed
+ * against real hardware (see {@code RegisterScannerManualTest}): the inverter has 6
+ * TOU slots, one register per slot per field, at {@code touXxxBaseRegister + slotIndex}.
  */
 @ConfigMapping(prefix = "pvopt.inverter.solarman")
 public interface SolarmanInverterConfig {
@@ -27,20 +27,27 @@ public interface SolarmanInverterConfig {
     @WithDefault("588")
     int batterySocRegister();
 
-    /** TODO: grid-charge enable/disable register address - verify against hardware. */
-    @WithDefault("145")
-    int gridChargeEnableRegister();
+    /**
+     * Base register for the 6 TOU slot start times (HHmm, e.g. 1700 = 17:00). Slot N's
+     * time lives at {@code touTimeBaseRegister + N}. Confirmed against real hardware.
+     * Only the one-off {@code TouSlotSetupManualTest} writes these.
+     */
+    @WithDefault("148")
+    int touTimeBaseRegister();
 
-    /** TODO: grid-charge target SOC register address - verify against hardware. */
-    @WithDefault("146")
-    int gridChargeTargetSocRegister();
+    /** Base register for the 6 TOU slots' target SOC (%). Slot N's target is {@code touBattTargetBaseRegister + N}. */
+    @WithDefault("166")
+    int touBattTargetBaseRegister();
+
+    /** Base register for the 6 TOU slots' grid-charge enable flag (0/1). Slot N's flag is {@code touGridChargeEnableBaseRegister + N}. */
+    @WithDefault("172")
+    int touGridChargeEnableBaseRegister();
 
     /**
-     * Safety switch: while false (the default), {@code applyChargeSchedule} only logs what it
-     * *would* write instead of actually sending the Modbus write. Keep this false until
-     * {@code gridChargeEnableRegister}/{@code gridChargeTargetSocRegister} are confirmed against
-     * real hardware (they are still unverified placeholders) - the scheduler runs hourly and will
-     * otherwise happily write wrong values to whatever those registers actually are.
+     * Safety switch: while false (the default), any Modbus write (including the TOU slot
+     * setup) only logs what it *would* write instead of actually sending it. Keep this
+     * false until the register map above has been verified end-to-end against real
+     * hardware and you're deliberately ready to let the scheduler write unattended.
      */
     @WithDefault("false")
     boolean writeEnabled();

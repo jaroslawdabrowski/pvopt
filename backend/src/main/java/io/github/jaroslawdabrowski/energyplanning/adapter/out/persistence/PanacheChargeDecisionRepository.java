@@ -7,6 +7,7 @@ import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecision;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.DecisionReason;
 import io.github.jaroslawdabrowski.energyplanning.port.out.PlanningHistoryPort;
 
@@ -54,6 +55,7 @@ public class PanacheChargeDecisionRepository implements PanacheRepository<Charge
     private ChargeDecisionEntity toEntity(ChargeDecision decision) {
         var entity = new ChargeDecisionEntity();
         entity.decidedAt = decision.decidedAt();
+        entity.window = decision.window().name();
         entity.chargeFromGrid = decision.chargeFromGrid();
         entity.targetSocPercent = decision.targetSocPercent();
         entity.reason = decision.reason().name();
@@ -62,8 +64,9 @@ public class PanacheChargeDecisionRepository implements PanacheRepository<Charge
     }
 
     private ChargeDecision toDomain(ChargeDecisionEntity entity) {
-        return new ChargeDecision(entity.decidedAt, entity.chargeFromGrid, entity.targetSocPercent,
-                DecisionReason.valueOf(entity.reason), readReasonParams(entity.reasonParamsJson));
+        return new ChargeDecision(entity.decidedAt, ChargeWindow.valueOf(entity.window), entity.chargeFromGrid,
+                entity.targetSocPercent, DecisionReason.valueOf(entity.reason),
+                readReasonParams(entity.reasonParamsJson));
     }
 
     private String writeReasonParams(Map<String, Double> reasonParams) {

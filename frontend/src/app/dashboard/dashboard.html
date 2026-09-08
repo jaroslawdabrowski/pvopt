@@ -18,7 +18,9 @@
     <div class="last-decision">
       <h2>{{ 'dashboard.lastDecision' | translate }}</h2>
       @if (s.lastDecision; as d) {
-        <p class="decided-at">{{ d.decidedAt | date: 'medium' }}</p>
+        <p class="decided-at">
+          {{ ('window.' + d.window) | translate }} - {{ d.decidedAt | date: 'medium' }}
+        </p>
         <p class="charge" [class.on]="d.chargeFromGrid">
           {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
         </p>
@@ -28,8 +30,13 @@
       }
     </div>
 
-    <button (click)="runNow()" [disabled]="running()">
-      {{ (running() ? 'dashboard.running' : 'dashboard.runNow') | translate }}
-    </button>
+    <div class="run-buttons">
+      <button (click)="runOvernightNow()" [disabled]="runningOvernight()">
+        {{ (runningOvernight() ? 'dashboard.running' : 'dashboard.runOvernight') | translate }}
+      </button>
+      <button (click)="runAfternoonNow()" [disabled]="runningAfternoon()">
+        {{ (runningAfternoon() ? 'dashboard.running' : 'dashboard.runAfternoon') | translate }}
+      </button>
+    </div>
   }
 </section>

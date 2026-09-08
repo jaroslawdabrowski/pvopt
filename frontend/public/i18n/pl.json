@@ -25,7 +25,8 @@
     "noDecision": "Brak dotychczasowych decyzji - uruchom planowanie ręcznie.",
     "chargeOn": "Ładowanie z sieci: WŁĄCZONE, cel {{targetSoc}}%",
     "chargeOff": "Ładowanie z sieci: WYŁĄCZONE",
-    "runNow": "Uruchom planowanie teraz",
+    "runOvernight": "Zaplanuj ładowanie nocne teraz",
+    "runAfternoon": "Zaplanuj doładowanie popołudniowe teraz",
     "running": "Uruchamianie..."
   },
   "history": {
@@ -34,18 +35,22 @@
     "error": "Nie udało się pobrać historii.",
     "empty": "Brak historii z ostatnich 7 dni.",
     "columnDate": "Data",
+    "columnWindow": "Okno",
     "columnGridCharge": "Ładowanie z sieci",
     "columnTargetSoc": "Docelowy SOC",
     "columnReason": "Uzasadnienie",
     "yes": "Tak",
     "no": "Nie"
   },
+  "window": {
+    "OVERNIGHT": "Noc",
+    "AFTERNOON": "Popołudnie"
+  },
   "reason": {
-    "OUTSIDE_CHEAP_WINDOW": "Poza tanim oknem taryfowym - nie zmieniamy trybu ładowania z sieci.",
     "ALREADY_AT_TARGET_SOC": "Magazyn już naładowany do poziomu docelowego ({{targetSoc}}%).",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
-    "FORECAST_SUFFICIENT": "Prognoza produkcji na jutro ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
-    "FORECAST_INSUFFICIENT": "Prognoza produkcji na jutro ({{forecastKwh}} kWh) niewystarczająca (wymagane {{requiredKwh}} kWh) - ładujemy do {{targetSoc}}% tanim prądem z sieci."
+    "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
+    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) niewystarczająca (wymagane {{requiredKwh}} kWh) - ładujemy do {{targetSoc}}% tanim prądem z sieci."
   },
   "language": {
     "label": "Język",

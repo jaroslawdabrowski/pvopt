@@ -7,7 +7,9 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,17 +40,23 @@ public class SolarmanInverterAdapter implements InverterPort {
 
     @Override
     public void applyChargeSchedule(ChargeSchedule schedule) {
+        int[] slots = TouSlots.slotsFor(schedule.window());
+
         if (!config.writeEnabled()) {
-            LOG.infof("DRY RUN (pvopt.inverter.solarman.write-enabled=false) - would apply: enabled=%s, "
-                            + "window=%s-%s, targetSoc=%d%% (registers %d/%d not written)",
-                    schedule.gridChargeEnabled(), schedule.start(), schedule.end(), schedule.targetSocPercent(),
-                    config.gridChargeEnableRegister(), config.gridChargeTargetSocRegister());
+            LOG.infof("DRY RUN (pvopt.inverter.solarman.write-enabled=false) - would apply: window=%s, "
+                            + "enabled=%s, targetSoc=%d%% (TOU slots %s not written)",
+                    schedule.window(), schedule.gridChargeEnabled(), schedule.targetSocPercent(),
+                    Arrays.toString(slots));
             return;
         }
-        writeRegister(config.gridChargeEnableRegister(), schedule.gridChargeEnabled() ? 1 : 0);
-        writeRegister(config.gridChargeTargetSocRegister(), schedule.targetSocPercent());
-        LOG.infof("Applied charge schedule to inverter: enabled=%s, window=%s-%s, targetSoc=%d%%",
-                schedule.gridChargeEnabled(), schedule.start(), schedule.end(), schedule.targetSocPercent());
+
+        for (int slot : slots) {
+            writeRegister(config.touGridChargeEnableBaseRegister() + slot, schedule.gridChargeEnabled() ? 1 : 0);
+            writeRegister(config.touBattTargetBaseRegister() + slot, schedule.targetSocPercent());
+        }
+        LOG.infof("Applied charge schedule to inverter: window=%s, enabled=%s, targetSoc=%d%%, slots=%s",
+                schedule.window(), schedule.gridChargeEnabled(), schedule.targetSocPercent(),
+                Arrays.toString(slots));
     }
 
     private void writeRegister(int register, int value) {
@@ -63,7 +71,7 @@ public class SolarmanInverterAdapter implements InverterPort {
         try (Socket socket = new Socket()) {
             // connect() with an explicit timeout - the Socket(host, port) constructor connects
             // with no timeout at all and can hang for a very long time when the logger is unreachable.
-            socket.connect(new java.net.InetSocketAddress(config.host(), config.port()), config.socketTimeoutMillis());
+            socket.connect(new InetSocketAddress(config.host(), config.port()), config.socketTimeoutMillis());
             socket.setSoTimeout(config.socketTimeoutMillis());
             socket.getOutputStream().write(v5Request);
             socket.getOutputStream().flush();

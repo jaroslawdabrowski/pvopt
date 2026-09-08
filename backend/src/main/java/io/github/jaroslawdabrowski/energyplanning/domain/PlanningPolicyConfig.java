@@ -1,20 +1,16 @@
 package io.github.jaroslawdabrowski.energyplanning.domain;
 
 /**
- * Decision thresholds for the planning engine, supplied from configuration.
+ * SOC thresholds for the planning engine, supplied from configuration. How much forecast
+ * is "required" to skip grid charging differs per {@link ChargeWindow} (a full day's
+ * consumption estimate for the overnight decision, a partial-day one for the afternoon
+ * decision) - that computation is an application-layer concern, not part of this config.
  *
- * @param minSocPercent               absolute minimum SOC - below it we always charge from the grid,
- *                                    regardless of forecast (power-supply safety net)
- * @param fullSocPercent              target SOC level for a full grid charge
- * @param dailyConsumptionEstimateKwh estimated daily household consumption (a fixed configurable value for now)
- * @param forecastSafetyMarginRatio   forecast safety margin, e.g. 1.2 = the forecast must cover 120% of
- *                                    estimated consumption to be considered sufficient on its own tomorrow
+ * @param minSocPercent  absolute minimum SOC - below it we always charge from the grid,
+ *                       regardless of forecast (power-supply safety net)
+ * @param fullSocPercent target SOC level for a full grid charge
  */
-public record PlanningPolicyConfig(
-        int minSocPercent,
-        int fullSocPercent,
-        double dailyConsumptionEstimateKwh,
-        double forecastSafetyMarginRatio) {
+public record PlanningPolicyConfig(int minSocPercent, int fullSocPercent) {
 
     public PlanningPolicyConfig {
         if (minSocPercent < 0 || minSocPercent > 100 || fullSocPercent < 0 || fullSocPercent > 100) {
@@ -23,15 +19,5 @@ public record PlanningPolicyConfig(
         if (minSocPercent > fullSocPercent) {
             throw new IllegalArgumentException("minSocPercent cannot be greater than fullSocPercent");
         }
-        if (dailyConsumptionEstimateKwh < 0) {
-            throw new IllegalArgumentException("dailyConsumptionEstimateKwh cannot be negative");
-        }
-        if (forecastSafetyMarginRatio <= 0) {
-            throw new IllegalArgumentException("forecastSafetyMarginRatio must be positive");
-        }
-    }
-
-    public double requiredForecastKwh() {
-        return dailyConsumptionEstimateKwh * forecastSafetyMarginRatio;
     }
 }

@@ -12,6 +12,7 @@
       <thead>
         <tr>
           <th>{{ 'history.columnDate' | translate }}</th>
+          <th>{{ 'history.columnWindow' | translate }}</th>
           <th>{{ 'history.columnGridCharge' | translate }}</th>
           <th>{{ 'history.columnTargetSoc' | translate }}</th>
           <th>{{ 'history.columnReason' | translate }}</th>
@@ -21,6 +22,7 @@
         @for (d of decisions(); track d.decidedAt) {
           <tr>
             <td>{{ d.decidedAt | date: 'short' }}</td>
+            <td>{{ ('window.' + d.window) | translate }}</td>
             <td [class.on]="d.chargeFromGrid">{{ (d.chargeFromGrid ? 'history.yes' : 'history.no') | translate }}</td>
             <td>{{ d.targetSocPercent }}%</td>
             <td class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</td>

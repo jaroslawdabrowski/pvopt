@@ -4,28 +4,29 @@ import jakarta.enterprise.context.ApplicationScoped;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecision;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecisionPolicy;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningPolicyConfig;
 import io.github.jaroslawdabrowski.energyplanning.domain.TariffCalendar;
-import io.github.jaroslawdabrowski.energyplanning.domain.TariffWindow;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
-import io.github.jaroslawdabrowski.energyplanning.port.in.PlanEnergyUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ClockPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ForecastPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.PlanningHistoryPort;
 
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.List;
 
 /**
- * The single orchestration point for the planning cycle: calls outbound ports,
- * passes data to the pure domain logic (TariffCalendar, ChargeDecisionPolicy),
+ * The single orchestration point for both daily planning decisions: calls outbound
+ * ports, passes data to the pure domain logic (TariffCalendar, ChargeDecisionPolicy),
  * and holds no business logic of its own.
  */
 @ApplicationScoped
-public class EnergyPlanner implements PlanEnergyUseCase, GetEnergyStatusUseCase, GetPlanningHistoryUseCase {
+public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonTopUpUseCase,
+        GetEnergyStatusUseCase, GetPlanningHistoryUseCase {
 
     private final InverterPort inverterPort;
     private final ForecastPort forecastPort;
@@ -33,6 +34,7 @@ public class EnergyPlanner implements PlanEnergyUseCase, GetEnergyStatusUseCase,
     private final ClockPort clockPort;
     private final TariffCalendar tariffCalendar;
     private final PlanningPolicyConfig policyConfig;
+    private final EnergyPlanningConfig config;
     private final ChargeDecisionPolicy decisionPolicy = new ChargeDecisionPolicy();
 
     public EnergyPlanner(InverterPort inverterPort, ForecastPort forecastPort, PlanningHistoryPort historyPort,
@@ -41,28 +43,38 @@ public class EnergyPlanner implements PlanEnergyUseCase, GetEnergyStatusUseCase,
         this.forecastPort = forecastPort;
         this.historyPort = historyPort;
         this.clockPort = clockPort;
+        this.config = config;
         this.tariffCalendar = new TariffCalendar(TariffWindowConfigParser.parse(config.cheapTariffWindows()));
-        this.policyConfig = new PlanningPolicyConfig(
-                config.minSocPercent(),
-                config.fullSocPercent(),
-                config.dailyConsumptionEstimateKwh(),
-                config.forecastSafetyMarginRatio());
+        this.policyConfig = new PlanningPolicyConfig(config.minSocPercent(), config.fullSocPercent());
     }
 
     @Override
-    public ChargeDecision planAndApply() {
+    public ChargeDecision planOvernightCharge() {
         var nowLocal = clockPort.nowLocal();
         var battery = inverterPort.readBatteryStatus();
-        var currentRate = tariffCalendar.rateAt(nowLocal);
         var tomorrowForecast = forecastPort.forecastFor(nowLocal.toLocalDate().plusDays(1));
+        double requiredKwh = config.dailyConsumptionEstimateKwh() * config.forecastSafetyMarginRatio();
 
-        var decision = decisionPolicy.decide(clockPort.now(), battery, currentRate, tomorrowForecast, policyConfig);
+        var decision = decisionPolicy.decide(clockPort.now(), ChargeWindow.OVERNIGHT, battery, tomorrowForecast,
+                requiredKwh, policyConfig);
 
-        var window = tariffCalendar.currentWindow(nowLocal);
-        var start = window.map(TariffWindow::start).orElse(LocalTime.MIDNIGHT);
-        var end = window.map(TariffWindow::end).orElse(LocalTime.MIDNIGHT);
-        inverterPort.applyChargeSchedule(new ChargeSchedule(decision.chargeFromGrid(), start, end, decision.targetSocPercent()));
+        inverterPort.applyChargeSchedule(
+                new ChargeSchedule(ChargeWindow.OVERNIGHT, decision.chargeFromGrid(), decision.targetSocPercent()));
+        historyPort.record(decision);
+        return decision;
+    }
 
+    @Override
+    public ChargeDecision planAfternoonTopUp() {
+        var battery = inverterPort.readBatteryStatus();
+        var remainingForecast = forecastPort.remainingToday(clockPort.nowLocal());
+        double requiredKwh = config.afternoonConsumptionEstimateKwh();
+
+        var decision = decisionPolicy.decide(clockPort.now(), ChargeWindow.AFTERNOON, battery, remainingForecast,
+                requiredKwh, policyConfig);
+
+        inverterPort.applyChargeSchedule(
+                new ChargeSchedule(ChargeWindow.AFTERNOON, decision.chargeFromGrid(), decision.targetSocPercent()));
         historyPort.record(decision);
         return decision;
     }

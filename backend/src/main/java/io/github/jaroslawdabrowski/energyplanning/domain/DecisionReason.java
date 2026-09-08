@@ -6,7 +6,6 @@ package io.github.jaroslawdabrowski.energyplanning.domain;
  * the actual (translatable) message from the code plus {@link ChargeDecision#reasonParams()}.
  */
 public enum DecisionReason {
-    OUTSIDE_CHEAP_WINDOW,
     ALREADY_AT_TARGET_SOC,
     BELOW_MIN_SOC,
     FORECAST_SUFFICIENT,
