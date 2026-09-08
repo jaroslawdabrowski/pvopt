@@ -29,6 +29,8 @@ final class TouSlots {
     private static final int SLOT_AFTERNOON = 2;
     private static final int SLOT_NIGHT = 5;
 
+    private static final int POWER_WATTS = 5000;
+
     private TouSlots() {
     }
 
@@ -53,24 +55,18 @@ final class TouSlots {
     }
 
     /**
-     * Grid-charge power cap (Watts) for a window's slot(s) - a static hardware setting (battery
-     * 10kWh, 20% minimum reserve -> 8kWh max to charge), not something the daily decision
-     * recomputes. Set once, alongside the slot times, by {@code TouSlotSetupManualTest}:
-     * 4000W for the 2h afternoon window (finishes an 8kWh charge in ~2h), 2000W for the 8h
-     * overnight window (finishes in ~4h, comfortable margin, gentler on the battery).
+     * The per-slot "Power" register is NOT just a grid-charge speed cap - it also caps how
+     * fast the battery is allowed to *discharge* during that slot. Confirmed by observation:
+     * with this at 1000-2000W, an evening load of 3.5kW only pulled ~1kW from the battery
+     * and the rest (2.5kW) from the grid, even with plenty of SOC available - the low cap
+     * throttled discharge, not just charge. Set to {@link #POWER_WATTS} (5000W, the
+     * inverter's practical max) on every slot for exactly this reason - a lower cap here
+     * defeats the whole point of having a battery to shave peak load with.
      */
     static int powerWattsFor(ChargeWindow window) {
-        return switch (window) {
-            case OVERNIGHT -> 2000;
-            case AFTERNOON -> 4000;
-        };
+        return POWER_WATTS;
     }
 
-    /**
-     * Power cap (Watts) for the slots {@link #powerWattsFor} doesn't cover (1, 3, 4 - never
-     * grid-charge-enabled) - defense in depth: if one of them were ever accidentally enabled
-     * (a stray LCD change, a future bug), it caps the damage at 1kW instead of the factory
-     * default 10kW.
-     */
-    static final int FALLBACK_POWER_WATTS = 1000;
+    /** Same 5000W cap for the slots {@link #powerWattsFor} doesn't cover (1, 3, 4) - see above. */
+    static final int FALLBACK_POWER_WATTS = POWER_WATTS;
 }
