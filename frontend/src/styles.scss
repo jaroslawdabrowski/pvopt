@@ -1,10 +1,44 @@
+// Angular Material M3 theming - see https://material.angular.dev/guide/theming
+// Light theme, pastel Bauhaus-inspired palette: cobalt blue, mustard yellow, terracotta red
+// on a warm cream ground - primary/secondary/tertiary map onto that classic Bauhaus triad.
+@use '@angular/material' as mat;
+
+:root {
+  // Hand-picked pastel Bauhaus accents, used directly (outside Material's tonal system)
+  // for page background, chips and highlights where a truer pastel is wanted than
+  // Material's HCT-derived light-theme tones give us.
+  --pv-cream: #f7f2e7;
+  --pv-charcoal: #2b2b2b;
+  --pv-blue: #7fa8c9;
+  --pv-yellow: #f0c869;
+  --pv-red: #e07856;
+  --pv-green: #8fb996;
+}
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$blue-palette,
+        secondary: mat.$yellow-palette,
+        tertiary: mat.$red-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
 html,
 body {
   margin: 0;
   min-height: 100vh;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+  background-color: var(--pv-cream);
+  color: var(--pv-charcoal);
+  font: var(--mat-sys-body-medium);
 }
 
 * {

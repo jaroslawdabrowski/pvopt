@@ -1,24 +1,26 @@
 <div class="login-page">
-  <form class="login-card" (ngSubmit)="submit()">
-    <h1>{{ 'login.title' | translate }}</h1>
-    <p class="subtitle">{{ 'login.subtitle' | translate }}</p>
+  <mat-card appearance="outlined" class="login-card">
+    <form (ngSubmit)="submit()">
+      <h1>{{ 'login.title' | translate }}</h1>
+      <p class="subtitle">{{ 'login.subtitle' | translate }}</p>
 
-    <label>
-      {{ 'login.username' | translate }}
-      <input type="text" name="username" [(ngModel)]="username" autocomplete="username" required />
-    </label>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'login.username' | translate }}</mat-label>
+        <input matInput type="text" name="username" [(ngModel)]="username" autocomplete="username" required />
+      </mat-form-field>
 
-    <label>
-      {{ 'login.password' | translate }}
-      <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required />
-    </label>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'login.password' | translate }}</mat-label>
+        <input matInput type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required />
+      </mat-form-field>
 
-    @if (errorKey()) {
-      <p class="error">{{ errorKey() | translate }}</p>
-    }
+      @if (errorKey()) {
+        <p class="error">{{ errorKey() | translate }}</p>
+      }
 
-    <button type="submit" [disabled]="loading()">
-      {{ (loading() ? 'login.submitting' : 'login.submit') | translate }}
-    </button>
-  </form>
+      <button mat-flat-button type="submit" [disabled]="loading()">
+        {{ (loading() ? 'login.submitting' : 'login.submit') | translate }}
+      </button>
+    </form>
+  </mat-card>
 </div>

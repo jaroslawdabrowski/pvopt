@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "touSchedule": "TOU schedule",
     "history": "History",
     "logout": "Log out"
   },
@@ -41,6 +42,21 @@
     "columnReason": "Reason",
     "yes": "Yes",
     "no": "No"
+  },
+  "touSchedule": {
+    "title": "Time-of-Use schedule",
+    "subtitle": "The inverter's live 6-slot grid-charge table, as currently set on the device.",
+    "refresh": "Refresh",
+    "error": "Failed to fetch the TOU schedule from the inverter.",
+    "columnStart": "Start",
+    "columnEnd": "End",
+    "columnPower": "Charge power",
+    "columnTargetSoc": "Target SOC",
+    "columnGridCharge": "Grid charge",
+    "columnGovernedBy": "Decided by",
+    "on": "ON",
+    "off": "OFF",
+    "unmanaged": "Fixed (not planned)"
   },
   "window": {
     "OVERNIGHT": "Overnight",

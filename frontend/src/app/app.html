@@ -1,11 +1,14 @@
 @if (authService.isAuthenticated()) {
-  <nav class="topnav">
+  <mat-toolbar class="topnav">
+    <mat-icon class="brand-icon">bolt</mat-icon>
     <span class="brand">PV Opt</span>
-    <a routerLink="/dashboard" routerLinkActive="active">{{ 'nav.dashboard' | translate }}</a>
-    <a routerLink="/history" routerLinkActive="active">{{ 'nav.history' | translate }}</a>
+    <a mat-button routerLink="/dashboard" routerLinkActive="active">{{ 'nav.dashboard' | translate }}</a>
+    <a mat-button routerLink="/tou-schedule" routerLinkActive="active">{{ 'nav.touSchedule' | translate }}</a>
+    <a mat-button routerLink="/history" routerLinkActive="active">{{ 'nav.history' | translate }}</a>
+    <span class="spacer"></span>
     <app-language-switcher class="language-switcher" />
-    <button class="logout" (click)="logout()">{{ 'nav.logout' | translate }}</button>
-  </nav>
+    <button mat-stroked-button class="logout" (click)="logout()">{{ 'nav.logout' | translate }}</button>
+  </mat-toolbar>
 }
 
 <main>

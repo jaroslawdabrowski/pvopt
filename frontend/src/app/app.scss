@@ -1,38 +1,46 @@
 .topnav {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding: 0.9rem 1.5rem;
-  background: #1e293b;
-  color: #e2e8f0;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--pv-blue) !important;
+  color: var(--pv-charcoal) !important;
+  border-bottom: 3px solid var(--pv-charcoal);
+
+  .brand-icon {
+    color: var(--pv-charcoal);
+  }
 
   .brand {
     font-weight: 700;
-    margin-right: 0.5rem;
+    margin-right: 1rem;
   }
 
   a {
-    color: #94a3b8;
-    text-decoration: none;
-    font-size: 0.95rem;
+    color: var(--pv-charcoal) !important;
+  }
 
-    &.active {
-      color: #e2e8f0;
-      font-weight: 600;
-    }
+  a.active {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--pv-red);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 4px;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
   }
 
   .language-switcher {
-    margin-left: auto;
+    margin-right: 0.5rem;
   }
 
   .logout {
-    background: none;
-    border: 1px solid #334155;
-    color: #cbd5e1;
-    padding: 0.35rem 0.8rem;
-    border-radius: 0.4rem;
-    cursor: pointer;
+    border-color: var(--pv-charcoal) !important;
+    color: var(--pv-charcoal) !important;
   }
 }
 

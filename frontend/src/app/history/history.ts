@@ -1,16 +1,20 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { MatTableModule } from '@angular/material/table';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChargeDecisionDto, EnergyPlanningApi } from '../core/energy-planning-api.service';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [DatePipe, TranslatePipe],
+  imports: [DatePipe, TranslatePipe, MatTableModule, MatCardModule, MatProgressSpinnerModule],
   templateUrl: './history.html',
   styleUrl: './history.scss'
 })
 export class History implements OnInit {
+  readonly columns = ['decidedAt', 'window', 'chargeFromGrid', 'targetSocPercent', 'reasonCode'];
   readonly decisions = signal<ChargeDecisionDto[]>([]);
   readonly loading = signal(true);
   /** Holds a translation key (not a rendered message) so the template can localize it. */

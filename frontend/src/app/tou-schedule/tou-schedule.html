@@ -1,0 +1,64 @@
+<section class="tou-schedule">
+  <div class="header">
+    <h1>{{ 'touSchedule.title' | translate }}</h1>
+    <button mat-icon-button (click)="load()" [disabled]="loading()" [attr.aria-label]="'touSchedule.refresh' | translate">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+  <p class="subtitle">{{ 'touSchedule.subtitle' | translate }}</p>
+
+  @if (loading()) {
+    <div class="spinner">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (errorKey()) {
+    <p class="error">{{ errorKey() | translate }}</p>
+  } @else {
+    <mat-card appearance="outlined" class="schedule-card">
+      <table mat-table [dataSource]="slots()" class="schedule-table">
+        <ng-container matColumnDef="startTime">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnStart' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">{{ slot.startTime }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="endTime">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnEnd' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">{{ slot.endTime }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="powerWatts">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnPower' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">{{ slot.powerWatts / 1000 | number: '1.0-1' }} kW</td>
+        </ng-container>
+
+        <ng-container matColumnDef="targetSocPercent">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnTargetSoc' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">{{ slot.targetSocPercent }}%</td>
+        </ng-container>
+
+        <ng-container matColumnDef="gridChargeEnabled">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnGridCharge' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">
+            <mat-chip [class.on]="slot.gridChargeEnabled" [class.off]="!slot.gridChargeEnabled" disabled>
+              {{ (slot.gridChargeEnabled ? 'touSchedule.on' : 'touSchedule.off') | translate }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="governedBy">
+          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnGovernedBy' | translate }}</th>
+          <td mat-cell *matCellDef="let slot">
+            @if (slot.governedBy) {
+              <mat-chip class="window">{{ ('window.' + slot.governedBy) | translate }}</mat-chip>
+            } @else {
+              <span class="muted">{{ 'touSchedule.unmanaged' | translate }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" [class.governed]="row.governedBy"></tr>
+      </table>
+    </mat-card>
+  }
+</section>

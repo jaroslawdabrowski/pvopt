@@ -17,5 +17,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./history/history').then((m) => m.History)
   },
+  {
+    path: 'tou-schedule',
+    canActivate: [authGuard],
+    loadComponent: () => import('./tou-schedule/tou-schedule').then((m) => m.TouSchedule)
+  },
   { path: '**', redirectTo: 'dashboard' }
 ];

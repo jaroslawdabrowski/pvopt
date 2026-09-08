@@ -19,6 +19,16 @@ export interface EnergyStatusDto {
   lastDecision: ChargeDecisionDto | null;
 }
 
+export interface TouScheduleSlotDto {
+  slotIndex: number;
+  startTime: string;
+  endTime: string;
+  powerWatts: number;
+  targetSocPercent: number;
+  gridChargeEnabled: boolean;
+  governedBy: ChargeWindow | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EnergyPlanningApi {
   constructor(private readonly http: HttpClient) {}
@@ -40,5 +50,9 @@ export class EnergyPlanningApi {
 
   runAfternoonNow(): Observable<ChargeDecisionDto> {
     return this.http.post<ChargeDecisionDto>('/api/schedule/run-now/afternoon', {});
+  }
+
+  touSchedule(): Observable<TouScheduleSlotDto[]> {
+    return this.http.get<TouScheduleSlotDto[]>('/api/inverter/tou-schedule');
   }
 }

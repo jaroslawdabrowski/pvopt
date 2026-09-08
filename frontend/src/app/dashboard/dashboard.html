@@ -1,21 +1,23 @@
 <section class="dashboard">
   @if (loading()) {
-    <p>{{ 'dashboard.loading' | translate }}</p>
+    <div class="spinner">
+      <mat-spinner diameter="36" />
+    </div>
   } @else if (errorKey()) {
     <p class="error">{{ errorKey() | translate }}</p>
   } @else if (status(); as s) {
     <div class="cards">
-      <div class="card">
+      <mat-card appearance="outlined" class="card">
         <span class="label">{{ 'dashboard.batterySoc' | translate }}</span>
         <span class="value">{{ s.batterySocPercent }}%</span>
-      </div>
-      <div class="card" [class.cheap]="s.tariffRate === 'CHEAP'">
+      </mat-card>
+      <mat-card appearance="outlined" class="card" [class.cheap]="s.tariffRate === 'CHEAP'">
         <span class="label">{{ 'dashboard.tariffNow' | translate }}</span>
         <span class="value">{{ (s.tariffRate === 'CHEAP' ? 'dashboard.tariffCheap' : 'dashboard.tariffExpensive') | translate }}</span>
-      </div>
+      </mat-card>
     </div>
 
-    <div class="last-decision">
+    <mat-card appearance="outlined" class="last-decision">
       <h2>{{ 'dashboard.lastDecision' | translate }}</h2>
       @if (s.lastDecision; as d) {
         <p class="decided-at">
@@ -28,13 +30,13 @@
       } @else {
         <p>{{ 'dashboard.noDecision' | translate }}</p>
       }
-    </div>
+    </mat-card>
 
     <div class="run-buttons">
-      <button (click)="runOvernightNow()" [disabled]="runningOvernight()">
+      <button mat-flat-button (click)="runOvernightNow()" [disabled]="runningOvernight()">
         {{ (runningOvernight() ? 'dashboard.running' : 'dashboard.runOvernight') | translate }}
       </button>
-      <button (click)="runAfternoonNow()" [disabled]="runningAfternoon()">
+      <button mat-flat-button (click)="runAfternoonNow()" [disabled]="runningAfternoon()">
         {{ (runningAfternoon() ? 'dashboard.running' : 'dashboard.runAfternoon') | translate }}
       </button>
     </div>

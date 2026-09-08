@@ -1,0 +1,67 @@
+.tou-schedule {
+  max-width: 860px;
+  margin: 0 auto;
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    h1 {
+      margin: 0;
+      font: var(--mat-sys-headline-medium);
+    }
+  }
+
+  .subtitle {
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0.25rem 0 1.5rem;
+  }
+
+  .spinner {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 0;
+  }
+
+  .error {
+    color: var(--mat-sys-error);
+  }
+}
+
+.schedule-card {
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border-top: 5px solid var(--pv-blue);
+}
+
+.schedule-table {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    font-weight: 600;
+  }
+
+  tr.governed {
+    background: color-mix(in srgb, var(--pv-yellow) 18%, transparent);
+  }
+
+  .muted {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+mat-chip.on {
+  --mat-chip-elevated-container-color: color-mix(in srgb, var(--pv-green) 55%, white);
+  --mat-chip-label-text-color: #2f4a35;
+}
+
+mat-chip.off {
+  --mat-chip-elevated-container-color: color-mix(in srgb, var(--mat-sys-outline) 15%, white);
+  --mat-chip-label-text-color: var(--mat-sys-on-surface-variant);
+}
+
+mat-chip.window {
+  --mat-chip-elevated-container-color: color-mix(in srgb, var(--pv-red) 45%, white);
+  --mat-chip-label-text-color: #7a2e11;
+}

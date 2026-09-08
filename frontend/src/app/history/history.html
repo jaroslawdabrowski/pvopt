@@ -2,33 +2,46 @@
   <h1>{{ 'history.title' | translate }}</h1>
 
   @if (loading()) {
-    <p>{{ 'history.loading' | translate }}</p>
+    <div class="spinner">
+      <mat-spinner diameter="36" />
+    </div>
   } @else if (errorKey()) {
     <p class="error">{{ errorKey() | translate }}</p>
   } @else if (decisions().length === 0) {
     <p>{{ 'history.empty' | translate }}</p>
   } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>{{ 'history.columnDate' | translate }}</th>
-          <th>{{ 'history.columnWindow' | translate }}</th>
-          <th>{{ 'history.columnGridCharge' | translate }}</th>
-          <th>{{ 'history.columnTargetSoc' | translate }}</th>
-          <th>{{ 'history.columnReason' | translate }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (d of decisions(); track d.decidedAt) {
-          <tr>
-            <td>{{ d.decidedAt | date: 'short' }}</td>
-            <td>{{ ('window.' + d.window) | translate }}</td>
-            <td [class.on]="d.chargeFromGrid">{{ (d.chargeFromGrid ? 'history.yes' : 'history.no') | translate }}</td>
-            <td>{{ d.targetSocPercent }}%</td>
-            <td class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <mat-card appearance="outlined" class="history-card">
+      <table mat-table [dataSource]="decisions()" class="history-table">
+        <ng-container matColumnDef="decidedAt">
+          <th mat-header-cell *matHeaderCellDef>{{ 'history.columnDate' | translate }}</th>
+          <td mat-cell *matCellDef="let d">{{ d.decidedAt | date: 'short' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="window">
+          <th mat-header-cell *matHeaderCellDef>{{ 'history.columnWindow' | translate }}</th>
+          <td mat-cell *matCellDef="let d">{{ ('window.' + d.window) | translate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="chargeFromGrid">
+          <th mat-header-cell *matHeaderCellDef>{{ 'history.columnGridCharge' | translate }}</th>
+          <td mat-cell *matCellDef="let d" [class.on]="d.chargeFromGrid">
+            {{ (d.chargeFromGrid ? 'history.yes' : 'history.no') | translate }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="targetSocPercent">
+          <th mat-header-cell *matHeaderCellDef>{{ 'history.columnTargetSoc' | translate }}</th>
+          <td mat-cell *matCellDef="let d">{{ d.targetSocPercent }}%</td>
+        </ng-container>
+
+        <ng-container matColumnDef="reasonCode">
+          <th mat-header-cell *matHeaderCellDef>{{ 'history.columnReason' | translate }}</th>
+          <td mat-cell *matCellDef="let d" class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </mat-card>
   }
 </section>

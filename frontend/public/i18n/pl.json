@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Panel",
+    "touSchedule": "Harmonogram TOU",
     "history": "Historia",
     "logout": "Wyloguj"
   },
@@ -41,6 +42,21 @@
     "columnReason": "Uzasadnienie",
     "yes": "Tak",
     "no": "Nie"
+  },
+  "touSchedule": {
+    "title": "Harmonogram Time-of-Use",
+    "subtitle": "Aktualna, 6-slotowa tabela ładowania z sieci ustawiona na falowniku.",
+    "refresh": "Odśwież",
+    "error": "Nie udało się pobrać harmonogramu TOU z falownika.",
+    "columnStart": "Start",
+    "columnEnd": "Koniec",
+    "columnPower": "Moc ładowania",
+    "columnTargetSoc": "Docelowy SOC",
+    "columnGridCharge": "Ładowanie z sieci",
+    "columnGovernedBy": "Decyduje",
+    "on": "WŁ",
+    "off": "WYŁ",
+    "unmanaged": "Stałe (nieplanowane)"
   },
   "window": {
     "OVERNIGHT": "Noc",
