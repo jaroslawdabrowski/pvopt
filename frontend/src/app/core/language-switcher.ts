@@ -15,7 +15,8 @@ import { AppLanguage, LanguageService } from './language.service';
       <option value="en">{{ 'language.en' | translate }}</option>
       <option value="pl">{{ 'language.pl' | translate }}</option>
     </select>
-  `
+  `,
+  styleUrl: './language-switcher.scss'
 })
 export class LanguageSwitcher {
   constructor(protected readonly languageService: LanguageService) {}
