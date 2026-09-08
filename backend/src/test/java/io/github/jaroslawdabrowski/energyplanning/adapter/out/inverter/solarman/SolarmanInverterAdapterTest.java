@@ -2,6 +2,7 @@ package io.github.jaroslawdabrowski.energyplanning.adapter.out.inverter.solarman
 
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
+import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -19,27 +20,14 @@ class SolarmanInverterAdapterTest {
     void doesNotTouchTheNetworkWhenWriteIsDisabled() {
         var adapter = new SolarmanInverterAdapter(fakeConfig(false));
         var schedule = new ChargeSchedule(ChargeWindow.OVERNIGHT, true, 80);
+        // TEST-NET-1 (RFC 5737) - guaranteed unroutable, never resolves
+        var connection = new InverterConnectionSettings("192.0.2.1", 8899, 1L);
 
-        assertThatNoException().isThrownBy(() -> adapter.applyChargeSchedule(schedule));
+        assertThatNoException().isThrownBy(() -> adapter.applyChargeSchedule(schedule, connection));
     }
 
     private static SolarmanInverterConfig fakeConfig(boolean writeEnabled) {
         return new SolarmanInverterConfig() {
-            @Override
-            public String host() {
-                return "192.0.2.1"; // TEST-NET-1 (RFC 5737) - guaranteed unroutable, never resolves
-            }
-
-            @Override
-            public int port() {
-                return 8899;
-            }
-
-            @Override
-            public long loggerSerial() {
-                return 1L;
-            }
-
             @Override
             public int modbusSlaveAddress() {
                 return 1;

@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -8,12 +9,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EnergyPlanningApi, TouScheduleSlotDto } from '../core/energy-planning-api.service';
+import { settingsAwareErrorKey } from '../core/settings-error.util';
 
 @Component({
   selector: 'app-tou-schedule',
   standalone: true,
   imports: [
     DecimalPipe,
+    RouterLink,
     TranslatePipe,
     MatTableModule,
     MatCardModule,
@@ -46,9 +49,9 @@ export class TouSchedule implements OnInit {
         this.slots.set(slots);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error) => {
         this.loading.set(false);
-        this.errorKey.set('touSchedule.error');
+        this.errorKey.set(settingsAwareErrorKey(error, 'touSchedule.error'));
       }
     });
   }

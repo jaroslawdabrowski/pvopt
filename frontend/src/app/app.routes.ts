@@ -22,5 +22,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./tou-schedule/tou-schedule').then((m) => m.TouSchedule)
   },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./settings/settings').then((m) => m.Settings)
+  },
   { path: '**', redirectTo: 'dashboard' }
 ];

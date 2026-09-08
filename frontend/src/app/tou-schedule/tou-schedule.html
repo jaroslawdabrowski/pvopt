@@ -12,7 +12,12 @@
       <mat-spinner diameter="36" />
     </div>
   } @else if (errorKey()) {
-    <p class="error">{{ errorKey() | translate }}</p>
+    <p class="error">
+      {{ errorKey() | translate }}
+      @if (errorKey() === 'common.settingsNotConfigured') {
+        <a routerLink="/settings">{{ 'nav.settings' | translate }}</a>
+      }
+    </p>
   } @else {
     <mat-card appearance="outlined" class="schedule-card">
       <table mat-table [dataSource]="slots()" class="schedule-table">

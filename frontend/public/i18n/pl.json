@@ -3,6 +3,7 @@
     "dashboard": "Panel",
     "touSchedule": "Harmonogram TOU",
     "history": "Historia",
+    "settings": "Ustawienia",
     "logout": "Wyloguj"
   },
   "login": {
@@ -13,6 +14,9 @@
     "submit": "Zaloguj",
     "submitting": "Logowanie...",
     "error": "Nieprawidłowy login lub hasło."
+  },
+  "common": {
+    "settingsNotConfigured": "Ustawienia procesu nie zostały jeszcze skonfigurowane - przejdź do Ustawień, aby je uzupełnić."
   },
   "dashboard": {
     "loading": "Ładowanie...",
@@ -57,6 +61,52 @@
     "on": "WŁ",
     "off": "WYŁ",
     "unmanaged": "Stałe (nieplanowane)"
+  },
+  "settings": {
+    "title": "Ustawienia procesu",
+    "subtitle": "Wszystko, czego potrzebuje silnik planowania - zapisywane tutaj, nie w pliku konfiguracyjnym, więc możesz to zmienić w każdej chwili.",
+    "notConfiguredBanner": "Jeszcze nie skonfigurowano - uzupełnij formularz poniżej i zapisz. Do tego czasu zaplanowane zadania będą tylko logować brak konfiguracji i pomijać uruchomienie.",
+    "saved": "Zapisano. Zaplanowane zadania zostały ponownie zarejestrowane z nowymi godzinami.",
+    "loadError": "Nie udało się wczytać ustawień.",
+    "saveError": "Nie udało się zapisać ustawień.",
+    "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "planning": {
+      "title": "Polityka planowania",
+      "minSoc": "Minimalny SOC",
+      "fullSoc": "Docelowy SOC pełnego ładowania",
+      "dailyConsumption": "Szacowane dobowe zużycie",
+      "afternoonConsumption": "Szacowane zużycie popołudniowe",
+      "safetyMargin": "Margines bezpieczeństwa prognozy (mnożnik)",
+      "tariffWindows": "Tanie okna taryfowe",
+      "tariffWindowsHint": "Zakresy HH:mm-HH:mm oddzielone przecinkami, np. 22:00-06:00, 13:00-15:00"
+    },
+    "schedule": {
+      "title": "Harmonogram dobowy",
+      "overnightTime": "Godzina decyzji nocnej",
+      "afternoonTime": "Godzina decyzji popołudniowej"
+    },
+    "forecast": {
+      "title": "Prognoza produkcji PV",
+      "latitude": "Szerokość geograficzna",
+      "longitude": "Długość geograficzna",
+      "directionsHint": "Jedna płaszczyzna paneli na stronę świata - zostaw kWp na 0, jeśli po danej stronie nie ma paneli.",
+      "declination": "Nachylenie",
+      "kwp": "Moc",
+      "direction": {
+        "north": "Północ",
+        "east": "Wschód",
+        "south": "Południe",
+        "west": "Zachód"
+      }
+    },
+    "inverter": {
+      "title": "Połączenie z falownikiem",
+      "hint": "Dane osobowe/sprzętowe (IP w sieci LAN, numer seryjny urządzenia) - przechowywane w bazie danych, nigdy w pliku konfiguracyjnym w repozytorium.",
+      "host": "Host / IP",
+      "port": "Port",
+      "loggerSerial": "Numer seryjny loggera"
+    }
   },
   "window": {
     "OVERNIGHT": "Noc",

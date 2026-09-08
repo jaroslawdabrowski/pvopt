@@ -4,7 +4,12 @@
       <mat-spinner diameter="36" />
     </div>
   } @else if (errorKey()) {
-    <p class="error">{{ errorKey() | translate }}</p>
+    <p class="error">
+      {{ errorKey() | translate }}
+      @if (errorKey() === 'common.settingsNotConfigured') {
+        <a routerLink="/settings">{{ 'nav.settings' | translate }}</a>
+      }
+    </p>
   } @else if (status(); as s) {
     <div class="cards">
       <mat-card appearance="outlined" class="card">

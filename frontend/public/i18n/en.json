@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "touSchedule": "TOU schedule",
     "history": "History",
+    "settings": "Settings",
     "logout": "Log out"
   },
   "login": {
@@ -13,6 +14,9 @@
     "submit": "Log in",
     "submitting": "Logging in...",
     "error": "Invalid username or password."
+  },
+  "common": {
+    "settingsNotConfigured": "Process settings haven't been configured yet - go to Settings to set them up."
   },
   "dashboard": {
     "loading": "Loading...",
@@ -57,6 +61,52 @@
     "on": "ON",
     "off": "OFF",
     "unmanaged": "Fixed (not planned)"
+  },
+  "settings": {
+    "title": "Process settings",
+    "subtitle": "Everything the planning engine needs - saved here, not in a config file, so you can change it anytime.",
+    "notConfiguredBanner": "Not configured yet - fill in the form below and save. Until then, the scheduled jobs will just log that nothing is configured and skip their run.",
+    "saved": "Saved. The scheduled jobs have been re-registered for the new times.",
+    "loadError": "Failed to load settings.",
+    "saveError": "Failed to save settings.",
+    "save": "Save",
+    "saving": "Saving...",
+    "planning": {
+      "title": "Planning policy",
+      "minSoc": "Minimum SOC",
+      "fullSoc": "Full-charge target SOC",
+      "dailyConsumption": "Daily consumption estimate",
+      "afternoonConsumption": "Afternoon consumption estimate",
+      "safetyMargin": "Forecast safety margin (multiplier)",
+      "tariffWindows": "Cheap tariff windows",
+      "tariffWindowsHint": "Comma-separated HH:mm-HH:mm ranges, e.g. 22:00-06:00, 13:00-15:00"
+    },
+    "schedule": {
+      "title": "Daily schedule",
+      "overnightTime": "Overnight decision time",
+      "afternoonTime": "Afternoon decision time"
+    },
+    "forecast": {
+      "title": "PV production forecast",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "directionsHint": "One panel plane per side - leave kWp at 0 for a side with no panels.",
+      "declination": "Tilt",
+      "kwp": "Capacity",
+      "direction": {
+        "north": "North",
+        "east": "East",
+        "south": "South",
+        "west": "West"
+      }
+    },
+    "inverter": {
+      "title": "Inverter connection",
+      "hint": "Personal/hardware data (LAN IP, device serial) - stored in the database, never in a config file checked into git.",
+      "host": "Host / IP",
+      "port": "Port",
+      "loggerSerial": "Logger serial number"
+    }
   },
   "window": {
     "OVERNIGHT": "Overnight",

@@ -1,15 +1,17 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EnergyPlanningApi, EnergyStatusDto } from '../core/energy-planning-api.service';
+import { settingsAwareErrorKey } from '../core/settings-error.util';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DatePipe, TranslatePipe, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [DatePipe, RouterLink, TranslatePipe, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
@@ -35,9 +37,9 @@ export class Dashboard implements OnInit {
         this.loading.set(false);
         this.errorKey.set(null);
       },
-      error: () => {
+      error: (error) => {
         this.loading.set(false);
-        this.errorKey.set('dashboard.error');
+        this.errorKey.set(settingsAwareErrorKey(error, 'dashboard.error'));
       }
     });
   }
@@ -49,9 +51,9 @@ export class Dashboard implements OnInit {
         this.runningOvernight.set(false);
         this.loadStatus();
       },
-      error: () => {
+      error: (error) => {
         this.runningOvernight.set(false);
-        this.errorKey.set('dashboard.runError');
+        this.errorKey.set(settingsAwareErrorKey(error, 'dashboard.runError'));
       }
     });
   }
@@ -63,9 +65,9 @@ export class Dashboard implements OnInit {
         this.runningAfternoon.set(false);
         this.loadStatus();
       },
-      error: () => {
+      error: (error) => {
         this.runningAfternoon.set(false);
-        this.errorKey.set('dashboard.runError');
+        this.errorKey.set(settingsAwareErrorKey(error, 'dashboard.runError'));
       }
     });
   }

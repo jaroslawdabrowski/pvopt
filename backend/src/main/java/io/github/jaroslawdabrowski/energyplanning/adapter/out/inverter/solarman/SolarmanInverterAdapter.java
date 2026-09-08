@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 import io.github.jaroslawdabrowski.energyplanning.domain.BatteryStatus;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
+import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 
@@ -34,12 +35,12 @@ public class SolarmanInverterAdapter implements InverterPort {
     }
 
     @Override
-    public BatteryStatus readBatteryStatus() {
-        return new BatteryStatus(readRegisters(config.batterySocRegister(), 1)[0]);
+    public BatteryStatus readBatteryStatus(InverterConnectionSettings connection) {
+        return new BatteryStatus(readRegisters(connection, config.batterySocRegister(), 1)[0]);
     }
 
     @Override
-    public void applyChargeSchedule(ChargeSchedule schedule) {
+    public void applyChargeSchedule(ChargeSchedule schedule, InverterConnectionSettings connection) {
         int[] slots = TouSlots.slotsFor(schedule.window());
 
         if (!config.writeEnabled()) {
@@ -51,8 +52,9 @@ public class SolarmanInverterAdapter implements InverterPort {
         }
 
         for (int slot : slots) {
-            writeRegister(config.touGridChargeEnableBaseRegister() + slot, schedule.gridChargeEnabled() ? 1 : 0);
-            writeRegister(config.touBattTargetBaseRegister() + slot, schedule.targetSocPercent());
+            writeRegister(connection, config.touGridChargeEnableBaseRegister() + slot,
+                    schedule.gridChargeEnabled() ? 1 : 0);
+            writeRegister(connection, config.touBattTargetBaseRegister() + slot, schedule.targetSocPercent());
         }
         LOG.infof("Applied charge schedule to inverter: window=%s, enabled=%s, targetSoc=%d%%, slots=%s",
                 schedule.window(), schedule.gridChargeEnabled(), schedule.targetSocPercent(),
@@ -60,11 +62,11 @@ public class SolarmanInverterAdapter implements InverterPort {
     }
 
     @Override
-    public List<TouScheduleSlot> readTouSchedule() {
-        int[] times = readRegisters(config.touTimeBaseRegister(), TouSlots.SLOT_COUNT);
-        int[] powers = readRegisters(config.touPowerBaseRegister(), TouSlots.SLOT_COUNT);
-        int[] targets = readRegisters(config.touBattTargetBaseRegister(), TouSlots.SLOT_COUNT);
-        int[] enabled = readRegisters(config.touGridChargeEnableBaseRegister(), TouSlots.SLOT_COUNT);
+    public List<TouScheduleSlot> readTouSchedule(InverterConnectionSettings connection) {
+        int[] times = readRegisters(connection, config.touTimeBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] powers = readRegisters(connection, config.touPowerBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] targets = readRegisters(connection, config.touBattTargetBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] enabled = readRegisters(connection, config.touGridChargeEnableBaseRegister(), TouSlots.SLOT_COUNT);
 
         var slots = new ArrayList<TouScheduleSlot>(TouSlots.SLOT_COUNT);
         for (int slot = 0; slot < TouSlots.SLOT_COUNT; slot++) {
@@ -81,30 +83,30 @@ public class SolarmanInverterAdapter implements InverterPort {
         return slots;
     }
 
-    private int[] readRegisters(int baseRegister, int count) {
+    private int[] readRegisters(InverterConnectionSettings connection, int baseRegister, int count) {
         byte[] modbusRequest = ModbusRtuFrame.readHoldingRegisters(config.modbusSlaveAddress(), baseRegister, count);
-        byte[] modbusResponse = sendAndReceive(modbusRequest);
+        byte[] modbusResponse = sendAndReceive(connection, modbusRequest);
         return ModbusRtuFrame.parseReadHoldingRegistersResponse(modbusResponse);
     }
 
-    private void writeRegister(int register, int value) {
+    private void writeRegister(InverterConnectionSettings connection, int register, int value) {
         // Function 0x06 (write single register) is silently rejected by this inverter (echoes a
         // non-standard 2-byte "05 00" response and the value never actually changes) - confirmed
         // against real hardware. Function 0x10 (write multiple registers, quantity=1) works.
         byte[] modbusRequest = ModbusRtuFrame.writeMultipleRegisters(config.modbusSlaveAddress(), register,
                 new int[] {value});
-        byte[] response = sendAndReceive(modbusRequest);
+        byte[] response = sendAndReceive(connection, modbusRequest);
         ModbusRtuFrame.checkWriteMultipleRegistersResponse(response, register, 1);
     }
 
-    private byte[] sendAndReceive(byte[] modbusRequest) {
+    private byte[] sendAndReceive(InverterConnectionSettings connection, byte[] modbusRequest) {
         byte[] v5Request = SolarmanV5Frame.encodeRequest(
-                config.loggerSerial(), sequenceNumber.getAndIncrement() & 0xFFFF, modbusRequest);
+                connection.loggerSerial(), sequenceNumber.getAndIncrement() & 0xFFFF, modbusRequest);
 
         try (Socket socket = new Socket()) {
             // connect() with an explicit timeout - the Socket(host, port) constructor connects
             // with no timeout at all and can hang for a very long time when the logger is unreachable.
-            socket.connect(new InetSocketAddress(config.host(), config.port()), config.socketTimeoutMillis());
+            socket.connect(new InetSocketAddress(connection.host(), connection.port()), config.socketTimeoutMillis());
             socket.setSoTimeout(config.socketTimeoutMillis());
             socket.getOutputStream().write(v5Request);
             socket.getOutputStream().flush();
@@ -113,14 +115,15 @@ public class SolarmanInverterAdapter implements InverterPort {
             int read = socket.getInputStream().read(responseBuffer);
             if (read <= 0) {
                 throw new InverterCommunicationException("No response from Deye/Solarman logger at "
-                        + config.host() + ":" + config.port());
+                        + connection.host() + ":" + connection.port());
             }
             byte[] response = new byte[read];
             System.arraycopy(responseBuffer, 0, response, 0, read);
             return SolarmanV5Frame.decodeResponse(response);
         } catch (IOException e) {
             throw new InverterCommunicationException(
-                    "Failed to communicate with Deye/Solarman logger at " + config.host() + ":" + config.port(), e);
+                    "Failed to communicate with Deye/Solarman logger at " + connection.host() + ":"
+                            + connection.port(), e);
         }
     }
 }

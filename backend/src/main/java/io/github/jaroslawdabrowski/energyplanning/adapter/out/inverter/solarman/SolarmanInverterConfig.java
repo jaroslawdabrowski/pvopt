@@ -4,21 +4,15 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
 /**
- * Connection parameters for the Deye/Solarman logger and the Modbus register map.
- * {@code batterySocRegister} and the TOU (Time-of-Use) register bases are confirmed
- * against real hardware (see {@code RegisterScannerManualTest}): the inverter has 6
+ * The Modbus register map and protocol-level knobs for the Deye/Solarman logger - all
+ * static, hardware-protocol constants confirmed against real hardware (see
+ * {@code RegisterScannerManualTest}), unlike the connection itself (host/port/logger
+ * serial), which is now user-editable via the settings panel (see
+ * {@code InverterConnectionSettings}) rather than configured here. The inverter has 6
  * TOU slots, one register per slot per field, at {@code touXxxBaseRegister + slotIndex}.
  */
 @ConfigMapping(prefix = "pvopt.inverter.solarman")
 public interface SolarmanInverterConfig {
-
-    String host();
-
-    @WithDefault("8899")
-    int port();
-
-    /** Logger serial number (not the inverter's!), required for the Solarman V5 frame. */
-    long loggerSerial();
 
     @WithDefault("1")
     int modbusSlaveAddress();

@@ -1,0 +1,135 @@
+<section class="settings">
+  <h1>{{ 'settings.title' | translate }}</h1>
+  <p class="subtitle">{{ 'settings.subtitle' | translate }}</p>
+
+  @if (loading()) {
+    <div class="spinner">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else {
+    @if (!configured()) {
+      <div class="banner not-configured">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'settings.notConfiguredBanner' | translate }}</span>
+      </div>
+    }
+    @if (savedJustNow()) {
+      <div class="banner saved">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ 'settings.saved' | translate }}</span>
+      </div>
+    }
+    @if (errorKey()) {
+      <p class="error">{{ errorKey() | translate }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <mat-card appearance="outlined" class="section" formGroupName="planning">
+        <h2>{{ 'settings.planning.title' | translate }}</h2>
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.planning.minSoc' | translate }}</mat-label>
+            <input matInput type="number" formControlName="minSocPercent" />
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.planning.fullSoc' | translate }}</mat-label>
+            <input matInput type="number" formControlName="fullSocPercent" />
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.planning.dailyConsumption' | translate }}</mat-label>
+            <input matInput type="number" step="0.1" formControlName="dailyConsumptionEstimateKwh" />
+            <span matTextSuffix>kWh</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.planning.afternoonConsumption' | translate }}</mat-label>
+            <input matInput type="number" step="0.1" formControlName="afternoonConsumptionEstimateKwh" />
+            <span matTextSuffix>kWh</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.planning.safetyMargin' | translate }}</mat-label>
+            <input matInput type="number" step="0.05" formControlName="forecastSafetyMarginRatio" />
+          </mat-form-field>
+        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'settings.planning.tariffWindows' | translate }}</mat-label>
+          <input matInput formControlName="cheapTariffWindows" placeholder="22:00-06:00, 13:00-15:00" />
+          <mat-hint>{{ 'settings.planning.tariffWindowsHint' | translate }}</mat-hint>
+        </mat-form-field>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="section" formGroupName="schedule">
+        <h2>{{ 'settings.schedule.title' | translate }}</h2>
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.schedule.overnightTime' | translate }}</mat-label>
+            <input matInput type="time" formControlName="overnightTime" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.schedule.afternoonTime' | translate }}</mat-label>
+            <input matInput type="time" formControlName="afternoonTime" />
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="section" formGroupName="forecast">
+        <h2>{{ 'settings.forecast.title' | translate }}</h2>
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.forecast.latitude' | translate }}</mat-label>
+            <input matInput type="number" step="0.0001" formControlName="latitude" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.forecast.longitude' | translate }}</mat-label>
+            <input matInput type="number" step="0.0001" formControlName="longitude" />
+          </mat-form-field>
+        </div>
+
+        <p class="directions-hint">{{ 'settings.forecast.directionsHint' | translate }}</p>
+        <div class="directions">
+          @for (direction of ['north', 'east', 'south', 'west']; track direction) {
+            <div class="direction" [formGroupName]="direction">
+              <h3>{{ ('settings.forecast.direction.' + direction) | translate }}</h3>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'settings.forecast.declination' | translate }}</mat-label>
+                <input matInput type="number" formControlName="declinationDegrees" />
+                <span matTextSuffix>&deg;</span>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'settings.forecast.kwp' | translate }}</mat-label>
+                <input matInput type="number" step="0.1" formControlName="kwp" />
+                <span matTextSuffix>kWp</span>
+              </mat-form-field>
+            </div>
+          }
+        </div>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="section" formGroupName="inverterConnection">
+        <h2>{{ 'settings.inverter.title' | translate }}</h2>
+        <p class="section-hint">{{ 'settings.inverter.hint' | translate }}</p>
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.inverter.host' | translate }}</mat-label>
+            <input matInput formControlName="host" placeholder="192.168.1.100" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.inverter.port' | translate }}</mat-label>
+            <input matInput type="number" formControlName="port" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.inverter.loggerSerial' | translate }}</mat-label>
+            <input matInput type="number" formControlName="loggerSerial" />
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <div class="actions">
+        <button mat-flat-button type="submit" [disabled]="saving()">
+          {{ (saving() ? 'settings.saving' : 'settings.save') | translate }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
