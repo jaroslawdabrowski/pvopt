@@ -7,8 +7,10 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningPolicyConfig;
 import io.github.jaroslawdabrowski.energyplanning.domain.TariffCalendar;
+import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.GetTouScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ClockPort;
@@ -26,7 +28,7 @@ import java.util.List;
  */
 @ApplicationScoped
 public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonTopUpUseCase,
-        GetEnergyStatusUseCase, GetPlanningHistoryUseCase {
+        GetEnergyStatusUseCase, GetPlanningHistoryUseCase, GetTouScheduleUseCase {
 
     private final InverterPort inverterPort;
     private final ForecastPort forecastPort;
@@ -89,5 +91,10 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     @Override
     public List<ChargeDecision> history(Instant from, Instant to) {
         return historyPort.findBetween(from, to);
+    }
+
+    @Override
+    public List<TouScheduleSlot> currentTouSchedule() {
+        return inverterPort.readTouSchedule();
     }
 }

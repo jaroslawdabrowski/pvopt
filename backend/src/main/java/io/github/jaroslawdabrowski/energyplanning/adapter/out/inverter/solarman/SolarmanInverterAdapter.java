@@ -4,12 +4,16 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 import io.github.jaroslawdabrowski.energyplanning.domain.BatteryStatus;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
+import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,11 +35,7 @@ public class SolarmanInverterAdapter implements InverterPort {
 
     @Override
     public BatteryStatus readBatteryStatus() {
-        byte[] modbusRequest = ModbusRtuFrame.readHoldingRegisters(
-                config.modbusSlaveAddress(), config.batterySocRegister(), 1);
-        byte[] modbusResponse = sendAndReceive(modbusRequest);
-        int[] values = ModbusRtuFrame.parseReadHoldingRegistersResponse(modbusResponse);
-        return new BatteryStatus(values[0]);
+        return new BatteryStatus(readRegisters(config.batterySocRegister(), 1)[0]);
     }
 
     @Override
@@ -57,6 +57,34 @@ public class SolarmanInverterAdapter implements InverterPort {
         LOG.infof("Applied charge schedule to inverter: window=%s, enabled=%s, targetSoc=%d%%, slots=%s",
                 schedule.window(), schedule.gridChargeEnabled(), schedule.targetSocPercent(),
                 Arrays.toString(slots));
+    }
+
+    @Override
+    public List<TouScheduleSlot> readTouSchedule() {
+        int[] times = readRegisters(config.touTimeBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] powers = readRegisters(config.touPowerBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] targets = readRegisters(config.touBattTargetBaseRegister(), TouSlots.SLOT_COUNT);
+        int[] enabled = readRegisters(config.touGridChargeEnableBaseRegister(), TouSlots.SLOT_COUNT);
+
+        var slots = new ArrayList<TouScheduleSlot>(TouSlots.SLOT_COUNT);
+        for (int slot = 0; slot < TouSlots.SLOT_COUNT; slot++) {
+            int nextSlot = (slot + 1) % TouSlots.SLOT_COUNT;
+            slots.add(new TouScheduleSlot(
+                    slot,
+                    LocalTime.of(times[slot] / 100, times[slot] % 100),
+                    LocalTime.of(times[nextSlot] / 100, times[nextSlot] % 100),
+                    powers[slot],
+                    targets[slot],
+                    enabled[slot] != 0,
+                    TouSlots.windowForSlot(slot)));
+        }
+        return slots;
+    }
+
+    private int[] readRegisters(int baseRegister, int count) {
+        byte[] modbusRequest = ModbusRtuFrame.readHoldingRegisters(config.modbusSlaveAddress(), baseRegister, count);
+        byte[] modbusResponse = sendAndReceive(modbusRequest);
+        return ModbusRtuFrame.parseReadHoldingRegistersResponse(modbusResponse);
     }
 
     private void writeRegister(int register, int value) {

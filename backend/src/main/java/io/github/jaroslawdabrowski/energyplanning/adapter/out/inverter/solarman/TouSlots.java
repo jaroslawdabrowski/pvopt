@@ -40,6 +40,18 @@ final class TouSlots {
         };
     }
 
+    /** Reverse of {@link #slotsFor} - which window (if any) governs a given device slot. */
+    static ChargeWindow windowForSlot(int slot) {
+        for (ChargeWindow window : ChargeWindow.values()) {
+            for (int candidate : slotsFor(window)) {
+                if (candidate == slot) {
+                    return window;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Grid-charge power cap (Watts) for a window's slot(s) - a static hardware setting (battery
      * 10kWh, 20% minimum reserve -> 8kWh max to charge), not something the daily decision

@@ -56,6 +56,11 @@ class SolarmanInverterAdapterTest {
             }
 
             @Override
+            public int touPowerBaseRegister() {
+                return 154;
+            }
+
+            @Override
             public int touBattTargetBaseRegister() {
                 return 166;
             }

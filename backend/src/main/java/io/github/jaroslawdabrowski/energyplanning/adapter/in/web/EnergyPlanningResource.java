@@ -9,6 +9,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.GetTouScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 
@@ -24,14 +25,16 @@ public class EnergyPlanningResource {
     private final PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase;
     private final GetEnergyStatusUseCase getEnergyStatusUseCase;
     private final GetPlanningHistoryUseCase getPlanningHistoryUseCase;
+    private final GetTouScheduleUseCase getTouScheduleUseCase;
 
     public EnergyPlanningResource(PlanOvernightChargeUseCase planOvernightChargeUseCase,
             PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetEnergyStatusUseCase getEnergyStatusUseCase,
-            GetPlanningHistoryUseCase getPlanningHistoryUseCase) {
+            GetPlanningHistoryUseCase getPlanningHistoryUseCase, GetTouScheduleUseCase getTouScheduleUseCase) {
         this.planOvernightChargeUseCase = planOvernightChargeUseCase;
         this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getEnergyStatusUseCase = getEnergyStatusUseCase;
         this.getPlanningHistoryUseCase = getPlanningHistoryUseCase;
+        this.getTouScheduleUseCase = getTouScheduleUseCase;
     }
 
     @GET
@@ -47,6 +50,14 @@ public class EnergyPlanningResource {
         Instant toInstant = to != null ? Instant.parse(to) : Instant.now();
         return getPlanningHistoryUseCase.history(fromInstant, toInstant).stream()
                 .map(ChargeDecisionResponse::from)
+                .toList();
+    }
+
+    @GET
+    @Path("/inverter/tou-schedule")
+    public List<TouScheduleSlotResponse> touSchedule() {
+        return getTouScheduleUseCase.currentTouSchedule().stream()
+                .map(TouScheduleSlotResponse::from)
                 .toList();
     }
 
