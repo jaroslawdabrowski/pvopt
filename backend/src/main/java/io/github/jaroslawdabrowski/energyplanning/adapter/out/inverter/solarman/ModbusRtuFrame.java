@@ -5,16 +5,19 @@ import java.nio.ByteBuffer;
 
 /**
  * Building and parsing Modbus RTU frames (address + function + data + CRC16).
- * Functions 0x03 (read holding registers), 0x04 (read input registers) and
- * 0x06 (write single register) - Deye inverters commonly expose live status
- * values (like battery SOC) as input registers rather than holding registers,
- * so both read functions are needed to locate the right one.
+ * Functions 0x03 (read holding registers), 0x04 (read input registers) and 0x10
+ * (write multiple registers) - Deye inverters commonly expose live status values
+ * (like battery SOC) as input registers rather than holding registers, so both
+ * read functions are needed to locate the right one. Function 0x06 (write single
+ * register) is confirmed - against real hardware - to be silently rejected by
+ * this inverter (it echoes a non-standard "05 00" response and the value never
+ * actually changes); 0x10 with a single-register payload is the one that works.
  */
 final class ModbusRtuFrame {
 
     private static final int FUNCTION_READ_HOLDING_REGISTERS = 0x03;
     private static final int FUNCTION_READ_INPUT_REGISTERS = 0x04;
-    private static final int FUNCTION_WRITE_SINGLE_REGISTER = 0x06;
+    private static final int FUNCTION_WRITE_MULTIPLE_REGISTERS = 0x10;
 
     private ModbusRtuFrame() {
     }
@@ -27,13 +30,41 @@ final class ModbusRtuFrame {
         return readRegisters(slaveAddress, FUNCTION_READ_INPUT_REGISTERS, startRegister, registerCount);
     }
 
-    static byte[] writeSingleRegister(int slaveAddress, int register, int value) {
-        var buffer = ByteBuffer.allocate(6);
+    /** Also used for single-register writes (values.length == 1) - see the class javadoc for why. */
+    static byte[] writeMultipleRegisters(int slaveAddress, int startRegister, int[] values) {
+        var buffer = ByteBuffer.allocate(7 + values.length * 2);
         buffer.put((byte) slaveAddress);
-        buffer.put((byte) FUNCTION_WRITE_SINGLE_REGISTER);
-        buffer.putShort((short) register);
-        buffer.putShort((short) value);
+        buffer.put((byte) FUNCTION_WRITE_MULTIPLE_REGISTERS);
+        buffer.putShort((short) startRegister);
+        buffer.putShort((short) values.length);
+        buffer.put((byte) (values.length * 2));
+        for (int value : values) {
+            buffer.putShort((short) value);
+        }
         return withCrc(buffer.array());
+    }
+
+    /**
+     * Validates a function-0x10 response: raises if the device rejected the write (a Modbus
+     * exception, or the non-standard "05 00" this inverter sends for functions it won't accept)
+     * instead of silently treating it as success.
+     */
+    static void checkWriteMultipleRegistersResponse(byte[] frame, int expectedStartRegister,
+            int expectedRegisterCount) {
+        if (frame.length >= 3 && (frame[1] & 0xFF) == (FUNCTION_WRITE_MULTIPLE_REGISTERS | 0x80)) {
+            throw new IllegalArgumentException(
+                    "Modbus exception response, code=" + (frame[2] & 0xFF) + ", frame=" + toHex(frame));
+        }
+        if (frame.length < 6 || (frame[1] & 0xFF) != FUNCTION_WRITE_MULTIPLE_REGISTERS) {
+            throw new IllegalArgumentException(
+                    "Unexpected/rejected Modbus response for write multiple registers: " + toHex(frame));
+        }
+        int echoedStart = ((frame[2] & 0xFF) << 8) | (frame[3] & 0xFF);
+        int echoedCount = ((frame[4] & 0xFF) << 8) | (frame[5] & 0xFF);
+        if (echoedStart != expectedStartRegister || echoedCount != expectedRegisterCount) {
+            throw new IllegalArgumentException("Write multiple registers echoed unexpected start/count "
+                    + "(expected " + expectedStartRegister + "/" + expectedRegisterCount + "): " + toHex(frame));
+        }
     }
 
     /** Extracts register values (uint16, big-endian - standard Modbus) from a function-0x03 response. */

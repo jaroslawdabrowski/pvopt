@@ -60,8 +60,13 @@ public class SolarmanInverterAdapter implements InverterPort {
     }
 
     private void writeRegister(int register, int value) {
-        byte[] modbusRequest = ModbusRtuFrame.writeSingleRegister(config.modbusSlaveAddress(), register, value);
-        sendAndReceive(modbusRequest);
+        // Function 0x06 (write single register) is silently rejected by this inverter (echoes a
+        // non-standard 2-byte "05 00" response and the value never actually changes) - confirmed
+        // against real hardware. Function 0x10 (write multiple registers, quantity=1) works.
+        byte[] modbusRequest = ModbusRtuFrame.writeMultipleRegisters(config.modbusSlaveAddress(), register,
+                new int[] {value});
+        byte[] response = sendAndReceive(modbusRequest);
+        ModbusRtuFrame.checkWriteMultipleRegistersResponse(response, register, 1);
     }
 
     private byte[] sendAndReceive(byte[] modbusRequest) {

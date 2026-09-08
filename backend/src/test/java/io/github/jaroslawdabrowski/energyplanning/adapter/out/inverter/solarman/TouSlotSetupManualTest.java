@@ -77,8 +77,10 @@ class TouSlotSetupManualTest {
 
     private void writeRegister(String host, int port, long loggerSerial, int slaveAddress, int register, int value)
             throws IOException {
-        byte[] request = ModbusRtuFrame.writeSingleRegister(slaveAddress, register, value);
-        sendAndReceive(host, port, loggerSerial, request);
+        byte[] request = ModbusRtuFrame.writeMultipleRegisters(slaveAddress, register, new int[] {value});
+        byte[] response = sendAndReceive(host, port, loggerSerial, request);
+        ModbusRtuFrame.checkWriteMultipleRegistersResponse(response, register, 1);
+        System.out.printf("  write register %d = %d -> ok%n", register, value);
     }
 
     private byte[] sendAndReceive(String host, int port, long loggerSerial, byte[] modbusRequest)
