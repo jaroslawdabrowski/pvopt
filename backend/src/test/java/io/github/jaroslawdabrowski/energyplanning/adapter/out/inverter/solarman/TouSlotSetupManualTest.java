@@ -1,26 +1,29 @@
 package io.github.jaroslawdabrowski.energyplanning.adapter.out.inverter.solarman;
 
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * One-off manual tool, NOT part of the normal test suite ({@code @Disabled} - run it
- * explicitly), that rewrites the inverter's 6 TOU slot start times to the boundaries
- * matching PGE G12 (see {@link TouSlots} for the boundary scheme and why). This is the
- * only place in the codebase that writes to registers 148-153 (touTimeBaseRegister) -
- * everything else only ever reads them or writes the enable/target registers for a
- * fixed slot. Does not touch Power (154-159); the existing 10000/slot is fine as-is.
+ * explicitly), that rewrites the inverter's TOU slot start times and grid-charge power
+ * caps for the two decision windows to match PGE G12 and the battery's usable capacity
+ * (see {@link TouSlots} for the values and why). Everything else (Batt%-target,
+ * grid-charge-enable) is written per-run by the normal decision path; these two are
+ * static hardware config, set once here.
  *
- * <p>Reads the current times first and prints old -> new for review. Only writes when
+ * <p>Reads the current values first and prints old -> new for review. Only writes when
  * BOTH {@code -Dpvopt.setup.confirm=yes} AND {@code -Dpvopt.setup.writeEnabled=true} are
  * passed - belt and suspenders on top of the normal {@code -Dtest}/{@code @Disabled}
  * gates, since this is the one tool in the codebase that's meant to actually change the
- * inverter's configuration rather than just its runtime charge state.
+ * inverter's configuration rather than just its runtime charge state. Idempotent - safe
+ * to re-run if the device is ever reset/reconfigured.
  *
  * <pre>
  * ./mvnw test -Dtest=TouSlotSetupManualTest -DfailIfNoTests=false \
@@ -34,18 +37,25 @@ class TouSlotSetupManualTest {
 
     @Test
     @Disabled("one-off hardware setup - pass -Dpvopt.setup.confirm=yes -Dpvopt.setup.writeEnabled=true and run explicitly, see class javadoc")
-    void rewriteTouSlotTimesToG12Boundaries() throws Exception {
+    void rewriteTouSlotTimesAndPowerCaps() throws Exception {
         String host = require("pvopt.scan.host");
         int port = Integer.parseInt(System.getProperty("pvopt.scan.port", "8899"));
         long loggerSerial = Long.parseLong(require("pvopt.scan.loggerSerial"));
         int slaveAddress = Integer.parseInt(System.getProperty("pvopt.scan.slaveAddress", "1"));
         int timeBaseRegister = Integer.parseInt(System.getProperty("pvopt.scan.touTimeBaseRegister", "148"));
+        int powerBaseRegister = Integer.parseInt(System.getProperty("pvopt.scan.touPowerBaseRegister", "154"));
+
+        Map<Integer, Integer> targetPowerBySlot = targetPowerBySlot();
 
         System.out.println("Current TOU slot times:");
-        int[] current = new int[TouSlots.SLOT_COUNT];
         for (int slot = 0; slot < TouSlots.SLOT_COUNT; slot++) {
-            current[slot] = readRegister(host, port, loggerSerial, slaveAddress, timeBaseRegister + slot);
-            System.out.printf("  slot %d: %04d -> %04d%n", slot, current[slot], TouSlots.START_TIMES_HHMM[slot]);
+            int value = readRegister(host, port, loggerSerial, slaveAddress, timeBaseRegister + slot);
+            System.out.printf("  slot %d time: %04d -> %04d%n", slot, value, TouSlots.START_TIMES_HHMM[slot]);
+        }
+        System.out.println("Current TOU slot power caps (charging slots get their real cap, others a low fallback):");
+        for (var entry : targetPowerBySlot.entrySet()) {
+            int value = readRegister(host, port, loggerSerial, slaveAddress, powerBaseRegister + entry.getKey());
+            System.out.printf("  slot %d power: %d -> %d%n", entry.getKey(), value, entry.getValue());
         }
 
         boolean confirmed = "yes".equals(System.getProperty("pvopt.setup.confirm"));
@@ -60,12 +70,38 @@ class TouSlotSetupManualTest {
             writeRegister(host, port, loggerSerial, slaveAddress, timeBaseRegister + slot,
                     TouSlots.START_TIMES_HHMM[slot]);
         }
+        for (var entry : targetPowerBySlot.entrySet()) {
+            writeRegister(host, port, loggerSerial, slaveAddress, powerBaseRegister + entry.getKey(),
+                    entry.getValue());
+        }
 
         System.out.println("Re-reading to confirm:");
         for (int slot = 0; slot < TouSlots.SLOT_COUNT; slot++) {
             int value = readRegister(host, port, loggerSerial, slaveAddress, timeBaseRegister + slot);
-            System.out.printf("  slot %d: %04d (expected %04d)%n", slot, value, TouSlots.START_TIMES_HHMM[slot]);
+            System.out.printf("  slot %d time: %04d (expected %04d)%n", slot, value, TouSlots.START_TIMES_HHMM[slot]);
         }
+        for (var entry : targetPowerBySlot.entrySet()) {
+            int value = readRegister(host, port, loggerSerial, slaveAddress, powerBaseRegister + entry.getKey());
+            System.out.printf("  slot %d power: %d (expected %d)%n", entry.getKey(), value, entry.getValue());
+        }
+    }
+
+    /**
+     * All 6 slots, not just the ones this app charges from: the others get
+     * {@link TouSlots#FALLBACK_POWER_WATTS} instead of the factory 10kW default, as
+     * defense in depth in case one of them is ever accidentally enabled.
+     */
+    private static Map<Integer, Integer> targetPowerBySlot() {
+        var result = new java.util.TreeMap<Integer, Integer>();
+        for (int slot = 0; slot < TouSlots.SLOT_COUNT; slot++) {
+            result.put(slot, TouSlots.FALLBACK_POWER_WATTS);
+        }
+        for (ChargeWindow window : ChargeWindow.values()) {
+            for (int slot : TouSlots.slotsFor(window)) {
+                result.put(slot, TouSlots.powerWattsFor(window));
+            }
+        }
+        return result;
     }
 
     private int readRegister(String host, int port, long loggerSerial, int slaveAddress, int register)

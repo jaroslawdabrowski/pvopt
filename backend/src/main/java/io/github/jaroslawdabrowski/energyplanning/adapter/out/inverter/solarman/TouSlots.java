@@ -39,4 +39,26 @@ final class TouSlots {
             case AFTERNOON -> new int[] {SLOT_AFTERNOON};
         };
     }
+
+    /**
+     * Grid-charge power cap (Watts) for a window's slot(s) - a static hardware setting (battery
+     * 10kWh, 20% minimum reserve -> 8kWh max to charge), not something the daily decision
+     * recomputes. Set once, alongside the slot times, by {@code TouSlotSetupManualTest}:
+     * 4000W for the 2h afternoon window (finishes an 8kWh charge in ~2h), 2000W for the 8h
+     * overnight window (finishes in ~4h, comfortable margin, gentler on the battery).
+     */
+    static int powerWattsFor(ChargeWindow window) {
+        return switch (window) {
+            case OVERNIGHT -> 2000;
+            case AFTERNOON -> 4000;
+        };
+    }
+
+    /**
+     * Power cap (Watts) for the slots {@link #powerWattsFor} doesn't cover (1, 3, 4 - never
+     * grid-charge-enabled) - defense in depth: if one of them were ever accidentally enabled
+     * (a stray LCD change, a future bug), it caps the damage at 1kW instead of the factory
+     * default 10kW.
+     */
+    static final int FALLBACK_POWER_WATTS = 1000;
 }

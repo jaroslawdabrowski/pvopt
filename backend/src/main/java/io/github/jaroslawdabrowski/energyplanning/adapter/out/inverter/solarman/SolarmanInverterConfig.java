@@ -35,6 +35,15 @@ public interface SolarmanInverterConfig {
     @WithDefault("148")
     int touTimeBaseRegister();
 
+    /**
+     * Base register for the 6 TOU slots' grid-charge power cap (Watts). Slot N's cap is
+     * {@code touPowerBaseRegister + N}. A static setting written once by
+     * {@code TouSlotSetupManualTest} (see {@code TouSlots.powerWattsFor}) - not part of
+     * the daily decision.
+     */
+    @WithDefault("154")
+    int touPowerBaseRegister();
+
     /** Base register for the 6 TOU slots' target SOC (%). Slot N's target is {@code touBattTargetBaseRegister + N}. */
     @WithDefault("166")
     int touBattTargetBaseRegister();
