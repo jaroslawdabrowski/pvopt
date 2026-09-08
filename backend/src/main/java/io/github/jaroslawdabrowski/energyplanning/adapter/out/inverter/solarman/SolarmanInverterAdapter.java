@@ -38,6 +38,13 @@ public class SolarmanInverterAdapter implements InverterPort {
 
     @Override
     public void applyChargeSchedule(ChargeSchedule schedule) {
+        if (!config.writeEnabled()) {
+            LOG.infof("DRY RUN (pvopt.inverter.solarman.write-enabled=false) - would apply: enabled=%s, "
+                            + "window=%s-%s, targetSoc=%d%% (registers %d/%d not written)",
+                    schedule.gridChargeEnabled(), schedule.start(), schedule.end(), schedule.targetSocPercent(),
+                    config.gridChargeEnableRegister(), config.gridChargeTargetSocRegister());
+            return;
+        }
         writeRegister(config.gridChargeEnableRegister(), schedule.gridChargeEnabled() ? 1 : 0);
         writeRegister(config.gridChargeTargetSocRegister(), schedule.targetSocPercent());
         LOG.infof("Applied charge schedule to inverter: enabled=%s, window=%s-%s, targetSoc=%d%%",

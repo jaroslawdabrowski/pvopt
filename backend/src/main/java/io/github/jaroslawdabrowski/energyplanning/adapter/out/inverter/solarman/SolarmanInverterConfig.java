@@ -35,6 +35,16 @@ public interface SolarmanInverterConfig {
     @WithDefault("146")
     int gridChargeTargetSocRegister();
 
+    /**
+     * Safety switch: while false (the default), {@code applyChargeSchedule} only logs what it
+     * *would* write instead of actually sending the Modbus write. Keep this false until
+     * {@code gridChargeEnableRegister}/{@code gridChargeTargetSocRegister} are confirmed against
+     * real hardware (they are still unverified placeholders) - the scheduler runs hourly and will
+     * otherwise happily write wrong values to whatever those registers actually are.
+     */
+    @WithDefault("false")
+    boolean writeEnabled();
+
     @WithDefault("5000")
     int socketTimeoutMillis();
 }
