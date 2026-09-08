@@ -5,8 +5,9 @@ import io.smallrye.config.WithDefault;
 
 /**
  * Connection parameters for the Deye/Solarman logger and the Modbus register map.
- * Register values are TODO pending hardware verification (plan Phase 1) - they
- * differ between Deye inverter models/firmware.
+ * {@code batterySocRegister} is confirmed against real hardware (see
+ * {@code RegisterScannerManualTest}); the grid-charge registers are still TODO -
+ * register addresses differ between Deye inverter models/firmware.
  */
 @ConfigMapping(prefix = "pvopt.inverter.solarman")
 public interface SolarmanInverterConfig {
@@ -22,8 +23,8 @@ public interface SolarmanInverterConfig {
     @WithDefault("1")
     int modbusSlaveAddress();
 
-    /** TODO: battery SOC (%) register address - verify against hardware. */
-    @WithDefault("184")
+    /** Battery SOC (%) holding register - confirmed against real hardware (raw value = percent, no scaling). */
+    @WithDefault("588")
     int batterySocRegister();
 
     /** TODO: grid-charge enable/disable register address - verify against hardware. */

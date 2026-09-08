@@ -5,24 +5,26 @@ import java.nio.ByteBuffer;
 
 /**
  * Building and parsing Modbus RTU frames (address + function + data + CRC16).
- * Functions 0x03 (read holding registers) and 0x06 (write single register)
- * - the only two we need for now to read SOC and write the charge mode.
+ * Functions 0x03 (read holding registers), 0x04 (read input registers) and
+ * 0x06 (write single register) - Deye inverters commonly expose live status
+ * values (like battery SOC) as input registers rather than holding registers,
+ * so both read functions are needed to locate the right one.
  */
 final class ModbusRtuFrame {
 
     private static final int FUNCTION_READ_HOLDING_REGISTERS = 0x03;
+    private static final int FUNCTION_READ_INPUT_REGISTERS = 0x04;
     private static final int FUNCTION_WRITE_SINGLE_REGISTER = 0x06;
 
     private ModbusRtuFrame() {
     }
 
     static byte[] readHoldingRegisters(int slaveAddress, int startRegister, int registerCount) {
-        var buffer = ByteBuffer.allocate(6);
-        buffer.put((byte) slaveAddress);
-        buffer.put((byte) FUNCTION_READ_HOLDING_REGISTERS);
-        buffer.putShort((short) startRegister);
-        buffer.putShort((short) registerCount);
-        return withCrc(buffer.array());
+        return readRegisters(slaveAddress, FUNCTION_READ_HOLDING_REGISTERS, startRegister, registerCount);
+    }
+
+    static byte[] readInputRegisters(int slaveAddress, int startRegister, int registerCount) {
+        return readRegisters(slaveAddress, FUNCTION_READ_INPUT_REGISTERS, startRegister, registerCount);
     }
 
     static byte[] writeSingleRegister(int slaveAddress, int register, int value) {
@@ -36,13 +38,32 @@ final class ModbusRtuFrame {
 
     /** Extracts register values (uint16, big-endian - standard Modbus) from a function-0x03 response. */
     static int[] parseReadHoldingRegistersResponse(byte[] frame) {
-        if (frame.length >= 3 && (frame[1] & 0xFF) == (FUNCTION_READ_HOLDING_REGISTERS | 0x80)) {
+        return parseReadRegistersResponse(frame, FUNCTION_READ_HOLDING_REGISTERS);
+    }
+
+    /** Extracts register values (uint16, big-endian - standard Modbus) from a function-0x04 response. */
+    static int[] parseReadInputRegistersResponse(byte[] frame) {
+        return parseReadRegistersResponse(frame, FUNCTION_READ_INPUT_REGISTERS);
+    }
+
+    private static byte[] readRegisters(int slaveAddress, int function, int startRegister, int registerCount) {
+        var buffer = ByteBuffer.allocate(6);
+        buffer.put((byte) slaveAddress);
+        buffer.put((byte) function);
+        buffer.putShort((short) startRegister);
+        buffer.putShort((short) registerCount);
+        return withCrc(buffer.array());
+    }
+
+    private static int[] parseReadRegistersResponse(byte[] frame, int expectedFunction) {
+        if (frame.length >= 3 && (frame[1] & 0xFF) == (expectedFunction | 0x80)) {
             throw new IllegalArgumentException(
                     "Modbus exception response, code=" + (frame[2] & 0xFF) + ", frame=" + toHex(frame));
         }
-        if (frame.length < 5 || (frame[1] & 0xFF) != FUNCTION_READ_HOLDING_REGISTERS) {
+        if (frame.length < 5 || (frame[1] & 0xFF) != expectedFunction) {
             throw new IllegalArgumentException(
-                    "Unexpected Modbus response frame for read holding registers: " + toHex(frame));
+                    "Unexpected Modbus response frame for function 0x" + Integer.toHexString(expectedFunction)
+                            + ": " + toHex(frame));
         }
         int byteCount = frame[2] & 0xFF;
         int registerCount = byteCount / 2;
