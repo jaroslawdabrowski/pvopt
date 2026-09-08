@@ -28,4 +28,4 @@ This starts the backend and, via Quinoa, the Angular dev server too — the full
 
 ## Status
 
-The Deye/Solarman inverter integration (`backend/.../adapter/out/inverter/solarman/`) implements the Solarman V5 protocol, but the register addresses and connection details in `application.properties` are placeholders — they need to be verified against the actual hardware (logger IP/port/serial, register map) before the app can control a real inverter.
+The Deye/Solarman inverter integration (`backend/.../adapter/out/inverter/solarman/`) has been verified end-to-end against real hardware: the logger's IP/port/serial number are confirmed working, and a Modbus register read succeeds over the real Solarman V5 connection. The specific register addresses (battery SOC, grid-charge enable/target) are still placeholders, though — they need to be identified for this inverter model before the app can reliably read real values or control charging.

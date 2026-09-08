@@ -36,8 +36,13 @@ final class ModbusRtuFrame {
 
     /** Extracts register values (uint16, big-endian - standard Modbus) from a function-0x03 response. */
     static int[] parseReadHoldingRegistersResponse(byte[] frame) {
+        if (frame.length >= 3 && (frame[1] & 0xFF) == (FUNCTION_READ_HOLDING_REGISTERS | 0x80)) {
+            throw new IllegalArgumentException(
+                    "Modbus exception response, code=" + (frame[2] & 0xFF) + ", frame=" + toHex(frame));
+        }
         if (frame.length < 5 || (frame[1] & 0xFF) != FUNCTION_READ_HOLDING_REGISTERS) {
-            throw new IllegalArgumentException("Unexpected Modbus response frame for read holding registers");
+            throw new IllegalArgumentException(
+                    "Unexpected Modbus response frame for read holding registers: " + toHex(frame));
         }
         int byteCount = frame[2] & 0xFF;
         int registerCount = byteCount / 2;
@@ -48,6 +53,14 @@ final class ModbusRtuFrame {
             values[i] = (hi << 8) | lo;
         }
         return values;
+    }
+
+    private static String toHex(byte[] data) {
+        var sb = new StringBuilder();
+        for (byte b : data) {
+            sb.append(String.format("%02x ", b));
+        }
+        return sb.toString().trim();
     }
 
     private static byte[] withCrc(byte[] pdu) {
