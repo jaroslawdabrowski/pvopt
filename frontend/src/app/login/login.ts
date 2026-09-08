@@ -39,10 +39,17 @@ export class Login {
         this.loading.set(false);
         this.router.navigateByUrl('/dashboard');
       },
-      error: () => {
+      error: (error) => {
         this.loading.set(false);
-        this.authService.logout();
-        this.errorKey.set('login.error');
+        if (error.status === 401) {
+          this.authService.logout();
+          this.errorKey.set('login.error');
+        } else {
+          // Credentials were accepted (a non-401 error, e.g. 409 settings.notConfigured,
+          // means the request reached the app) - let the user in, the dashboard shows
+          // whatever the actual problem is.
+          this.router.navigateByUrl('/dashboard');
+        }
       }
     });
   }
