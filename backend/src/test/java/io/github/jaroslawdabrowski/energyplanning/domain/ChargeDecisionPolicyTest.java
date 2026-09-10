@@ -22,6 +22,10 @@ class ChargeDecisionPolicyTest {
         assertThat(decision.chargeFromGrid()).isFalse();
         assertThat(decision.window()).isEqualTo(ChargeWindow.OVERNIGHT);
         assertThat(decision.reason()).isEqualTo(DecisionReason.ALREADY_AT_TARGET_SOC);
+        // The inverter enforces target-SOC as a floor regardless of the grid-charge-enable
+        // flag - writing the battery's current SOC here would make it top up from the grid
+        // the moment SOC drifts down, even with charging nominally off.
+        assertThat(decision.targetSocPercent()).isEqualTo(20);
     }
 
     @Test
@@ -42,6 +46,7 @@ class ChargeDecisionPolicyTest {
         assertThat(decision.chargeFromGrid()).isFalse();
         assertThat(decision.window()).isEqualTo(ChargeWindow.AFTERNOON);
         assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_SUFFICIENT);
+        assertThat(decision.targetSocPercent()).isEqualTo(20);
     }
 
     @Test
