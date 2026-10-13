@@ -31,10 +31,21 @@ export interface ChargeDecisionDto {
   outcome: PeriodOutcomeDto | null;
 }
 
+export type RunIssueKind = 'DECISION_FAILED' | 'SCHEDULE_MISMATCH' | 'FORECAST_UNAVAILABLE';
+
+export interface RunIssueDto {
+  occurredAt: string;
+  window: ChargeWindow;
+  kind: RunIssueKind;
+  detail: string;
+}
+
 export interface EnergyStatusDto {
   batterySocPercent: number;
   tariffRate: 'CHEAP' | 'EXPENSIVE';
   lastDecision: ChargeDecisionDto | null;
+  /** The most recent problem ever recorded - the dashboard decides whether it still matters. */
+  latestIssue: RunIssueDto | null;
 }
 
 export interface TouScheduleSlotDto {

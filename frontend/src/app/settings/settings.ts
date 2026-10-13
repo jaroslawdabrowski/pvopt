@@ -56,8 +56,31 @@ export class Settings implements OnInit {
       host: ['', Validators.required],
       port: [8899, [Validators.required, Validators.min(1), Validators.max(65535)]],
       loggerSerial: [0, [Validators.required, Validators.min(1)]]
+    }),
+    notifications: this.fb.group({
+      ntfyUrl: ['', Validators.pattern(/^\s*(https?:\/\/\S+)?\s*$/)]
     })
   });
+
+  readonly testing = signal(false);
+  /** Result of the last test notification: a translation key, or null before any test. */
+  readonly testResultKey = signal<string | null>(null);
+
+  sendTestNotification(): void {
+    const url = this.form.controls.notifications.controls.ntfyUrl.value ?? '';
+    this.testing.set(true);
+    this.testResultKey.set(null);
+    this.api.testNotification(url).subscribe({
+      next: (result) => {
+        this.testing.set(false);
+        this.testResultKey.set(result.delivered ? 'settings.notifications.testDelivered' : 'settings.notifications.testFailed');
+      },
+      error: () => {
+        this.testing.set(false);
+        this.testResultKey.set('settings.notifications.testFailed');
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.load();
@@ -126,7 +149,8 @@ export class Settings implements OnInit {
       },
       schedule: settings.schedule,
       forecast: settings.forecast,
-      inverterConnection: settings.inverterConnection
+      inverterConnection: settings.inverterConnection,
+      notifications: settings.notifications ?? { ntfyUrl: '' }
     });
   }
 
@@ -142,7 +166,8 @@ export class Settings implements OnInit {
       },
       schedule: value.schedule!,
       forecast: value.forecast!,
-      inverterConnection: value.inverterConnection!
+      inverterConnection: value.inverterConnection!,
+      notifications: { ntfyUrl: (value.notifications?.ntfyUrl ?? '').trim() }
     } as ProcessSettingsDto;
   }
 }

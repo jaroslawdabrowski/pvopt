@@ -11,11 +11,14 @@ public record ProcessSettings(
         PlanningSettings planning,
         ScheduleSettings schedule,
         ForecastSettings forecast,
-        InverterConnectionSettings inverterConnection) {
+        InverterConnectionSettings inverterConnection,
+        NotificationSettings notifications) {
 
     public ProcessSettings {
         if (planning == null || schedule == null || forecast == null || inverterConnection == null) {
             throw new IllegalArgumentException("planning, schedule, forecast and inverterConnection are all required");
         }
+        // Optional - settings saved before notifications existed simply have none.
+        notifications = notifications == null ? NotificationSettings.NONE : notifications;
     }
 }

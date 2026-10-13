@@ -63,6 +63,11 @@ public class SolarmanInverterAdapter implements InverterPort {
     }
 
     @Override
+    public boolean appliesWrites() {
+        return config.writeEnabled();
+    }
+
+    @Override
     public DailyEnergyCounters readDailyEnergy(InverterConnectionSettings connection) {
         int[] registers = {config.dailyPvRegister(), config.dailyLoadRegister(), config.dailyGridImportRegister(),
                 config.dailyGridExportRegister(), config.dailyBatteryChargeRegister(),

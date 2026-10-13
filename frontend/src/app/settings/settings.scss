@@ -128,3 +128,41 @@ form {
     font-size: 18px;
   }
 }
+
+.test-row {
+  display: flex;
+  gap: var(--space-3);
+
+  .input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .test-row {
+    flex-direction: column;
+  }
+}
+
+.group-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin-top: var(--space-2);
+}
+
+// Three related fields side by side; hints under a field don't push its neighbours around.
+.field-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .field-grid.three {
+    grid-template-columns: 1fr;
+  }
+}

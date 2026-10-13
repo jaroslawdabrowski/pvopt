@@ -52,6 +52,11 @@ public class PanacheChargeDecisionRepository implements PanacheRepository<Charge
         return find("order by decidedAt desc").firstResultOptional().map(this::toDomain);
     }
 
+    @Override
+    public Optional<ChargeDecision> findLatest(ChargeWindow window) {
+        return find("window = ?1 order by decidedAt desc", window.name()).firstResultOptional().map(this::toDomain);
+    }
+
     private ChargeDecisionEntity toEntity(ChargeDecision decision) {
         var entity = new ChargeDecisionEntity();
         entity.decidedAt = decision.decidedAt();

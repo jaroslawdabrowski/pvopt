@@ -30,6 +30,12 @@
                   {{ ('history.' + verdict(d)) | translate: { targetSoc: d.targetSocPercent } }}
                 </span>
                 <span class="reason">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</span>
+                @if (d.reasonParams['forecastUnavailable'] === 1) {
+                  <span class="no-forecast">
+                    <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+                    {{ 'common.noForecast' | translate }}
+                  </span>
+                }
                 @if (d.outcome; as o) {
                   <span class="outcome" data-testid="history-outcome">
                     <span class="visually-hidden">{{ 'history.outcome.label' | translate }}</span>

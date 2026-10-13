@@ -67,3 +67,15 @@
     }
   }
 }
+
+.no-forecast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--amber-700);
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+}

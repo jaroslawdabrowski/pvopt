@@ -1,6 +1,7 @@
 package io.github.jaroslawdabrowski.energyplanning.adapter.in.web;
 
 import io.quarkus.security.Authenticated;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -8,10 +9,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
+import io.github.jaroslawdabrowski.energyplanning.domain.NotificationSettings;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetLearnedConsumptionUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetTouScheduleUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.GuardChargeScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 
@@ -31,17 +34,19 @@ public class EnergyPlanningResource {
     private final GetPlanningHistoryUseCase getPlanningHistoryUseCase;
     private final GetTouScheduleUseCase getTouScheduleUseCase;
     private final GetLearnedConsumptionUseCase getLearnedConsumptionUseCase;
+    private final GuardChargeScheduleUseCase guardUseCase;
 
     public EnergyPlanningResource(PlanOvernightChargeUseCase planOvernightChargeUseCase,
             PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetEnergyStatusUseCase getEnergyStatusUseCase,
             GetPlanningHistoryUseCase getPlanningHistoryUseCase, GetTouScheduleUseCase getTouScheduleUseCase,
-            GetLearnedConsumptionUseCase getLearnedConsumptionUseCase) {
+            GetLearnedConsumptionUseCase getLearnedConsumptionUseCase, GuardChargeScheduleUseCase guardUseCase) {
         this.planOvernightChargeUseCase = planOvernightChargeUseCase;
         this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getEnergyStatusUseCase = getEnergyStatusUseCase;
         this.getPlanningHistoryUseCase = getPlanningHistoryUseCase;
         this.getTouScheduleUseCase = getTouScheduleUseCase;
         this.getLearnedConsumptionUseCase = getLearnedConsumptionUseCase;
+        this.guardUseCase = guardUseCase;
     }
 
     @GET
@@ -74,6 +79,18 @@ public class EnergyPlanningResource {
     }
 
     public record LearnedConsumptionResponse(double kwh, int samples) {
+    }
+
+    /** Sends a test notification to the URL in the body - the Settings form can test it before saving. */
+    @POST
+    @Path("/notifications/test")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public TestNotificationResponse testNotification(ProcessSettingsPayload.NotificationsPayload payload) {
+        var settings = new NotificationSettings(payload == null ? "" : payload.ntfyUrl());
+        return new TestNotificationResponse(guardUseCase.sendTestNotification(settings));
+    }
+
+    public record TestNotificationResponse(boolean delivered) {
     }
 
     @GET

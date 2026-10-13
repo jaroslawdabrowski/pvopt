@@ -22,7 +22,8 @@
           <h2 class="card-title">{{ 'settings.planning.title' | translate }}</h2>
           <p class="card-hint">{{ 'settings.planning.hint' | translate }}</p>
         </div>
-        <div class="field-grid">
+        <h3 class="group-title">{{ 'settings.planning.batteryGroup' | translate }}</h3>
+        <div class="field-grid three">
           <div class="field">
             <label for="minSoc">{{ 'settings.planning.minSoc' | translate }}</label>
             <div class="input-group">
@@ -44,6 +45,9 @@
               <span class="suffix">kWh</span>
             </div>
           </div>
+        </div>
+        <h3 class="group-title">{{ 'settings.planning.consumptionGroup' | translate }}</h3>
+        <div class="field-grid three">
           <div class="field">
             <label for="consumptionAfterOvernight"><span class="material-symbols-rounded label-icon tone-night" aria-hidden="true">bedtime</span>{{ 'settings.planning.consumptionAfterOvernight' | translate }}</label>
             <div class="input-group">
@@ -167,6 +171,29 @@
             <label for="loggerSerial">{{ 'settings.inverter.loggerSerial' | translate }}</label>
             <input id="loggerSerial" class="input num" type="number" inputmode="numeric" formControlName="loggerSerial" />
           </div>
+        </div>
+      </div>
+
+      <div class="card" formGroupName="notifications">
+        <div>
+          <h2 class="card-title">{{ 'settings.notifications.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.notifications.hint' | translate }}</p>
+        </div>
+        <div class="field">
+          <label for="ntfyUrl">{{ 'settings.notifications.ntfyUrl' | translate }}</label>
+          <div class="test-row">
+            <input id="ntfyUrl" class="input" type="url" inputmode="url" formControlName="ntfyUrl" placeholder="https://ntfy.sh/pvopt-moj-tajny-temat" autocomplete="off" />
+            <button class="btn btn-stroked" type="button" (click)="sendTestNotification()" [disabled]="testing() || !form.controls.notifications.controls.ntfyUrl.value">
+              <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+              {{ (testing() ? 'settings.notifications.testing' : 'settings.notifications.test') | translate }}
+            </button>
+          </div>
+          @if (testResultKey(); as key) {
+            <p class="appear" [class]="key.endsWith('Delivered') ? 'success-box' : 'error-box'" role="status">
+              <span class="material-symbols-rounded" aria-hidden="true">{{ key.endsWith('Delivered') ? 'check_circle' : 'error' }}</span>
+              <span>{{ key | translate }}</span>
+            </p>
+          }
         </div>
       </div>
 

@@ -3,6 +3,7 @@ package io.github.jaroslawdabrowski.energyplanning.adapter.in.web;
 import io.github.jaroslawdabrowski.energyplanning.domain.DirectionPanelSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ForecastSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.NotificationSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ScheduleSettings;
@@ -20,7 +21,8 @@ public record ProcessSettingsPayload(
         PlanningPayload planning,
         SchedulePayload schedule,
         ForecastPayload forecast,
-        InverterConnectionPayload inverterConnection) {
+        InverterConnectionPayload inverterConnection,
+        NotificationsPayload notifications) {
 
     public record PlanningPayload(
             int minSocPercent,
@@ -58,6 +60,10 @@ public record ProcessSettingsPayload(
     public record InverterConnectionPayload(String host, int port, long loggerSerial) {
     }
 
+    /** {@code ntfyUrl} blank = off; the whole object may be missing from older clients. */
+    public record NotificationsPayload(String ntfyUrl) {
+    }
+
     public static ProcessSettingsPayload from(ProcessSettings settings) {
         var planning = settings.planning();
         var schedule = settings.schedule();
@@ -73,7 +79,8 @@ public record ProcessSettingsPayload(
                         ForecastPayload.DirectionPayload.from(forecast.east()),
                         ForecastPayload.DirectionPayload.from(forecast.south()),
                         ForecastPayload.DirectionPayload.from(forecast.west())),
-                new InverterConnectionPayload(connection.host(), connection.port(), connection.loggerSerial()));
+                new InverterConnectionPayload(connection.host(), connection.port(), connection.loggerSerial()),
+                new NotificationsPayload(settings.notifications().ntfyUrl()));
     }
 
     public ProcessSettings toDomain() {
@@ -86,6 +93,7 @@ public record ProcessSettingsPayload(
                         forecast.north().toDomain(), forecast.east().toDomain(),
                         forecast.south().toDomain(), forecast.west().toDomain()),
                 new InverterConnectionSettings(inverterConnection.host(), inverterConnection.port(),
-                        inverterConnection.loggerSerial()));
+                        inverterConnection.loggerSerial()),
+                notifications == null ? NotificationSettings.NONE : new NotificationSettings(notifications.ntfyUrl()));
     }
 }

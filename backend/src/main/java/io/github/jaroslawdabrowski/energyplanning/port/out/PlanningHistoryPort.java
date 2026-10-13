@@ -1,6 +1,7 @@
 package io.github.jaroslawdabrowski.energyplanning.port.out;
 
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecision;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,4 +14,6 @@ public interface PlanningHistoryPort {
     List<ChargeDecision> findBetween(Instant from, Instant to);
 
     Optional<ChargeDecision> findLatest();
+
+    Optional<ChargeDecision> findLatest(ChargeWindow window);
 }

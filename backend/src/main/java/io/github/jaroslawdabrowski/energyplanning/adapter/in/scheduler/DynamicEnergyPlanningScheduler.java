@@ -1,22 +1,30 @@
 package io.github.jaroslawdabrowski.energyplanning.adapter.in.scheduler;
 
+import io.quarkus.arc.Arc;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduler;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import org.jboss.logging.Logger;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettingsNotConfiguredException;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetProcessSettingsUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.GuardChargeScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.RecordEnergySnapshotUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.out.SchedulingPort;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * G12 has exactly two cheap windows, so exactly two decisions are needed per day - not
@@ -39,22 +47,31 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     private static final String OVERNIGHT_JOB = "overnight-charge";
     private static final String AFTERNOON_JOB = "afternoon-topup";
 
+    static final int MAX_ATTEMPTS = 3;
+    static final Duration RETRY_DELAY = Duration.ofMinutes(3);
+    /** Long enough for the device to settle - the register-159 revert showed up within minutes, not seconds. */
+    static final Duration VERIFY_DELAY = Duration.ofMinutes(2);
+
     private final Scheduler scheduler;
     private final PlanOvernightChargeUseCase planOvernightChargeUseCase;
     private final PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase;
     private final GetProcessSettingsUseCase getProcessSettingsUseCase;
     private final RecordEnergySnapshotUseCase recordEnergySnapshotUseCase;
+    private final GuardChargeScheduleUseCase guardUseCase;
+    private final ScheduledExecutorService delayed = Executors.newSingleThreadScheduledExecutor(
+            runnable -> Thread.ofPlatform().name("planning-retry").daemon().unstarted(runnable));
     /** Snapshot jobs are one per boundary time, so their identities change with the tariff windows. */
     private final Set<String> snapshotJobs = new HashSet<>();
 
     public DynamicEnergyPlanningScheduler(Scheduler scheduler, PlanOvernightChargeUseCase planOvernightChargeUseCase,
             PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetProcessSettingsUseCase getProcessSettingsUseCase,
-            RecordEnergySnapshotUseCase recordEnergySnapshotUseCase) {
+            RecordEnergySnapshotUseCase recordEnergySnapshotUseCase, GuardChargeScheduleUseCase guardUseCase) {
         this.scheduler = scheduler;
         this.planOvernightChargeUseCase = planOvernightChargeUseCase;
         this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getProcessSettingsUseCase = getProcessSettingsUseCase;
         this.recordEnergySnapshotUseCase = recordEnergySnapshotUseCase;
+        this.guardUseCase = guardUseCase;
     }
 
     void onStart(@Observes StartupEvent event) {
@@ -94,13 +111,73 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     }
 
     private void runOvernight() {
+        attemptDecision(ChargeWindow.OVERNIGHT, 1);
+    }
+
+    private void runAfternoon() {
+        attemptDecision(ChargeWindow.AFTERNOON, 1);
+    }
+
+    /**
+     * A decision that fails (logger unreachable, a dropped Modbus frame) is retried a few minutes
+     * later - the jobs run ~15 minutes before their window, so there's room for
+     * {@link #MAX_ATTEMPTS} tries. Only when all of them fail is someone told; the inverter then
+     * keeps its previous schedule. A decision that did go through is read back a little later.
+     */
+    private void attemptDecision(ChargeWindow window, int attempt) {
         try {
-            var decision = planOvernightChargeUseCase.planOvernightCharge();
-            LOG.infof("Overnight planning decision: chargeFromGrid=%s, targetSoc=%d%%, reason=%s, params=%s",
-                    decision.chargeFromGrid(), decision.targetSocPercent(), decision.reason(), decision.reasonParams());
+            var decision = window == ChargeWindow.OVERNIGHT
+                    ? planOvernightChargeUseCase.planOvernightCharge()
+                    : planAfternoonTopUpUseCase.planAfternoonTopUp();
+            LOG.infof("%s planning decision (attempt %d): chargeFromGrid=%s, targetSoc=%d%%, reason=%s, params=%s",
+                    window, attempt, decision.chargeFromGrid(), decision.targetSocPercent(), decision.reason(),
+                    decision.reasonParams());
+            later(VERIFY_DELAY, () -> verify(window));
         } catch (ProcessSettingsNotConfiguredException e) {
-            LOG.info("Overnight planning skipped - no process settings configured");
+            LOG.infof("%s planning skipped - no process settings configured", window);
+        } catch (RuntimeException e) {
+            if (attempt < MAX_ATTEMPTS) {
+                LOG.warnf(e, "%s planning failed (attempt %d of %d) - retrying in %s", window, attempt, MAX_ATTEMPTS,
+                        RETRY_DELAY);
+                later(RETRY_DELAY, () -> attemptDecision(window, attempt + 1));
+            } else {
+                LOG.errorf(e, "%s planning failed after %d attempts", window, MAX_ATTEMPTS);
+                guardUseCase.reportFailure(window, String.valueOf(e.getMessage()));
+            }
         }
+    }
+
+    private void verify(ChargeWindow window) {
+        try {
+            var result = guardUseCase.verify(window);
+            LOG.infof("%s schedule read back: %s", window, result);
+        } catch (RuntimeException e) {
+            // The decision itself went through - a failed read-back isn't worth an alert on its own.
+            LOG.warnf(e, "%s schedule read-back failed", window);
+        }
+    }
+
+    /**
+     * Runs a one-off task after a delay, off the scheduler's own thread. The request context is
+     * activated by hand: Panache needs one, and only scheduler/HTTP threads get it for free.
+     */
+    private void later(Duration delay, Runnable task) {
+        delayed.schedule(() -> {
+            var requestContext = Arc.container().requestContext();
+            requestContext.activate();
+            try {
+                task.run();
+            } catch (RuntimeException e) {
+                LOG.error("Delayed planning task failed", e);
+            } finally {
+                requestContext.terminate();
+            }
+        }, delay.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    void shutdown() {
+        delayed.shutdownNow();
     }
 
     private void runSnapshot() {
@@ -111,16 +188,6 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
         } catch (RuntimeException e) {
             // A missed snapshot only costs one measured period - never worth failing the job loudly.
             LOG.warnf(e, "Energy snapshot failed");
-        }
-    }
-
-    private void runAfternoon() {
-        try {
-            var decision = planAfternoonTopUpUseCase.planAfternoonTopUp();
-            LOG.infof("Afternoon planning decision: chargeFromGrid=%s, targetSoc=%d%%, reason=%s, params=%s",
-                    decision.chargeFromGrid(), decision.targetSocPercent(), decision.reason(), decision.reasonParams());
-        } catch (ProcessSettingsNotConfiguredException e) {
-            LOG.info("Afternoon planning skipped - no process settings configured");
         }
     }
 }

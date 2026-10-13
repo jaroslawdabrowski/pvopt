@@ -34,6 +34,10 @@ export interface ProcessSettingsDto {
     port: number;
     loggerSerial: number;
   };
+  notifications: {
+    /** A full ntfy topic URL; blank = notifications off. */
+    ntfyUrl: string;
+  };
 }
 
 export interface ProcessSettingsStatusDto {
@@ -69,6 +73,9 @@ export function blankProcessSettings(): ProcessSettingsDto {
       host: '',
       port: 8899,
       loggerSerial: 0
+    },
+    notifications: {
+      ntfyUrl: ''
     }
   };
 }
@@ -79,6 +86,10 @@ export class ProcessSettingsApi {
 
   get(): Observable<ProcessSettingsStatusDto> {
     return this.http.get<ProcessSettingsStatusDto>('/api/settings');
+  }
+
+  testNotification(ntfyUrl: string): Observable<{ delivered: boolean }> {
+    return this.http.post<{ delivered: boolean }>('/api/notifications/test', { ntfyUrl });
   }
 
   save(settings: ProcessSettingsDto): Observable<ProcessSettingsDto> {

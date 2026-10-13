@@ -23,7 +23,8 @@
   "common": {
     "settingsNotConfigured": "The process isn't configured yet, so there's nothing to show.",
     "goToSettings": "Fill in the settings",
-    "periodLabel": "expensive hours {{from}}–{{to}}"
+    "periodLabel": "expensive hours {{from}}–{{to}}",
+    "noForecast": "There was no PV forecast - the decision was made as if no sun was coming."
   },
   "dashboard": {
     "loading": "Loading...",
@@ -54,7 +55,13 @@
     "tomorrow": "tomorrow",
     "runTitle": "Decide now",
     "runHint": "Recalculates the decision for a window from the current forecast and writes it to the inverter straight away.",
-    "reserveHeld": "Not charging, holding {{targetSoc}}%"
+    "reserveHeld": "Not charging, holding {{targetSoc}}%",
+    "stale": "The last decision was made {{time}} - over a day ago. The scheduled jobs don't seem to be running, and the inverter is on an old plan.",
+    "issue": {
+      "DECISION_FAILED": "The {{window}} decision at {{time}} failed despite retries - the inverter kept its previous schedule.",
+      "SCHEDULE_MISMATCH": "Read back after writing at {{time}}, the {{window}} slots didn't match the decision, even after rewriting. Check the inverter schedule.",
+      "FORECAST_UNAVAILABLE": "At {{time}} there was no PV forecast - the {{window}} decision was made as if no sun was coming."
+    }
   },
   "history": {
     "title": "Decision history",
@@ -112,7 +119,9 @@
       "consumptionAfterOvernightHint": "In the expensive hours after the overnight window (6–13)",
       "consumptionAfterAfternoon": "Evening consumption",
       "consumptionAfterAfternoonHint": "In the expensive hours after the afternoon window (15–22)",
-      "learned": "Measured: {{kwh}} kWh, averaged over {{samples}} days. Planning uses this instead of the value entered."
+      "learned": "Measured: {{kwh}} kWh, averaged over {{samples}} days. Planning uses this instead of the value entered.",
+      "batteryGroup": "Battery",
+      "consumptionGroup": "Consumption in the expensive hours"
     },
     "schedule": {
       "title": "Daily schedule",
@@ -143,7 +152,16 @@
       "loggerSerial": "Logger serial number"
     },
     "loading": "Loading settings...",
-    "invalid": "Fix the highlighted fields and save again."
+    "invalid": "Fix the highlighted fields and save again.",
+    "notifications": {
+      "title": "Notifications",
+      "hint": "An alert on your phone when a decision fails, the inverter doesn't take the schedule, or there's no forecast. Install the ntfy app, pick a hard-to-guess topic and paste its address.",
+      "ntfyUrl": "ntfy topic address",
+      "test": "Send a test",
+      "testing": "Sending...",
+      "testDelivered": "Sent - it should be on your phone now.",
+      "testFailed": "Couldn't send it. Check the topic address."
+    }
   },
   "window": {
     "OVERNIGHT": "Overnight",

@@ -20,6 +20,12 @@ public interface InverterPort {
 
     void applyChargeSchedule(ChargeSchedule schedule, InverterConnectionSettings connection);
 
+    /**
+     * Whether {@link #applyChargeSchedule} actually reaches the device - false while writes are
+     * switched off (dry run), in which case reading the schedule back can't confirm anything.
+     */
+    boolean appliesWrites();
+
     /** The inverter's energy counters since its midnight. */
     DailyEnergyCounters readDailyEnergy(InverterConnectionSettings connection);
 

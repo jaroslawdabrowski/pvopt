@@ -20,6 +20,20 @@
       </p>
     }
 
+    @if (recentIssue(); as issue) {
+      <p [class]="issue.kind === 'FORECAST_UNAVAILABLE' ? 'warning-box' : 'error-box'" role="alert" data-testid="run-issue">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ issue.kind === 'FORECAST_UNAVAILABLE' ? 'cloud_off' : 'error' }}</span>
+        <span>{{ ('dashboard.issue.' + issue.kind) | translate: { window: (('window.' + issue.window) | translate), time: dayAndTime(issue.occurredAt) } }}</span>
+      </p>
+    }
+
+    @if (stale()) {
+      <p class="warning-box" role="alert" data-testid="stale-decision">
+        <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+        <span>{{ 'dashboard.stale' | translate: { time: dayAndTime(status()!.lastDecision!.decidedAt) } }}</span>
+      </p>
+    }
+
     @if (status(); as s) {
       <div class="card hero">
         <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisionHours]="decisionHours()" [now]="now()" />
@@ -80,6 +94,12 @@
             </div>
           </div>
           <p class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</p>
+          @if (d.reasonParams['forecastUnavailable'] === 1) {
+            <p class="warning-box">
+              <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+              <span>{{ 'common.noForecast' | translate }}</span>
+            </p>
+          }
         } @else {
           <p class="empty-box">{{ 'dashboard.noDecision' | translate }}</p>
         }

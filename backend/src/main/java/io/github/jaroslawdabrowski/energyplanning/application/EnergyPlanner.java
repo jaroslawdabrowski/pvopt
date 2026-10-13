@@ -7,6 +7,9 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator.LearnedConsumption;
+import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
+import io.github.jaroslawdabrowski.energyplanning.domain.ProductionForecast;
+import io.github.jaroslawdabrowski.energyplanning.domain.RunIssue;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlannedDecision;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningPolicyConfig;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
@@ -24,6 +27,7 @@ import io.github.jaroslawdabrowski.energyplanning.port.out.ForecastPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.PlanningHistoryPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ProcessSettingsPort;
+import io.github.jaroslawdabrowski.energyplanning.port.out.RunIssuePort;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -51,16 +55,21 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     private final ClockPort clockPort;
     private final ProcessSettingsPort settingsPort;
     private final EnergyRecordPort energyRecordPort;
+    private final IssueReporter issueReporter;
+    private final RunIssuePort runIssuePort;
     private final ChargeDecisionPolicy decisionPolicy = new ChargeDecisionPolicy();
 
     public EnergyPlanner(InverterPort inverterPort, ForecastPort forecastPort, PlanningHistoryPort historyPort,
-            ClockPort clockPort, ProcessSettingsPort settingsPort, EnergyRecordPort energyRecordPort) {
+            ClockPort clockPort, ProcessSettingsPort settingsPort, EnergyRecordPort energyRecordPort,
+            IssueReporter issueReporter, RunIssuePort runIssuePort) {
         this.inverterPort = inverterPort;
         this.forecastPort = forecastPort;
         this.historyPort = historyPort;
         this.clockPort = clockPort;
         this.settingsPort = settingsPort;
         this.energyRecordPort = energyRecordPort;
+        this.issueReporter = issueReporter;
+        this.runIssuePort = runIssuePort;
     }
 
     @Override
@@ -83,25 +92,42 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
         var calendar = tariffCalendar(settings);
         var period = calendar.expensivePeriodAfter(calendar.windowFor(window), clockPort.nowLocal());
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
-        var forecast = forecastPort.productionBetween(period.from(), period.to(), settings.forecast());
+        var forecast = forecastOrNone(window, period, settings);
         var learned = learnedConsumption(window);
         double consumptionKwh = learned.map(LearnedConsumption::kwh)
                 .orElse(settings.planning().consumptionAfter(window));
         double requiredKwh = consumptionKwh * settings.planning().forecastSafetyMarginRatio();
 
-        var decision = decisionPolicy.decide(clockPort.now(), window, battery, forecast, requiredKwh,
+        var decision = decisionPolicy.decide(clockPort.now(), window, battery,
+                forecast.orElseGet(() -> new ProductionForecast(period.from().toLocalDate(), 0)), requiredKwh,
                 policyConfig(settings))
                 .withReasonParams(Map.of(
                         "periodFromHour", hourOf(period.from()),
                         "periodToHour", hourOf(period.to()),
                         "consumptionKwh", consumptionKwh,
-                        "learnedSamples", (double) learned.map(LearnedConsumption::samples).orElse(0)));
+                        "learnedSamples", (double) learned.map(LearnedConsumption::samples).orElse(0),
+                        "forecastUnavailable", forecast.isPresent() ? 0.0 : 1.0));
 
         inverterPort.applyChargeSchedule(
                 new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
                 settings.inverterConnection());
         historyPort.record(decision);
         return decision;
+    }
+
+    /**
+     * Without a forecast the decision is made as if no sun were coming - a conservative grid
+     * charge beats facing the expensive hours with an empty battery. Someone gets told.
+     */
+    private Optional<ProductionForecast> forecastOrNone(ChargeWindow window, ExpensivePeriod period,
+            ProcessSettings settings) {
+        try {
+            return Optional.of(forecastPort.productionBetween(period.from(), period.to(), settings.forecast()));
+        } catch (RuntimeException e) {
+            issueReporter.report(new RunIssue(clockPort.now(), window, RunIssue.Kind.FORECAST_UNAVAILABLE,
+                    String.valueOf(e.getMessage())), settings.notifications());
+            return Optional.empty();
+        }
     }
 
     private static double hourOf(LocalDateTime moment) {
@@ -113,7 +139,7 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
         var settings = loadSettingsOrThrow();
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
         var currentRate = tariffCalendar(settings).rateAt(clockPort.nowLocal());
-        return new EnergyStatus(battery, currentRate, historyPort.findLatest());
+        return new EnergyStatus(battery, currentRate, historyPort.findLatest(), runIssuePort.findLatest());
     }
 
     @Override

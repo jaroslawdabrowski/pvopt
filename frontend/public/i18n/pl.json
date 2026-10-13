@@ -23,7 +23,8 @@
   "common": {
     "settingsNotConfigured": "Proces nie jest jeszcze skonfigurowany, więc nie ma czego pokazać.",
     "goToSettings": "Uzupełnij ustawienia",
-    "periodLabel": "drogie godziny {{from}}–{{to}}"
+    "periodLabel": "drogie godziny {{from}}–{{to}}",
+    "noForecast": "Nie było prognozy PV - decyzję policzono tak, jakby słońca nie było."
   },
   "dashboard": {
     "loading": "Ładowanie...",
@@ -54,7 +55,13 @@
     "tomorrow": "jutro",
     "runTitle": "Zdecyduj teraz",
     "runHint": "Przelicza decyzję dla wybranego okna na podstawie aktualnej prognozy i od razu zapisuje ją w falowniku.",
-    "reserveHeld": "Bez ładowania, trzyma {{targetSoc}}%"
+    "reserveHeld": "Bez ładowania, trzyma {{targetSoc}}%",
+    "stale": "Ostatnia decyzja zapadła {{time}} - ponad dobę temu. Zaplanowane zadania chyba nie działają, a falownik jedzie na starym planie.",
+    "issue": {
+      "DECISION_FAILED": "Decyzja ({{window}}) z {{time}} nie powiodła się mimo ponowień - falownik został przy poprzednim harmonogramie.",
+      "SCHEDULE_MISMATCH": "Po zapisie {{time}} sloty okna ({{window}}) nie zgadzały się z decyzją, także po ponownym zapisie. Sprawdź harmonogram falownika.",
+      "FORECAST_UNAVAILABLE": "{{time}} nie było prognozy PV - decyzję ({{window}}) policzono tak, jakby słońca nie było."
+    }
   },
   "history": {
     "title": "Historia decyzji",
@@ -112,7 +119,9 @@
       "consumptionAfterOvernightHint": "W drogich godzinach po nocnym oknie (6–13)",
       "consumptionAfterAfternoon": "Zużycie wieczorem",
       "consumptionAfterAfternoonHint": "W drogich godzinach po popołudniowym oknie (15–22)",
-      "learned": "Zmierzone: {{kwh}} kWh, średnio z {{samples}} dni. Planowanie używa tej wartości zamiast wpisanej."
+      "learned": "Zmierzone: {{kwh}} kWh, średnio z {{samples}} dni. Planowanie używa tej wartości zamiast wpisanej.",
+      "batteryGroup": "Bateria",
+      "consumptionGroup": "Zużycie w drogich godzinach"
     },
     "schedule": {
       "title": "Harmonogram dobowy",
@@ -143,7 +152,16 @@
       "loggerSerial": "Numer seryjny loggera"
     },
     "loading": "Wczytuję ustawienia...",
-    "invalid": "Popraw zaznaczone pola i zapisz ponownie."
+    "invalid": "Popraw zaznaczone pola i zapisz ponownie.",
+    "notifications": {
+      "title": "Powiadomienia",
+      "hint": "Alert na telefon, gdy decyzja się nie uda, falownik nie przyjmie harmonogramu albo zabraknie prognozy. Zainstaluj aplikację ntfy, wymyśl trudny do zgadnięcia temat i wklej jego adres.",
+      "ntfyUrl": "Adres tematu ntfy",
+      "test": "Wyślij test",
+      "testing": "Wysyłam...",
+      "testDelivered": "Wysłane - powinno być już na telefonie.",
+      "testFailed": "Nie udało się wysłać. Sprawdź adres tematu."
+    }
   },
   "window": {
     "OVERNIGHT": "Noc",

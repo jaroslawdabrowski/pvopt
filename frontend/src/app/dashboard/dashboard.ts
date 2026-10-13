@@ -9,6 +9,9 @@ import { decisionPeriod, decisionVerdict, formatDayAndTime, formatTime } from '.
 import { DayDial } from './day-dial';
 import { hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
+
 interface UpcomingDecision {
   window: ChargeWindow;
   at: Date;
@@ -36,6 +39,23 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly errorKey = signal<string | null>(null);
   readonly now = signal(new Date());
   private clock?: ReturnType<typeof setInterval>;
+
+  /** A problem from the last day - older ones have been followed by working runs or are already known. */
+  readonly recentIssue = computed(() => {
+    const issue = this.status()?.latestIssue;
+    if (!issue) return null;
+    return this.now().getTime() - new Date(issue.occurredAt).getTime() < DAY_MS ? issue : null;
+  });
+
+  /**
+   * Two decisions a day - so a last decision older than a day and a bit means the scheduled
+   * jobs aren't running (or keep failing), and the inverter is on an old plan.
+   */
+  readonly stale = computed(() => {
+    const decision = this.status()?.lastDecision;
+    return decision !== null && decision !== undefined
+      && this.now().getTime() - new Date(decision.decidedAt).getTime() > STALE_AFTER_MS;
+  });
 
   readonly windows = computed(() => parseTariffWindows(this.settings()?.planning.cheapTariffWindows ?? []));
 
