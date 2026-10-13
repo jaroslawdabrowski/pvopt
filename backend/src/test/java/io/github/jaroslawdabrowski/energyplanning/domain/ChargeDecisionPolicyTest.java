@@ -17,18 +17,6 @@ class ChargeDecisionPolicyTest {
     private static final double REQUIRED_KWH = 18.0;
 
     @Test
-    void holdsTheNeededReserveWhenAlreadyFull() {
-        // 18 kWh needed, nothing forecast -> capped at 100%; the battery is there already.
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), forecast(0.0),
-                REQUIRED_KWH, config);
-
-        assertThat(decision.chargeFromGrid()).isFalse();
-        assertThat(decision.window()).isEqualTo(ChargeWindow.OVERNIGHT);
-        assertThat(decision.reason()).isEqualTo(DecisionReason.RESERVE_HELD);
-        assertThat(decision.targetSocPercent()).isEqualTo(100);
-    }
-
-    @Test
     void chargesToMinimumWhenBelowSafetyFloorAndForecastCoversTheRest() {
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(10), forecast(50.0),
                 REQUIRED_KWH, config);
@@ -90,19 +78,6 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void holdsTheReserveThroughTheCheapWindowWhenTheBatteryAlreadyHasIt() {
-        // 3.5 kWh short -> 55% needed, battery is at 60%: no grid charge, but the floor stays
-        // at 55% so cheap-hour load doesn't eat what the expensive hours need.
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), forecast(14.5),
-                REQUIRED_KWH, config);
-
-        assertThat(decision.chargeFromGrid()).isFalse();
-        assertThat(decision.reason()).isEqualTo(DecisionReason.RESERVE_HELD);
-        assertThat(decision.targetSocPercent()).isEqualTo(55);
-        assertThat(decision.reasonParams()).containsEntry("soc", 60.0).containsEntry("targetSoc", 55.0);
-    }
-
-    @Test
     void letsTheBatteryDrainToMinimumWhenTheForecastCoversEverything() {
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(80), forecast(25.0),
                 REQUIRED_KWH, config);
@@ -122,13 +97,28 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void doesNotHoldAFullBatteryWhenCapacityIsUnknown() {
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), forecast(14.5),
-                REQUIRED_KWH, unknownCapacity);
+    void decidesTheSameWhateverTheBatteryHoldsAtDecisionTime() {
+        // A decision made at 14:00 with a full battery must still protect the reserve: by the
+        // time the window starts the battery may have drained. The inverter compares SOC with
+        // the target itself, during the window.
+        for (int soc : new int[] {30, 55, 60, 100}) {
+            var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(soc), forecast(14.5),
+                    REQUIRED_KWH, config);
 
-        assertThat(decision.chargeFromGrid()).isFalse();
-        assertThat(decision.reason()).isEqualTo(DecisionReason.ALREADY_AT_TARGET_SOC);
-        assertThat(decision.targetSocPercent()).isEqualTo(20);
+            assertThat(decision.chargeFromGrid()).as("soc %d", soc).isTrue();
+            assertThat(decision.targetSocPercent()).as("soc %d", soc).isEqualTo(55);
+            assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
+            assertThat(decision.reasonParams()).containsEntry("soc", (double) soc);
+        }
+    }
+
+    @Test
+    void keepsAFullReserveWhenNothingIsForecastEvenIfTheBatteryIsFullNow() {
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), forecast(0.0),
+                REQUIRED_KWH, config);
+
+        assertThat(decision.chargeFromGrid()).isTrue();
+        assertThat(decision.targetSocPercent()).isEqualTo(100);
     }
 
     private ProductionForecast forecast(double expectedKwh) {

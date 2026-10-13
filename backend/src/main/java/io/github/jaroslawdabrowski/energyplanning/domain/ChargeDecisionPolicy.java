@@ -20,10 +20,11 @@ import java.util.Map;
  * an unknown battery capacity the shortfall can't be turned into a SOC, so a grid charge
  * falls back to {@code fullSoc}.
  *
- * The written target is also the slot's floor for the whole cheap window. When the
- * battery already holds the needed reserve, the floor is that reserve rather than
- * {@code minSoc}: cheap-hour load is then served by the (cheap) grid instead of draining
- * the energy the expensive hours after the window need.
+ * The decision doesn't depend on the SOC at decision time (except the safety-minimum
+ * case): a shortfall always means "grid charge on, target = reserve", and the inverter
+ * applies it during the window - topping up only if the battery is below the reserve by
+ * then, otherwise holding it there so cheap-hour load runs on the cheap grid instead of
+ * draining what the expensive hours after the window need.
  */
 public class ChargeDecisionPolicy {
 
@@ -50,26 +51,16 @@ public class ChargeDecisionPolicy {
 
         if (shortfallKwh == 0) {
             return noCharge(now, window, DecisionReason.FORECAST_SUFFICIENT,
-                    Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)), config.minSocPercent());
+                    Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)),
+                    config.minSocPercent());
         }
 
-        if (battery.isAtOrAbove(targetSoc) && !config.knowsCapacity()) {
-            // Without a capacity the "reserve" is just fullSoc - holding that through the
-            // window would keep a full battery idle. Keep the old behaviour until it's entered.
-            return noCharge(now, window, DecisionReason.ALREADY_AT_TARGET_SOC,
-                    Map.of("targetSoc", (double) targetSoc), config.minSocPercent());
-        }
-
-        if (battery.isAtOrAbove(targetSoc)) {
-            // The battery already holds what the expensive hours need - no grid charge, but
-            // keep that much in it through the cheap window (the house runs on cheap grid
-            // meanwhile) instead of letting it drain to minSoc on cheap-hour load and then
-            // facing the expensive period short.
-            return new ChargeDecision(now, window, false, targetSoc, DecisionReason.RESERVE_HELD,
-                    Map.of("targetSoc", (double) targetSoc, "soc", (double) battery.socPercent(),
-                            "forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)));
-        }
-
+        // Grid charge enabled with the reserve as its target, whatever the battery holds right
+        // now: the inverter compares SOC with the target itself, *during* the window - it tops
+        // up only if the battery has drained below the reserve by then, and otherwise just keeps
+        // it from going below. Comparing with the SOC at decision time would be wrong for any
+        // decision made ahead of the window (a manual run at 14:00 sees a battery that will be
+        // much emptier by 22:00).
         return new ChargeDecision(
                 now,
                 window,
@@ -77,7 +68,7 @@ public class ChargeDecisionPolicy {
                 targetSoc,
                 DecisionReason.FORECAST_INSUFFICIENT,
                 Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh),
-                        "targetSoc", (double) targetSoc));
+                        "targetSoc", (double) targetSoc, "soc", (double) battery.socPercent()));
     }
 
     /** {@code minSoc} plus the shortfall as a share of the battery, rounded up, capped at {@code fullSoc}. */
@@ -105,7 +96,7 @@ public class ChargeDecisionPolicy {
         // inverter topped up from the grid overnight the moment SOC dropped below 70%,
         // even with grid-charge OFF. So the floor is never "wherever the battery happened
         // to be": it's the safety minimum when nothing needs holding, or the computed
-        // reserve (RESERVE_HELD above) - which is exactly what we'd charge to anyway.
+        // reserve - which is exactly what a grid charge targets anyway.
         return new ChargeDecision(now, window, false, minSocPercent, reason, params);
     }
 }

@@ -33,7 +33,7 @@
     "batterySoc": "bateria",
     "lastDecision": "Ostatnia decyzja",
     "noDecision": "Nie ma jeszcze żadnej decyzji. Pierwsza zapadnie o zaplanowanej godzinie albo uruchom ją niżej.",
-    "chargeOn": "Ładuje z sieci do {{targetSoc}}%",
+    "chargeOn": "Zapas {{targetSoc}}%, w razie potrzeby z sieci",
     "chargeOff": "Bez ładowania z sieci",
     "runOvernight": "Okno nocne",
     "runAfternoon": "Okno popołudniowe",
@@ -71,7 +71,7 @@
     "subtitle": "Wszystkie decyzje o ładowaniu z ostatnich 7 dni, najnowsze na górze.",
     "today": "Dziś",
     "yesterday": "Wczoraj",
-    "chargeOn": "Ładowanie z sieci do {{targetSoc}}%",
+    "chargeOn": "Zapas {{targetSoc}}%, doładowanie z sieci",
     "chargeOff": "Bez ładowania z sieci",
     "reserveHeld": "Bez ładowania, zapas {{targetSoc}}%",
     "outcome": {
@@ -114,14 +114,15 @@
       "tariffWindows": "Tanie okna taryfowe",
       "tariffWindowsHint": "Zakresy HH:mm-HH:mm oddzielone przecinkami, np. 22:00-06:00, 13:00-15:00",
       "hint": "Pojemność i progi baterii oraz zużycie w drogich godzinach. Każda decyzja porównuje to zużycie z prognozą produkcji na te same godziny.",
-      "batteryCapacity": "Pojemność baterii (użyteczna)",
+      "batteryCapacity": "Pojemność baterii",
       "consumptionAfterOvernight": "Zużycie rano",
       "consumptionAfterOvernightHint": "W drogich godzinach po nocnym oknie (6–13)",
       "consumptionAfterAfternoon": "Zużycie wieczorem",
       "consumptionAfterAfternoonHint": "W drogich godzinach po popołudniowym oknie (15–22)",
       "learned": "Zmierzone: {{kwh}} kWh, średnio z {{samples}} dni. Planowanie używa tej wartości zamiast wpisanej.",
       "batteryGroup": "Bateria",
-      "consumptionGroup": "Zużycie w drogich godzinach"
+      "consumptionGroup": "Zużycie w drogich godzinach",
+      "batteryCapacityHint": "Całkowita, odpowiadająca 0–100% SOC. Nie odejmuj minimalnego SOC - zapas jest liczony ponad nim."
     },
     "schedule": {
       "title": "Harmonogram dobowy",
@@ -171,7 +172,7 @@
     "ALREADY_AT_TARGET_SOC": "Bateria ma już co najmniej {{targetSoc}}%, czyli zapas na to, czego nie pokryje słońce - pomijamy ładowanie z sieci.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
     "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
-    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) nie wystarczy (wymagane {{requiredKwh}} kWh) - doładowujemy z sieci tylko brakującą energię, do {{targetSoc}}%.",
+    "FORECAST_INSUFFICIENT": "Prognoza na drogie godziny ({{forecastKwh}} kWh) nie pokryje zużycia ({{requiredKwh}} kWh), więc w tanim oknie bateria trzyma co najmniej {{targetSoc}}%. Jeśli będzie miała mniej, falownik doładuje ją z sieci, ale tylko do tego poziomu.",
     "RESERVE_HELD": "Bateria ({{soc}}%) ma już zapas na drogie godziny (potrzeba {{targetSoc}}%, prognoza {{forecastKwh}} kWh przy wymaganych {{requiredKwh}} kWh). Bez ładowania z sieci, ale w tanich godzinach bateria nie zejdzie poniżej {{targetSoc}}% - dom korzysta wtedy z taniej sieci."
   },
   "language": {

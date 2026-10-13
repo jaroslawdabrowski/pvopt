@@ -33,7 +33,7 @@
     "batterySoc": "battery",
     "lastDecision": "Last decision",
     "noDecision": "No decision yet. The first one runs at its scheduled time, or run one below.",
-    "chargeOn": "Charging from the grid to {{targetSoc}}%",
+    "chargeOn": "Reserve {{targetSoc}}%, from the grid if needed",
     "chargeOff": "Not charging from the grid",
     "runOvernight": "Overnight window",
     "runAfternoon": "Afternoon window",
@@ -71,7 +71,7 @@
     "subtitle": "Every charging decision from the last 7 days, newest first.",
     "today": "Today",
     "yesterday": "Yesterday",
-    "chargeOn": "Grid charge to {{targetSoc}}%",
+    "chargeOn": "Reserve {{targetSoc}}%, grid top-up",
     "chargeOff": "No grid charge",
     "reserveHeld": "No grid charge, holding {{targetSoc}}%",
     "outcome": {
@@ -114,14 +114,15 @@
       "tariffWindows": "Cheap tariff windows",
       "tariffWindowsHint": "Comma-separated HH:mm-HH:mm ranges, e.g. 22:00-06:00, 13:00-15:00",
       "hint": "Battery capacity and thresholds, and consumption in the expensive hours. Each decision weighs that consumption against the forecast for the same hours.",
-      "batteryCapacity": "Battery capacity (usable)",
+      "batteryCapacity": "Battery capacity",
       "consumptionAfterOvernight": "Morning consumption",
       "consumptionAfterOvernightHint": "In the expensive hours after the overnight window (6–13)",
       "consumptionAfterAfternoon": "Evening consumption",
       "consumptionAfterAfternoonHint": "In the expensive hours after the afternoon window (15–22)",
       "learned": "Measured: {{kwh}} kWh, averaged over {{samples}} days. Planning uses this instead of the value entered.",
       "batteryGroup": "Battery",
-      "consumptionGroup": "Consumption in the expensive hours"
+      "consumptionGroup": "Consumption in the expensive hours",
+      "batteryCapacityHint": "The full capacity, matching 0–100% SOC. Don't subtract the minimum SOC - the reserve is counted on top of it."
     },
     "schedule": {
       "title": "Daily schedule",
@@ -171,7 +172,7 @@
     "ALREADY_AT_TARGET_SOC": "The battery already holds at least {{targetSoc}}%, enough for what the sun won't cover - skipping grid charging.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
     "FORECAST_SUFFICIENT": "Production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
-    "FORECAST_INSUFFICIENT": "Forecast production ({{forecastKwh}} kWh) falls short (needed {{requiredKwh}} kWh) - charging from the grid only for the missing energy, to {{targetSoc}}%.",
+    "FORECAST_INSUFFICIENT": "The forecast for the expensive hours ({{forecastKwh}} kWh) won't cover consumption ({{requiredKwh}} kWh), so during the cheap window the battery keeps at least {{targetSoc}}%. If it has less, the inverter tops it up from the grid - only to that level.",
     "RESERVE_HELD": "The battery ({{soc}}%) already holds enough for the expensive hours ({{targetSoc}}% needed, forecast {{forecastKwh}} kWh against {{requiredKwh}} kWh required). No grid charge, but it won't drop below {{targetSoc}}% during the cheap hours - the house runs on the cheap grid meanwhile."
   },
   "language": {

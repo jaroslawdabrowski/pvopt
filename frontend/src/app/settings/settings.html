@@ -41,9 +41,10 @@
           <div class="field">
             <label for="batteryCapacity">{{ 'settings.planning.batteryCapacity' | translate }}</label>
             <div class="input-group">
-              <input id="batteryCapacity" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="batteryCapacityKwh" />
+              <input id="batteryCapacity" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="batteryCapacityKwh" aria-describedby="batteryCapacityHint" />
               <span class="suffix">kWh</span>
             </div>
+            <span id="batteryCapacityHint" class="field-hint">{{ 'settings.planning.batteryCapacityHint' | translate }}</span>
           </div>
         </div>
         <h3 class="group-title">{{ 'settings.planning.consumptionGroup' | translate }}</h3>
