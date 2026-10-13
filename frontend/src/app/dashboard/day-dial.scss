@@ -1,12 +1,21 @@
 :host {
   position: relative;
   display: block;
-  aspect-ratio: 1;
   width: 100%;
   max-width: 300px;
+
+  // A square from padding, not aspect-ratio + height: 100% - Safari resolved those
+  // differently and drew the dial below its card.
+  &::before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+  }
 }
 
 svg {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
