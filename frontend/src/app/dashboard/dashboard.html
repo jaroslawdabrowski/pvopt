@@ -60,12 +60,12 @@
             <div class="upcoming">
               <h2 class="side-title">{{ 'dashboard.nextDecisions' | translate }}</h2>
               <ul class="list">
-                @for (u of upcoming(); track u.window) {
+                @for (u of upcoming(); track u.window + u.recheck) {
                   <li class="list-row" [class]="toneOf(u.window)">
                     <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">{{ iconOf(u.window) }}</span></span>
                     <span class="list-main">
-                      <span class="list-title">{{ ('window.' + u.window) | translate }}</span>
-                      <span class="list-sub">{{ ('dashboard.decidesFor.' + u.window) | translate }}</span>
+                      <span class="list-title">{{ ('window.' + u.window) | translate }}@if (u.recheck) {, {{ 'dashboard.recheck' | translate }}}</span>
+                      <span class="list-sub">{{ (u.recheck ? 'dashboard.decidesFor.RECHECK' : 'dashboard.decidesFor.' + u.window) | translate }}</span>
                     </span>
                     <span class="list-end">
                       <span class="when num">{{ time(u.at) }}</span>

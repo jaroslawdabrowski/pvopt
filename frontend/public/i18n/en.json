@@ -51,7 +51,8 @@
     "nextDecisions": "Next decisions",
     "decidesFor": {
       "OVERNIGHT": "Whether to charge from the grid overnight",
-      "AFTERNOON": "Whether to top up from the grid this afternoon"
+      "AFTERNOON": "Whether to top up from the grid this afternoon",
+      "RECHECK": "Recalculates the night with a fresher forecast"
     },
     "today": "today",
     "tomorrow": "tomorrow",
@@ -63,7 +64,8 @@
       "DECISION_FAILED": "The {{window}} decision at {{time}} failed despite retries - the inverter kept its previous schedule.",
       "SCHEDULE_MISMATCH": "Read back after writing at {{time}}, the {{window}} slots didn't match the decision, even after rewriting. Check the inverter schedule.",
       "FORECAST_UNAVAILABLE": "At {{time}} there was no PV forecast - the {{window}} decision was made as if no sun was coming."
-    }
+    },
+    "recheck": "recheck"
   },
   "history": {
     "title": "Decision history",
@@ -130,7 +132,9 @@
       "title": "Daily schedule",
       "overnightTime": "Overnight decision time",
       "afternoonTime": "Afternoon decision time",
-      "hint": "When each of the two daily decisions runs. Ideally a quarter of an hour before its cheap window starts."
+      "hint": "When each of the two daily decisions runs. Ideally a quarter of an hour before its cheap window starts.",
+      "overnightRecheckTime": "Overnight recheck",
+      "overnightRecheckHint": "A second overnight decision, inside the cheap window, with a fresher forecast. Leave empty to turn off."
     },
     "forecast": {
       "title": "PV production forecast",

@@ -34,7 +34,8 @@ public record ProcessSettingsPayload(
             List<String> cheapTariffWindows) {
     }
 
-    public record SchedulePayload(String overnightTime, String afternoonTime) {
+    /** {@code overnightRecheckTime} blank or missing = no second overnight decision. */
+    public record SchedulePayload(String overnightTime, String afternoonTime, String overnightRecheckTime) {
     }
 
     public record ForecastPayload(
@@ -73,7 +74,8 @@ public record ProcessSettingsPayload(
                 new PlanningPayload(planning.minSocPercent(), planning.fullSocPercent(),
                         planning.batteryCapacityKwh(), planning.consumptionAfterOvernightKwh(), planning.consumptionAfterAfternoonKwh(),
                         planning.forecastSafetyMarginRatio(), planning.cheapTariffWindows()),
-                new SchedulePayload(schedule.overnightTime().toString(), schedule.afternoonTime().toString()),
+                new SchedulePayload(schedule.overnightTime().toString(), schedule.afternoonTime().toString(),
+                        schedule.overnightRecheck().map(LocalTime::toString).orElse("")),
                 new ForecastPayload(forecast.latitude(), forecast.longitude(),
                         ForecastPayload.DirectionPayload.from(forecast.north()),
                         ForecastPayload.DirectionPayload.from(forecast.east()),
@@ -88,7 +90,9 @@ public record ProcessSettingsPayload(
                 new PlanningSettings(planning.minSocPercent(), planning.fullSocPercent(),
                         planning.batteryCapacityKwh(), planning.consumptionAfterOvernightKwh(), planning.consumptionAfterAfternoonKwh(),
                         planning.forecastSafetyMarginRatio(), planning.cheapTariffWindows()),
-                new ScheduleSettings(LocalTime.parse(schedule.overnightTime()), LocalTime.parse(schedule.afternoonTime())),
+                new ScheduleSettings(LocalTime.parse(schedule.overnightTime()), LocalTime.parse(schedule.afternoonTime()),
+                        schedule.overnightRecheckTime() == null || schedule.overnightRecheckTime().isBlank()
+                                ? null : LocalTime.parse(schedule.overnightRecheckTime())),
                 new ForecastSettings(forecast.latitude(), forecast.longitude(),
                         forecast.north().toDomain(), forecast.east().toDomain(),
                         forecast.south().toDomain(), forecast.west().toDomain()),

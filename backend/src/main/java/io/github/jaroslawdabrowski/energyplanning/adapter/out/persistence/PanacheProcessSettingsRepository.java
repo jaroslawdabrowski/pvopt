@@ -43,6 +43,7 @@ public class PanacheProcessSettingsRepository
         try {
             var json = (ObjectNode) objectMapper.readTree(entity.settingsJson);
             migrateConsumptionEstimates((ObjectNode) json.get("planning"));
+            migrateOvernightRecheck((ObjectNode) json.get("schedule"));
             return objectMapper.treeToValue(json, ProcessSettings.class);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to deserialize process settings: " + entity.settingsJson, e);
@@ -66,6 +67,17 @@ public class PanacheProcessSettingsRepository
         planning.put("consumptionAfterAfternoonKwh", roundToTenth(afternoon * 7 / 11));
         planning.remove("dailyConsumptionEstimateKwh");
         planning.remove("afternoonConsumptionEstimateKwh");
+    }
+
+    /**
+     * Settings saved before the overnight recheck existed get it at 03:30 - it's a pure
+     * improvement (a fresher forecast, charging closer to 06:00); clearing the field in
+     * Settings turns it off, which is stored as an explicit null.
+     */
+    static void migrateOvernightRecheck(ObjectNode schedule) {
+        if (schedule != null && !schedule.has("overnightRecheckTime")) {
+            schedule.put("overnightRecheckTime", "03:30:00");
+        }
     }
 
     private static double roundToTenth(double value) {

@@ -14,6 +14,8 @@ const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
 
 interface UpcomingDecision {
   window: ChargeWindow;
+  /** The overnight decision runs twice: before the window and again inside it. */
+  recheck: boolean;
   at: Date;
   tomorrow: boolean;
 }
@@ -62,7 +64,10 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly decisionHours = computed(() => {
     const schedule = this.settings()?.schedule;
     if (!schedule) return [];
-    return [hoursOf(schedule.overnightTime), hoursOf(schedule.afternoonTime)].filter((h): h is number => h !== null);
+    return [schedule.overnightTime, schedule.afternoonTime, schedule.overnightRecheckTime]
+      .filter((t): t is string => !!t)
+      .map(hoursOf)
+      .filter((h): h is number => h !== null);
   });
 
   /** Both daily decisions, soonest first. */
@@ -70,14 +75,15 @@ export class Dashboard implements OnInit, OnDestroy {
     const schedule = this.settings()?.schedule;
     if (!schedule) return [];
     const now = this.now();
-    const entries: [ChargeWindow, string][] = [
-      ['OVERNIGHT', schedule.overnightTime],
-      ['AFTERNOON', schedule.afternoonTime]
+    const entries: [ChargeWindow, string, boolean][] = [
+      ['OVERNIGHT', schedule.overnightTime, false],
+      ['AFTERNOON', schedule.afternoonTime, false]
     ];
+    if (schedule.overnightRecheckTime) entries.push(['OVERNIGHT', schedule.overnightRecheckTime, true]);
     return entries
-      .flatMap(([window, time]) => {
+      .flatMap(([window, time, recheck]) => {
         const hours = hoursOf(time);
-        return hours === null ? [] : [{ window, ...nextOccurrence(hours, now) }];
+        return hours === null ? [] : [{ window, recheck, ...nextOccurrence(hours, now) }];
       })
       .sort((a, b) => a.at.getTime() - b.at.getTime());
   });

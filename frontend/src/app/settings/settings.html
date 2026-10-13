@@ -102,6 +102,11 @@
             <label for="overnightTime"><span class="material-symbols-rounded label-icon" aria-hidden="true">bedtime</span>{{ 'settings.schedule.overnightTime' | translate }}</label>
             <input id="overnightTime" class="input num" type="time" formControlName="overnightTime" />
           </div>
+          <div class="field tone-night">
+            <label for="overnightRecheckTime"><span class="material-symbols-rounded label-icon" aria-hidden="true">update</span>{{ 'settings.schedule.overnightRecheckTime' | translate }}</label>
+            <input id="overnightRecheckTime" class="input num" type="time" formControlName="overnightRecheckTime" aria-describedby="overnightRecheckHint" />
+            <span id="overnightRecheckHint" class="field-hint">{{ 'settings.schedule.overnightRecheckHint' | translate }}</span>
+          </div>
           <div class="field tone-day">
             <label for="afternoonTime"><span class="material-symbols-rounded label-icon" aria-hidden="true">wb_sunny</span>{{ 'settings.schedule.afternoonTime' | translate }}</label>
             <input id="afternoonTime" class="input num" type="time" formControlName="afternoonTime" />

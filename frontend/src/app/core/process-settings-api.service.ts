@@ -19,6 +19,8 @@ export interface ProcessSettingsDto {
   };
   schedule: {
     overnightTime: string;
+    /** Second overnight decision inside the window; '' = off. */
+    overnightRecheckTime: string;
     afternoonTime: string;
   };
   forecast: {
@@ -59,6 +61,7 @@ export function blankProcessSettings(): ProcessSettingsDto {
     },
     schedule: {
       overnightTime: '21:45',
+      overnightRecheckTime: '03:30',
       afternoonTime: '12:45'
     },
     forecast: {

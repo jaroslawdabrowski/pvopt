@@ -51,7 +51,8 @@
     "nextDecisions": "Najbliższe decyzje",
     "decidesFor": {
       "OVERNIGHT": "Czy ładować z sieci w nocy",
-      "AFTERNOON": "Czy doładować z sieci po południu"
+      "AFTERNOON": "Czy doładować z sieci po południu",
+      "RECHECK": "Przelicza noc ze świeższą prognozą"
     },
     "today": "dziś",
     "tomorrow": "jutro",
@@ -63,7 +64,8 @@
       "DECISION_FAILED": "Decyzja ({{window}}) z {{time}} nie powiodła się mimo ponowień - falownik został przy poprzednim harmonogramie.",
       "SCHEDULE_MISMATCH": "Po zapisie {{time}} sloty okna ({{window}}) nie zgadzały się z decyzją, także po ponownym zapisie. Sprawdź harmonogram falownika.",
       "FORECAST_UNAVAILABLE": "{{time}} nie było prognozy PV - decyzję ({{window}}) policzono tak, jakby słońca nie było."
-    }
+    },
+    "recheck": "ponownie"
   },
   "history": {
     "title": "Historia decyzji",
@@ -130,7 +132,9 @@
       "title": "Harmonogram dobowy",
       "overnightTime": "Godzina decyzji nocnej",
       "afternoonTime": "Godzina decyzji popołudniowej",
-      "hint": "Kiedy codziennie zapada każda z dwóch decyzji. Najlepiej kwadrans przed początkiem taniego okna."
+      "hint": "Kiedy codziennie zapada każda z dwóch decyzji. Najlepiej kwadrans przed początkiem taniego okna.",
+      "overnightRecheckTime": "Ponowne przeliczenie w nocy",
+      "overnightRecheckHint": "Druga decyzja nocna, już w tanim oknie, ze świeższą prognozą. Puste wyłącza."
     },
     "forecast": {
       "title": "Prognoza produkcji PV",

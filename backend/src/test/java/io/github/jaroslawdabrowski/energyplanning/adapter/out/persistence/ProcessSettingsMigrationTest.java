@@ -34,4 +34,24 @@ class ProcessSettingsMigrationTest {
         assertThat(planning.get("consumptionAfterOvernightKwh").asDouble()).isEqualTo(3.0);
         assertThat(planning.get("consumptionAfterAfternoonKwh").asDouble()).isEqualTo(6.0);
     }
+
+    @Test
+    void turnsTheOvernightRecheckOnForOlderSettings() throws Exception {
+        var schedule = (ObjectNode) mapper.readTree("""
+                {"overnightTime":"21:45:00","afternoonTime":"12:45:00"}""");
+
+        PanacheProcessSettingsRepository.migrateOvernightRecheck(schedule);
+
+        assertThat(schedule.get("overnightRecheckTime").asText()).isEqualTo("03:30:00");
+    }
+
+    @Test
+    void keepsAnExplicitlyDisabledRecheckOff() throws Exception {
+        var schedule = (ObjectNode) mapper.readTree("""
+                {"overnightTime":"21:45:00","afternoonTime":"12:45:00","overnightRecheckTime":null}""");
+
+        PanacheProcessSettingsRepository.migrateOvernightRecheck(schedule);
+
+        assertThat(schedule.get("overnightRecheckTime").isNull()).isTrue();
+    }
 }

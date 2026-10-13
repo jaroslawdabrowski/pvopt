@@ -45,6 +45,7 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     private static final Logger LOG = Logger.getLogger(DynamicEnergyPlanningScheduler.class);
 
     private static final String OVERNIGHT_JOB = "overnight-charge";
+    private static final String OVERNIGHT_RECHECK_JOB = "overnight-recheck";
     private static final String AFTERNOON_JOB = "afternoon-topup";
 
     static final int MAX_ATTEMPTS = 3;
@@ -81,12 +82,15 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     @Override
     public void reschedule(Optional<ProcessSettings> settings) {
         unscheduleIfPresent(OVERNIGHT_JOB);
+        unscheduleIfPresent(OVERNIGHT_RECHECK_JOB);
         unscheduleIfPresent(AFTERNOON_JOB);
         snapshotJobs.forEach(this::unscheduleIfPresent);
         snapshotJobs.clear();
 
         settings.ifPresentOrElse(s -> {
             scheduleDaily(OVERNIGHT_JOB, s.schedule().overnightTime(), this::runOvernight);
+            // Same decision again with a fresher forecast - it simply overwrites the 21:45 one.
+            s.schedule().overnightRecheck().ifPresent(time -> scheduleDaily(OVERNIGHT_RECHECK_JOB, time, this::runOvernight));
             scheduleDaily(AFTERNOON_JOB, s.schedule().afternoonTime(), this::runAfternoon);
             var snapshotTimes = recordEnergySnapshotUseCase.snapshotTimes(s);
             for (LocalTime time : snapshotTimes) {
@@ -94,8 +98,9 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
                 scheduleDaily(identity, time, this::runSnapshot);
                 snapshotJobs.add(identity);
             }
-            LOG.infof("Scheduled jobs registered: overnight=%s, afternoon=%s, energy snapshots at %s",
-                    s.schedule().overnightTime(), s.schedule().afternoonTime(), snapshotTimes);
+            LOG.infof("Scheduled jobs registered: overnight=%s (recheck %s), afternoon=%s, %d energy snapshots",
+                    s.schedule().overnightTime(), s.schedule().overnightRecheck().map(LocalTime::toString).orElse("off"),
+                    s.schedule().afternoonTime(), snapshotTimes.size());
         }, () -> LOG.info("No process settings configured - scheduled jobs are disabled until settings are saved"));
     }
 

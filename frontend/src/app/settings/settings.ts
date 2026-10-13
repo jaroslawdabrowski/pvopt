@@ -42,6 +42,7 @@ export class Settings implements OnInit {
     }),
     schedule: this.fb.group({
       overnightTime: ['21:45', Validators.required],
+      overnightRecheckTime: ['03:30'],
       afternoonTime: ['12:45', Validators.required]
     }),
     forecast: this.fb.group({

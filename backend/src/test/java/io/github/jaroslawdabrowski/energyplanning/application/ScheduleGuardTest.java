@@ -168,7 +168,7 @@ class ScheduleGuardTest {
             var none = new DirectionPanelSettings(0, 0);
             return Optional.of(new ProcessSettings(
                     new PlanningSettings(20, 100, 10, 5, 6, 1.2, List.of("22:00-06:00", "13:00-15:00")),
-                    new ScheduleSettings(LocalTime.of(21, 45), LocalTime.of(12, 45)),
+                    new ScheduleSettings(LocalTime.of(21, 45), LocalTime.of(12, 45), LocalTime.of(3, 30)),
                     new ForecastSettings(52, 21, none, none, none, none),
                     new InverterConnectionSettings("192.0.2.1", 8899, 1L),
                     new NotificationSettings("https://ntfy.example/test")));
