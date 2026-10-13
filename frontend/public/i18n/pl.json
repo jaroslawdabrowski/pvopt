@@ -66,7 +66,9 @@
       "SCHEDULE_MISMATCH": "Po zapisie {{time}} sloty okna ({{window}}) nie zgadzały się z decyzją, także po ponownym zapisie. Sprawdź harmonogram falownika.",
       "FORECAST_UNAVAILABLE": "{{time}} nie było prognozy PV - decyzję ({{window}}) policzono tak, jakby słońca nie było."
     },
-    "recheck": "ponownie"
+    "recheck": "ponownie",
+    "legendReserve": "zapas {{soc}}%",
+    "legendNoCharge": "bez ładowania"
   },
   "history": {
     "title": "Historia decyzji",

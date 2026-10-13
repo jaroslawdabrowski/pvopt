@@ -36,7 +36,7 @@
 
     @if (status(); as s) {
       <div class="card hero">
-        <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisionHours]="decisionHours()" [now]="now()" />
+        <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisionHours]="decisionHours()" [now]="now()" [reserves]="reserves()" />
 
         <div class="hero-side">
           <span class="chip" [class]="s.tariffRate === 'CHEAP' ? 'tone-cheap' : 'tone-neutral'" data-testid="tariff-now">
@@ -51,6 +51,11 @@
                   <span class="swatch" aria-hidden="true"></span>
                   <span class="legend-name">{{ ('dashboard.cheapWindow.' + w.tone) | translate }}</span>
                   <span class="legend-time num">{{ w.label }}</span>
+                  @if (decisionFor(w.tone); as d) {
+                    <span class="legend-decision num" data-testid="legend-decision">
+                      {{ (d.chargeFromGrid ? 'dashboard.legendReserve' : 'dashboard.legendNoCharge') | translate: { soc: d.targetSocPercent } }}
+                    </span>
+                  }
                 </li>
               }
             </ul>

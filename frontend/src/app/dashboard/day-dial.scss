@@ -70,6 +70,28 @@ svg {
   }
 }
 
+// A window's reserve on the battery ring: the haloed notch reads against both the ink fill
+// and the empty track; the percentage says the same thing without relying on colour.
+.reserve-halo {
+  stroke: var(--surface);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.reserve-tick {
+  stroke: var(--tone);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.reserve-label {
+  fill: var(--tone-strong);
+  font: 700 10px var(--font);
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
 .now-dot {
   fill: var(--grey-900);
   stroke: var(--surface);

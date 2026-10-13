@@ -66,7 +66,9 @@
       "SCHEDULE_MISMATCH": "Read back after writing at {{time}}, the {{window}} slots didn't match the decision, even after rewriting. Check the inverter schedule.",
       "FORECAST_UNAVAILABLE": "At {{time}} there was no PV forecast - the {{window}} decision was made as if no sun was coming."
     },
-    "recheck": "recheck"
+    "recheck": "recheck",
+    "legendReserve": "reserve {{soc}}%",
+    "legendNoCharge": "no grid charge"
   },
   "history": {
     "title": "Decision history",

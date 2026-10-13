@@ -43,6 +43,14 @@
   .legend-time {
     font-weight: 600;
   }
+
+  .legend-decision {
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--tone-tint);
+    color: var(--tone-on-tint);
+    font-weight: 600;
+  }
 }
 
 .upcoming {

@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ChargeWindow, EnergyPlanningApi, EnergyStatusDto } from '../core/energy-planning-api.service';
+import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi, EnergyStatusDto } from '../core/energy-planning-api.service';
 import { ProcessSettingsApi, ProcessSettingsDto } from '../core/process-settings-api.service';
 import { settingsAwareErrorKey } from '../core/settings-error.util';
 import { LanguageService } from '../core/language.service';
 import { decisionPeriod, decisionReserve, decisionVerdict, formatDayAndTime, formatTime } from '../core/format';
-import { DayDial } from './day-dial';
-import { hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
+import { DayDial, ReserveMark } from './day-dial';
+import { WindowTone, hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
@@ -42,11 +42,18 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly now = signal(new Date());
   private clock?: ReturnType<typeof setInterval>;
 
-  /** A problem from the last day - older ones have been followed by working runs or are already known. */
+  /**
+   * A problem from the last day that nothing has fixed since: a decision for the same window
+   * made after it, with a forecast, means it's resolved.
+   */
   readonly recentIssue = computed(() => {
     const issue = this.status()?.latestIssue;
-    if (!issue) return null;
-    return this.now().getTime() - new Date(issue.occurredAt).getTime() < DAY_MS ? issue : null;
+    if (!issue || this.now().getTime() - new Date(issue.occurredAt).getTime() >= DAY_MS) return null;
+    const later = this.latestByWindow().get(issue.window);
+    const resolved = later !== undefined
+      && new Date(later.decidedAt).getTime() > new Date(issue.occurredAt).getTime()
+      && later.reasonParams['forecastUnavailable'] !== 1;
+    return resolved ? null : issue;
   });
 
   /**
@@ -58,6 +65,26 @@ export class Dashboard implements OnInit, OnDestroy {
     return decision !== null && decision !== undefined
       && this.now().getTime() - new Date(decision.decidedAt).getTime() > STALE_AFTER_MS;
   });
+
+  /** Last 7 days of decisions, oldest first - the dial and legend need the latest one per window. */
+  readonly recentDecisions = signal<ChargeDecisionDto[]>([]);
+
+  private readonly latestByWindow = computed(() => {
+    const latest = new Map<ChargeWindow, ChargeDecisionDto>();
+    for (const decision of this.recentDecisions()) latest.set(decision.window, decision);
+    return latest;
+  });
+
+  /** Each window's grid-charge target as a notch on the battery ring - only where it holds a reserve. */
+  readonly reserves = computed<ReserveMark[]>(() =>
+    [...this.latestByWindow().values()]
+      .filter((d) => d.chargeFromGrid)
+      .map((d) => ({ tone: d.window === 'OVERNIGHT' ? 'night' : 'day', soc: d.targetSocPercent }))
+  );
+
+  decisionFor(tone: WindowTone): ChargeDecisionDto | undefined {
+    return this.latestByWindow().get(tone === 'night' ? 'OVERNIGHT' : 'AFTERNOON');
+  }
 
   readonly windows = computed(() => parseTariffWindows(this.settings()?.planning.cheapTariffWindows ?? []));
 
@@ -103,6 +130,10 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   loadStatus(): void {
+    this.api.history().subscribe({
+      next: (decisions) => this.recentDecisions.set(decisions),
+      error: () => this.recentDecisions.set([])
+    });
     this.api.status().subscribe({
       next: (status) => {
         this.status.set(status);

@@ -52,7 +52,10 @@ the Material toolbar/tables read as a component demo. Redesigned 2026-10-13.
   day as a 24 h ring, midnight at the top: the cheap G12 windows as arcs in their window's
   colour (parsed from the settings' `cheapTariffWindows`, `dashboard/tariff-windows.ts`), ink
   ticks at the two decision times, a dot for "now", and the battery SOC as the big number in the
-  middle with the inner ring filled to it. The SOC ring filling up once on load is the app's
+  middle with the inner ring filled to it. Each window that holds a reserve (its latest decision
+  charges from the grid) gets a haloed notch on the battery ring at its target SOC, in the window's
+  colour and labelled with the percentage, and the legend repeats it per window ("zapas 36%" /
+  "bez ładowania") - the battery now and the plan for it in one picture. The SOC ring filling up once on load is the app's
   only orchestrated motion.
 - **TOU page**: a thin 00-24 bar of the six slots (governed slots tinted in their window's
   colour, solid when the slot charges from the grid) above the slot list.

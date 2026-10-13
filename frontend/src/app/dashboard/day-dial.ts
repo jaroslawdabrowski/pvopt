@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { TariffWindowView } from './tariff-windows';
+import { TariffWindowView, WindowTone } from './tariff-windows';
 
 const CENTER = 120;
 const DAY_RING_RADIUS = 104;
@@ -12,6 +12,16 @@ const SOC_CIRCUMFERENCE = 2 * Math.PI * SOC_RING_RADIUS;
 function pointAt(hours: number, radius: number): { x: number; y: number } {
   const angle = (hours / 24) * 2 * Math.PI;
   return { x: CENTER + radius * Math.sin(angle), y: CENTER - radius * Math.cos(angle) };
+}
+
+/** A point on a ring at {@code fraction} of a full turn, clockwise from the top (the battery ring's 0%). */
+function pointOnRing(fraction: number, radius: number): { x: number; y: number } {
+  return pointAt(fraction * 24, radius);
+}
+
+export interface ReserveMark {
+  tone: WindowTone;
+  soc: number;
 }
 
 function arcPath(startHours: number, endHours: number, radius: number): string {
@@ -56,6 +66,14 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
         [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
       />
 
+      @for (marker of reserveMarkers(); track marker.tone) {
+        <g class="reserve-marker" [class]="'tone-' + marker.tone">
+          <line class="reserve-halo" [attr.x1]="marker.x1" [attr.y1]="marker.y1" [attr.x2]="marker.x2" [attr.y2]="marker.y2" />
+          <line class="reserve-tick" [attr.x1]="marker.x1" [attr.y1]="marker.y1" [attr.x2]="marker.x2" [attr.y2]="marker.y2" />
+          <text class="reserve-label" [attr.x]="marker.labelX" [attr.y]="marker.labelY">{{ marker.soc }}%</text>
+        </g>
+      }
+
       <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7" />
     </svg>
 
@@ -72,6 +90,8 @@ export class DayDial {
   /** Decision times as hours past midnight (e.g. 21.75 for 21:45). */
   readonly decisionHours = input<number[]>([]);
   readonly now = input.required<Date>();
+  /** The SOC each cheap window holds (its grid-charge target) - drawn as a notch on the battery ring. */
+  readonly reserves = input<ReserveMark[]>([]);
 
   protected readonly center = CENTER;
   protected readonly dayRadius = DAY_RING_RADIUS;
@@ -102,6 +122,20 @@ export class DayDial {
   protected readonly nowPoint = computed(() => {
     const now = this.now();
     return pointAt(now.getHours() + now.getMinutes() / 60, DAY_RING_RADIUS);
+  });
+
+  protected readonly reserveMarkers = computed(() => {
+    const sorted = [...this.reserves()].sort((a, b) => a.soc - b.soc);
+    return sorted.map((reserve, i) => {
+      const fraction = Math.min(100, Math.max(0, reserve.soc)) / 100;
+      const inner = pointOnRing(fraction, SOC_RING_RADIUS - 9);
+      const outer = pointOnRing(fraction, SOC_RING_RADIUS + 9);
+      // Two reserves a few points apart would print on top of each other - push the second one inwards.
+      const crowded = i > 0 && reserve.soc - sorted[i - 1].soc < 6;
+      const label = pointOnRing(fraction, SOC_RING_RADIUS - (crowded ? 30 : 19));
+      return { tone: reserve.tone, soc: reserve.soc, x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y,
+        labelX: label.x, labelY: label.y };
+    });
   });
 
   protected readonly socOffset = computed(() => {
