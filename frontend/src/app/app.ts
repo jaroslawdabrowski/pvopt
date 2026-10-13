@@ -1,29 +1,32 @@
 import { Component, effect } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/auth.service';
 import { LanguageService } from './core/language.service';
 import { LanguageSwitcher } from './core/language-switcher';
 
+interface NavItem {
+  path: string;
+  icon: string;
+  labelKey: string;
+  /** Shorter label for the phone tab bar. */
+  shortKey: string;
+}
+
 @Component({
   selector: 'app-root',
-  imports: [
-    RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    TranslatePipe,
-    LanguageSwitcher,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, LanguageSwitcher],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
+  readonly navItems: NavItem[] = [
+    { path: '/dashboard', icon: 'home', labelKey: 'nav.dashboard', shortKey: 'nav.dashboardShort' },
+    { path: '/tou-schedule', icon: 'schedule', labelKey: 'nav.touSchedule', shortKey: 'nav.touScheduleShort' },
+    { path: '/history', icon: 'history', labelKey: 'nav.history', shortKey: 'nav.historyShort' },
+    { path: '/settings', icon: 'tune', labelKey: 'nav.settings', shortKey: 'nav.settingsShort' }
+  ];
+
   constructor(
     protected readonly authService: AuthService,
     private readonly languageService: LanguageService,

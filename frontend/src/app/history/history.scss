@@ -1,39 +1,38 @@
-.history {
-  max-width: 60rem;
-  margin: 0 auto;
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
 
-  h1 {
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
+.day-header {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-inline: var(--space-2);
+
+  &::first-letter {
+    text-transform: uppercase;
   }
 }
 
-.spinner {
-  display: flex;
-  justify-content: center;
-  padding: 3rem 0;
+// .card and .list are both global; the card keeps its padding.
+.card.list {
+  padding: var(--space-5);
+  gap: 0;
 }
 
-.history-card {
-  overflow: hidden;
-  border-radius: 0.5rem;
-  border-top: 5px solid var(--pv-blue);
-  padding: 0;
+@media (max-width: 900px) {
+  .card.list {
+    padding: var(--space-4);
+  }
 }
 
-.history-table {
-  width: 100%;
+.reason {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  max-width: 68ch;
 }
 
-td.on {
-  color: #4a7a56;
-  font-weight: 600;
-}
-
-td.reasoning {
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.error {
-  color: var(--mat-sys-error);
+.time {
+  font-weight: 700;
 }

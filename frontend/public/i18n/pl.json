@@ -1,14 +1,19 @@
 {
   "nav": {
-    "dashboard": "Panel",
-    "touSchedule": "Harmonogram TOU",
+    "dashboard": "Pulpit",
+    "touSchedule": "Falownik",
     "history": "Historia",
     "settings": "Ustawienia",
-    "logout": "Wyloguj"
+    "logout": "Wyloguj",
+    "label": "Nawigacja",
+    "dashboardShort": "Pulpit",
+    "touScheduleShort": "Falownik",
+    "historyShort": "Historia",
+    "settingsShort": "Ustawienia"
   },
   "login": {
     "title": "PV Opt",
-    "subtitle": "Zaloguj się, aby zobaczyć harmonogram ładowania",
+    "subtitle": "Zaloguj się, żeby zobaczyć baterię i plan ładowania.",
     "username": "Login",
     "password": "Hasło",
     "submit": "Zaloguj",
@@ -16,81 +21,93 @@
     "error": "Nieprawidłowy login lub hasło."
   },
   "common": {
-    "settingsNotConfigured": "Ustawienia procesu nie zostały jeszcze skonfigurowane - przejdź do Ustawień, aby je uzupełnić."
+    "settingsNotConfigured": "Proces nie jest jeszcze skonfigurowany, więc nie ma czego pokazać.",
+    "goToSettings": "Uzupełnij ustawienia"
   },
   "dashboard": {
     "loading": "Ładowanie...",
     "error": "Nie udało się pobrać statusu z backendu.",
     "runError": "Nie udało się uruchomić planowania.",
-    "batterySoc": "SOC baterii",
-    "tariffNow": "Taryfa teraz",
-    "tariffCheap": "Tania",
-    "tariffExpensive": "Droga",
+    "batterySoc": "bateria",
     "lastDecision": "Ostatnia decyzja",
-    "noDecision": "Brak dotychczasowych decyzji - uruchom planowanie ręcznie.",
-    "chargeOn": "Ładowanie z sieci: WŁĄCZONE, cel {{targetSoc}}%",
-    "chargeOff": "Ładowanie z sieci: WYŁĄCZONE",
-    "runOvernight": "Zaplanuj ładowanie nocne teraz",
-    "runAfternoon": "Zaplanuj doładowanie popołudniowe teraz",
-    "running": "Uruchamianie..."
+    "noDecision": "Nie ma jeszcze żadnej decyzji. Pierwsza zapadnie o zaplanowanej godzinie albo uruchom ją niżej.",
+    "chargeOn": "Ładuje z sieci do {{targetSoc}}%",
+    "chargeOff": "Bez ładowania z sieci",
+    "runOvernight": "Okno nocne",
+    "runAfternoon": "Okno popołudniowe",
+    "running": "Liczę...",
+    "title": "Pulpit",
+    "dialLabel": "Bateria naładowana w {{soc}}%. Tarcza pokazuje dobę z tanimi oknami taryfy.",
+    "tariffCheapNow": "Teraz tania taryfa",
+    "tariffExpensiveNow": "Teraz droga taryfa",
+    "cheapWindow": {
+      "night": "Tanio w nocy",
+      "day": "Tanio po południu"
+    },
+    "nextDecisions": "Najbliższe decyzje",
+    "decidesFor": {
+      "OVERNIGHT": "Czy ładować z sieci w nocy",
+      "AFTERNOON": "Czy doładować z sieci po południu"
+    },
+    "today": "dziś",
+    "tomorrow": "jutro",
+    "runTitle": "Zdecyduj teraz",
+    "runHint": "Przelicza decyzję dla wybranego okna na podstawie aktualnej prognozy i od razu zapisuje ją w falowniku."
   },
   "history": {
     "title": "Historia decyzji",
     "loading": "Ładowanie...",
     "error": "Nie udało się pobrać historii.",
-    "empty": "Brak historii z ostatnich 7 dni.",
-    "columnDate": "Data",
-    "columnWindow": "Okno",
-    "columnGridCharge": "Ładowanie z sieci",
-    "columnTargetSoc": "Docelowy SOC",
-    "columnReason": "Uzasadnienie",
-    "yes": "Tak",
-    "no": "Nie"
+    "empty": "W ostatnich 7 dniach nie zapadła żadna decyzja.",
+    "subtitle": "Wszystkie decyzje o ładowaniu z ostatnich 7 dni, najnowsze na górze.",
+    "today": "Dziś",
+    "yesterday": "Wczoraj",
+    "chargeOn": "Ładowanie z sieci do {{targetSoc}}%",
+    "chargeOff": "Bez ładowania z sieci"
   },
   "touSchedule": {
-    "title": "Harmonogram Time-of-Use",
-    "subtitle": "Aktualna, 6-slotowa tabela ładowania z sieci ustawiona na falowniku.",
+    "title": "Harmonogram falownika",
+    "subtitle": "Sześć slotów Time-of-Use zapisanych teraz w falowniku. Dwa z nich ustawia aplikacja, reszta jest stała.",
     "refresh": "Odśwież",
     "error": "Nie udało się pobrać harmonogramu TOU z falownika.",
-    "columnStart": "Start",
-    "columnEnd": "Koniec",
-    "columnPower": "Moc ładowania",
-    "columnTargetSoc": "Docelowy SOC",
-    "columnGridCharge": "Ładowanie z sieci",
-    "columnGovernedBy": "Decyduje",
-    "on": "WŁ",
-    "off": "WYŁ",
-    "unmanaged": "Stałe (nieplanowane)"
+    "unmanaged": "Stały, poza aplikacją",
+    "loading": "Czytam z falownika...",
+    "governedBy": "Ustawia decyzja: {{window}}",
+    "gridOn": "Ładuje z sieci",
+    "gridOff": "Bez sieci",
+    "slotDetails": "{{power}} kW, cel {{soc}}%"
   },
   "settings": {
     "title": "Ustawienia procesu",
-    "subtitle": "Wszystko, czego potrzebuje silnik planowania - zapisywane tutaj, nie w pliku konfiguracyjnym, więc możesz to zmienić w każdej chwili.",
-    "notConfiguredBanner": "Jeszcze nie skonfigurowano - uzupełnij formularz poniżej i zapisz. Do tego czasu zaplanowane zadania będą tylko logować brak konfiguracji i pomijać uruchomienie.",
-    "saved": "Zapisano. Zaplanowane zadania zostały ponownie zarejestrowane z nowymi godzinami.",
+    "subtitle": "Wszystko, czego potrzebuje planowanie. Zmiany działają od razu, także godziny decyzji.",
+    "notConfiguredBanner": "Proces nie jest jeszcze skonfigurowany. Uzupełnij formularz i zapisz. Do tego czasu zaplanowane decyzje są pomijane.",
+    "saved": "Zapisano. Decyzje zapadną o nowych godzinach.",
     "loadError": "Nie udało się wczytać ustawień.",
     "saveError": "Nie udało się zapisać ustawień.",
-    "save": "Zapisz",
+    "save": "Zapisz ustawienia",
     "saving": "Zapisywanie...",
     "planning": {
       "title": "Polityka planowania",
       "minSoc": "Minimalny SOC",
-      "fullSoc": "Docelowy SOC pełnego ładowania",
+      "fullSoc": "Ładuj z sieci do",
       "dailyConsumption": "Szacowane dobowe zużycie",
       "afternoonConsumption": "Szacowane zużycie popołudniowe",
-      "safetyMargin": "Margines bezpieczeństwa prognozy (mnożnik)",
+      "safetyMargin": "Zapas na prognozę",
       "tariffWindows": "Tanie okna taryfowe",
-      "tariffWindowsHint": "Zakresy HH:mm-HH:mm oddzielone przecinkami, np. 22:00-06:00, 13:00-15:00"
+      "tariffWindowsHint": "Zakresy HH:mm-HH:mm oddzielone przecinkami, np. 22:00-06:00, 13:00-15:00",
+      "hint": "Progi baterii i szacowane zużycie, z którymi porównywana jest prognoza produkcji."
     },
     "schedule": {
       "title": "Harmonogram dobowy",
       "overnightTime": "Godzina decyzji nocnej",
-      "afternoonTime": "Godzina decyzji popołudniowej"
+      "afternoonTime": "Godzina decyzji popołudniowej",
+      "hint": "Kiedy codziennie zapada każda z dwóch decyzji. Najlepiej kwadrans przed początkiem taniego okna."
     },
     "forecast": {
       "title": "Prognoza produkcji PV",
       "latitude": "Szerokość geograficzna",
       "longitude": "Długość geograficzna",
-      "directionsHint": "Jedna płaszczyzna paneli na stronę świata - zostaw kWp na 0, jeśli po danej stronie nie ma paneli.",
+      "directionsHint": "Lokalizacja instalacji i po jednej płaszczyźnie paneli na stronę świata. Moc 0 kWp znaczy, że z tej strony nie ma paneli.",
       "declination": "Nachylenie",
       "kwp": "Moc",
       "direction": {
@@ -98,15 +115,18 @@
         "east": "Wschód",
         "south": "Południe",
         "west": "Zachód"
-      }
+      },
+      "noPanel": "brak paneli"
     },
     "inverter": {
       "title": "Połączenie z falownikiem",
-      "hint": "Dane osobowe/sprzętowe (IP w sieci LAN, numer seryjny urządzenia) - przechowywane w bazie danych, nigdy w pliku konfiguracyjnym w repozytorium.",
+      "hint": "Adres falownika w sieci domowej i numer seryjny loggera. Zapisywane tylko w lokalnej bazie.",
       "host": "Host / IP",
       "port": "Port",
       "loggerSerial": "Numer seryjny loggera"
-    }
+    },
+    "loading": "Wczytuję ustawienia...",
+    "invalid": "Popraw zaznaczone pola i zapisz ponownie."
   },
   "window": {
     "OVERNIGHT": "Noc",

@@ -1,17 +1,58 @@
 @if (authService.isAuthenticated()) {
-  <mat-toolbar class="topnav">
-    <mat-icon class="brand-icon">bolt</mat-icon>
-    <span class="brand">PV Opt</span>
-    <a mat-button routerLink="/dashboard" routerLinkActive="active">{{ 'nav.dashboard' | translate }}</a>
-    <a mat-button routerLink="/tou-schedule" routerLinkActive="active">{{ 'nav.touSchedule' | translate }}</a>
-    <a mat-button routerLink="/history" routerLinkActive="active">{{ 'nav.history' | translate }}</a>
-    <a mat-button routerLink="/settings" routerLinkActive="active">{{ 'nav.settings' | translate }}</a>
-    <span class="spacer"></span>
-    <app-language-switcher class="language-switcher" />
-    <button mat-stroked-button class="logout" (click)="logout()">{{ 'nav.logout' | translate }}</button>
-  </mat-toolbar>
-}
+  <div class="shell">
+    <!-- Desktop: fixed sidebar -->
+    <aside class="sidebar">
+      <a class="brand" routerLink="/dashboard">
+        <span class="brand-mark" aria-hidden="true"><span class="material-symbols-rounded">bolt</span></span>
+        <span class="brand-name">PV Opt</span>
+      </a>
 
-<main>
+      <nav class="side-nav" [attr.aria-label]="'nav.label' | translate">
+        @for (item of navItems; track item.path) {
+          <a class="side-link" [routerLink]="item.path" routerLinkActive="active">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
+            <span>{{ item.labelKey | translate }}</span>
+          </a>
+        }
+      </nav>
+
+      <div class="side-bottom">
+        <app-language-switcher />
+        <button class="side-link logout" type="button" (click)="logout()">
+          <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+          <span>{{ 'nav.logout' | translate }}</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Phone: slim top bar -->
+    <header class="topbar">
+      <a class="brand" routerLink="/dashboard">
+        <span class="brand-mark" aria-hidden="true"><span class="material-symbols-rounded">bolt</span></span>
+        <span class="brand-name">PV Opt</span>
+      </a>
+      <div class="topbar-end">
+        <app-language-switcher />
+        <button class="icon-btn" type="button" (click)="logout()" [attr.aria-label]="'nav.logout' | translate">
+          <span class="material-symbols-rounded">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <!-- Phone: floating bottom tab bar -->
+    <nav class="tabbar" [attr.aria-label]="'nav.label' | translate">
+      @for (item of navItems; track item.path) {
+        <a class="tab" [routerLink]="item.path" routerLinkActive="active">
+          <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
+          <span class="tab-label">{{ item.shortKey | translate }}</span>
+        </a>
+      }
+    </nav>
+  </div>
+} @else {
   <router-outlet />
-</main>
+}

@@ -1,26 +1,57 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MatTableModule } from '@angular/material/table';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ChargeDecisionDto, EnergyPlanningApi } from '../core/energy-planning-api.service';
+import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi } from '../core/energy-planning-api.service';
+import { LanguageService } from '../core/language.service';
+import { dayKey, formatDayHeader, formatTime } from '../core/format';
+
+interface DayGroup {
+  key: string;
+  /** 'today' / 'yesterday' get a translated header; other days a formatted date. */
+  relative: 'today' | 'yesterday' | null;
+  date: string;
+  decisions: ChargeDecisionDto[];
+}
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [DatePipe, TranslatePipe, MatTableModule, MatCardModule, MatProgressSpinnerModule],
+  imports: [TranslatePipe],
   templateUrl: './history.html',
   styleUrl: './history.scss'
 })
 export class History implements OnInit {
-  readonly columns = ['decidedAt', 'window', 'chargeFromGrid', 'targetSocPercent', 'reasonCode'];
+  private readonly api = inject(EnergyPlanningApi);
+  private readonly language = inject(LanguageService).currentLanguage;
+
   readonly decisions = signal<ChargeDecisionDto[]>([]);
   readonly loading = signal(true);
   /** Holds a translation key (not a rendered message) so the template can localize it. */
   readonly errorKey = signal<string | null>(null);
 
-  constructor(private readonly api: EnergyPlanningApi) {}
+  /** Newest first, one group per calendar day. */
+  readonly days = computed<DayGroup[]>(() => {
+    const today = dayKey(new Date());
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = dayKey(yesterdayDate);
+
+    const groups: DayGroup[] = [];
+    for (const decision of this.decisions()) {
+      const key = dayKey(decision.decidedAt);
+      let group = groups.at(-1);
+      if (!group || group.key !== key) {
+        group = {
+          key,
+          relative: key === today ? 'today' : key === yesterday ? 'yesterday' : null,
+          date: decision.decidedAt,
+          decisions: []
+        };
+        groups.push(group);
+      }
+      group.decisions.push(decision);
+    }
+    return groups;
+  });
 
   ngOnInit(): void {
     this.api.history().subscribe({
@@ -33,5 +64,21 @@ export class History implements OnInit {
         this.errorKey.set('history.error');
       }
     });
+  }
+
+  dayHeader(iso: string): string {
+    return formatDayHeader(iso, this.language());
+  }
+
+  time(iso: string): string {
+    return formatTime(iso, this.language());
+  }
+
+  toneOf(window: ChargeWindow): string {
+    return window === 'OVERNIGHT' ? 'tone-night' : 'tone-day';
+  }
+
+  iconOf(window: ChargeWindow): string {
+    return window === 'OVERNIGHT' ? 'bedtime' : 'wb_sunny';
   }
 }

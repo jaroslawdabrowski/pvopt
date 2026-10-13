@@ -1,69 +1,71 @@
-<section class="tou-schedule">
-  <div class="header">
-    <h1>{{ 'touSchedule.title' | translate }}</h1>
-    <button mat-icon-button (click)="load()" [disabled]="loading()" [attr.aria-label]="'touSchedule.refresh' | translate">
-      <mat-icon>refresh</mat-icon>
-    </button>
-  </div>
-  <p class="subtitle">{{ 'touSchedule.subtitle' | translate }}</p>
-
-  @if (loading()) {
-    <div class="spinner">
-      <mat-spinner diameter="36" />
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'touSchedule.title' | translate }}</h1>
+      <p class="page-lead">{{ 'touSchedule.subtitle' | translate }}</p>
     </div>
+    <button class="icon-btn" type="button" (click)="load()" [disabled]="loading()" [attr.aria-label]="'touSchedule.refresh' | translate">
+      <span class="material-symbols-rounded" [class.spinning]="loading()">refresh</span>
+    </button>
+  </header>
+
+  @if (loading() && slots().length === 0) {
+    <div class="loading-row" role="progressbar"><span class="spinner"></span>{{ 'touSchedule.loading' | translate }}</div>
   } @else if (errorKey()) {
-    <p class="error">
-      {{ errorKey() | translate }}
-      @if (errorKey() === 'common.settingsNotConfigured') {
-        <a routerLink="/settings">{{ 'nav.settings' | translate }}</a>
-      }
+    <p class="error-box" role="alert">
+      <span class="material-symbols-rounded" aria-hidden="true">error</span>
+      <span>
+        {{ errorKey() | translate }}
+        @if (errorKey() === 'common.settingsNotConfigured') {
+          <a routerLink="/settings">{{ 'common.goToSettings' | translate }}</a>
+        }
+      </span>
     </p>
   } @else {
-    <mat-card appearance="outlined" class="schedule-card">
-      <table mat-table [dataSource]="slots()" class="schedule-table">
-        <ng-container matColumnDef="startTime">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnStart' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">{{ slot.startTime }}</td>
-        </ng-container>
+    <div class="card">
+      <div class="timeline" aria-hidden="true">
+        @for (seg of segments(); track $index) {
+          <span
+            class="segment"
+            [class]="toneOf(seg.slot)"
+            [class.charging]="seg.slot.gridChargeEnabled"
+            [style.left.%]="seg.left"
+            [style.width.%]="seg.width"
+          ></span>
+        }
+      </div>
+      <div class="timeline-hours num" aria-hidden="true">
+        <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
+      </div>
 
-        <ng-container matColumnDef="endTime">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnEnd' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">{{ slot.endTime }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="powerWatts">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnPower' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">{{ slot.powerWatts / 1000 | number: '1.0-1' }} kW</td>
-        </ng-container>
-
-        <ng-container matColumnDef="targetSocPercent">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnTargetSoc' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">{{ slot.targetSocPercent }}%</td>
-        </ng-container>
-
-        <ng-container matColumnDef="gridChargeEnabled">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnGridCharge' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">
-            <mat-chip [class.on]="slot.gridChargeEnabled" [class.off]="!slot.gridChargeEnabled" disabled>
-              {{ (slot.gridChargeEnabled ? 'touSchedule.on' : 'touSchedule.off') | translate }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="governedBy">
-          <th mat-header-cell *matHeaderCellDef>{{ 'touSchedule.columnGovernedBy' | translate }}</th>
-          <td mat-cell *matCellDef="let slot">
-            @if (slot.governedBy) {
-              <mat-chip class="window">{{ ('window.' + slot.governedBy) | translate }}</mat-chip>
-            } @else {
-              <span class="muted">{{ 'touSchedule.unmanaged' | translate }}</span>
-            }
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns" [class.governed]="row.governedBy"></tr>
-      </table>
-    </mat-card>
+      <ul class="list">
+        @for (slot of slots(); track slot.slotIndex) {
+          <li class="list-row" [class]="toneOf(slot)" data-testid="tou-slot">
+            <span class="list-icon">
+              <span class="material-symbols-rounded" aria-hidden="true">{{ slot.gridChargeEnabled ? 'battery_charging_full' : iconOf(slot) }}</span>
+            </span>
+            <span class="list-main">
+              <span class="list-title num">{{ slot.startTime }}–{{ slot.endTime }}</span>
+              <span class="list-sub">
+                @if (slot.governedBy) {
+                  {{ 'touSchedule.governedBy' | translate: { window: (('window.' + slot.governedBy) | translate) } }}
+                } @else {
+                  {{ 'touSchedule.unmanaged' | translate }}
+                }
+              </span>
+            </span>
+            <span class="list-end">
+              <span class="chip" [class]="slot.gridChargeEnabled ? 'tone-cheap' : 'tone-neutral'">
+                <span class="material-symbols-rounded" aria-hidden="true">{{ slot.gridChargeEnabled ? 'check_circle' : 'block' }}</span>
+                {{ (slot.gridChargeEnabled ? 'touSchedule.gridOn' : 'touSchedule.gridOff') | translate }}
+              </span>
+              <span class="list-sub num">
+                {{ 'touSchedule.slotDetails' | translate: { power: (slot.powerWatts / 1000 | number: '1.0-1'), soc: slot.targetSocPercent } }}
+              </span>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
   }
 </section>

@@ -1,12 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
 import {
   ProcessSettingsApi,
   ProcessSettingsDto,
@@ -16,16 +10,7 @@ import {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    TranslatePipe,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatIconModule
-  ],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './settings.html',
   styleUrl: './settings.scss'
 })
@@ -39,6 +24,7 @@ export class Settings implements OnInit {
   /** Holds a translation key (not a rendered message) so the template can localize it. */
   readonly errorKey = signal<string | null>(null);
   readonly savedJustNow = signal(false);
+  readonly directions = ['north', 'east', 'south', 'west'] as const;
 
   readonly form = this.fb.group({
     planning: this.fb.group({
@@ -72,6 +58,10 @@ export class Settings implements OnInit {
     this.load();
   }
 
+  hasPanel(direction: (typeof this.directions)[number]): boolean {
+    return Number(this.form.controls.forecast.controls[direction].controls.kwp.value) > 0;
+  }
+
   private directionGroup() {
     return this.fb.group({
       declinationDegrees: [0, [Validators.required, Validators.min(0), Validators.max(90)]],
@@ -98,6 +88,8 @@ export class Settings implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.savedJustNow.set(false);
+      this.errorKey.set('settings.invalid');
       return;
     }
     this.saving.set(true);

@@ -1,49 +1,106 @@
-<section class="dashboard">
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'dashboard.title' | translate }}</h1>
+    </div>
+  </header>
+
   @if (loading()) {
-    <div class="spinner">
-      <mat-spinner diameter="36" />
-    </div>
-  } @else if (errorKey()) {
-    <p class="error">
-      {{ errorKey() | translate }}
-      @if (errorKey() === 'common.settingsNotConfigured') {
-        <a routerLink="/settings">{{ 'nav.settings' | translate }}</a>
-      }
-    </p>
-  } @else if (status(); as s) {
-    <div class="cards">
-      <mat-card appearance="outlined" class="card">
-        <span class="label">{{ 'dashboard.batterySoc' | translate }}</span>
-        <span class="value">{{ s.batterySocPercent }}%</span>
-      </mat-card>
-      <mat-card appearance="outlined" class="card" [class.cheap]="s.tariffRate === 'CHEAP'">
-        <span class="label">{{ 'dashboard.tariffNow' | translate }}</span>
-        <span class="value">{{ (s.tariffRate === 'CHEAP' ? 'dashboard.tariffCheap' : 'dashboard.tariffExpensive') | translate }}</span>
-      </mat-card>
-    </div>
+    <div class="loading-row" role="progressbar"><span class="spinner"></span>{{ 'dashboard.loading' | translate }}</div>
+  } @else {
+    @if (errorKey()) {
+      <p class="error-box appear" role="alert">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <span>
+          {{ errorKey() | translate }}
+          @if (errorKey() === 'common.settingsNotConfigured') {
+            <a routerLink="/settings">{{ 'common.goToSettings' | translate }}</a>
+          }
+        </span>
+      </p>
+    }
 
-    <mat-card appearance="outlined" class="last-decision">
-      <h2>{{ 'dashboard.lastDecision' | translate }}</h2>
-      @if (s.lastDecision; as d) {
-        <p class="decided-at">
-          {{ ('window.' + d.window) | translate }} - {{ d.decidedAt | date: 'medium' }}
-        </p>
-        <p class="charge" [class.on]="d.chargeFromGrid">
-          {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
-        </p>
-        <p class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</p>
-      } @else {
-        <p>{{ 'dashboard.noDecision' | translate }}</p>
-      }
-    </mat-card>
+    @if (status(); as s) {
+      <div class="card hero">
+        <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisionHours]="decisionHours()" [now]="now()" />
 
-    <div class="run-buttons">
-      <button mat-flat-button (click)="runOvernightNow()" [disabled]="runningOvernight()">
-        {{ (runningOvernight() ? 'dashboard.running' : 'dashboard.runOvernight') | translate }}
-      </button>
-      <button mat-flat-button (click)="runAfternoonNow()" [disabled]="runningAfternoon()">
-        {{ (runningAfternoon() ? 'dashboard.running' : 'dashboard.runAfternoon') | translate }}
-      </button>
+        <div class="hero-side">
+          <span class="chip" [class]="s.tariffRate === 'CHEAP' ? 'tone-cheap' : 'tone-neutral'" data-testid="tariff-now">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ s.tariffRate === 'CHEAP' ? 'savings' : 'bolt' }}</span>
+            {{ (s.tariffRate === 'CHEAP' ? 'dashboard.tariffCheapNow' : 'dashboard.tariffExpensiveNow') | translate }}
+          </span>
+
+          @if (windows().length > 0) {
+            <ul class="legend">
+              @for (w of windows(); track w.label) {
+                <li [class]="'tone-' + w.tone">
+                  <span class="swatch" aria-hidden="true"></span>
+                  <span class="legend-name">{{ ('dashboard.cheapWindow.' + w.tone) | translate }}</span>
+                  <span class="legend-time num">{{ w.label }}</span>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (upcoming().length > 0) {
+            <div class="upcoming">
+              <h2 class="side-title">{{ 'dashboard.nextDecisions' | translate }}</h2>
+              <ul class="list">
+                @for (u of upcoming(); track u.window) {
+                  <li class="list-row" [class]="toneOf(u.window)">
+                    <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">{{ iconOf(u.window) }}</span></span>
+                    <span class="list-main">
+                      <span class="list-title">{{ ('window.' + u.window) | translate }}</span>
+                      <span class="list-sub">{{ ('dashboard.decidesFor.' + u.window) | translate }}</span>
+                    </span>
+                    <span class="list-end">
+                      <span class="when num">{{ time(u.at) }}</span>
+                      <span class="list-sub">{{ (u.tomorrow ? 'dashboard.tomorrow' : 'dashboard.today') | translate }}</span>
+                    </span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card decision" [class]="s.lastDecision ? toneOf(s.lastDecision.window) : ''">
+        <h2 class="card-title">{{ 'dashboard.lastDecision' | translate }}</h2>
+        @if (s.lastDecision; as d) {
+          <div class="decision-head">
+            <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">{{ d.chargeFromGrid ? 'battery_charging_full' : iconOf(d.window) }}</span></span>
+            <div class="list-main">
+              <p class="decision-verdict" data-testid="decision-verdict">
+                {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
+              </p>
+              <p class="list-sub">
+                {{ ('window.' + d.window) | translate }}, {{ dayAndTime(d.decidedAt) }}
+              </p>
+            </div>
+          </div>
+          <p class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</p>
+        } @else {
+          <p class="empty-box">{{ 'dashboard.noDecision' | translate }}</p>
+        }
+      </div>
+    }
+
+    <div class="card">
+      <div>
+        <h2 class="card-title">{{ 'dashboard.runTitle' | translate }}</h2>
+        <p class="card-hint">{{ 'dashboard.runHint' | translate }}</p>
+      </div>
+      <div class="run-buttons">
+        <button class="btn btn-stroked" type="button" (click)="runOvernightNow()" [disabled]="runningOvernight()">
+          <span class="material-symbols-rounded" aria-hidden="true">bedtime</span>
+          {{ (runningOvernight() ? 'dashboard.running' : 'dashboard.runOvernight') | translate }}
+        </button>
+        <button class="btn btn-stroked" type="button" (click)="runAfternoonNow()" [disabled]="runningAfternoon()">
+          <span class="material-symbols-rounded" aria-hidden="true">wb_sunny</span>
+          {{ (runningAfternoon() ? 'dashboard.running' : 'dashboard.runAfternoon') | translate }}
+        </button>
+      </div>
     </div>
   }
 </section>

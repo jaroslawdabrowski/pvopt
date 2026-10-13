@@ -1,50 +1,716 @@
-// Angular Material M3 theming - see https://material.angular.dev/guide/theming
-// Light theme, pastel Bauhaus-inspired palette: cobalt blue, mustard yellow, terracotta red
-// on a warm cream ground - primary/secondary/tertiary map onto that classic Bauhaus triad.
-@use '@angular/material' as mat;
+// PV Opt design system - see docs/DESIGN.md for the why. Every value comes from a scale;
+// components use the semantic roles (--surface, --text-*, --night, --day, ...), never raw
+// ramp values. No Angular Material components are rendered - plain elements styled here.
 
 :root {
-  // Hand-picked pastel Bauhaus accents, used directly (outside Material's tonal system)
-  // for page background, chips and highlights where a truer pastel is wanted than
-  // Material's HCT-derived light-theme tones give us.
-  --pv-cream: #f7f2e7;
-  --pv-charcoal: #2b2b2b;
-  --pv-blue: #7fa8c9;
-  --pv-yellow: #f0c869;
-  --pv-red: #e07856;
-  --pv-green: #8fb996;
+  // --- Ramps (defined up front, never computed) ------------------------------------------
+  // Greys: cool slate, derived from the ink.
+  --grey-50: #f3f5f8;
+  --grey-100: #e7ebf0;
+  --grey-200: #d5dbe3;
+  --grey-300: #b6bfcc;
+  --grey-400: #8892a3; // 3.1:1 on white - the only edge of a control
+  --grey-500: #5c6678; // tertiary text, 5.8:1 on white - the palest grey allowed for text
+  --grey-600: #444d5e;
+  --grey-700: #2f3746;
+  --grey-900: #151b28; // ink
+
+  // Overnight window: night indigo.
+  --indigo-50: #eef0fb;
+  --indigo-100: #dde1f7;
+  --indigo-400: #6c76d9;
+  --indigo-500: #4b52c2;
+  --indigo-600: #3c42a3;
+  --indigo-700: #2f3482;
+
+  // Afternoon window and PV production: sun amber.
+  --amber-50: #fdf5e3;
+  --amber-100: #fae7bd;
+  --amber-400: #f2b33d;
+  --amber-500: #c27c06;
+  --amber-600: #a26605;
+  --amber-700: #7d4e05;
+
+  // Cheap tariff right now / battery healthy.
+  --green-50: #e9f6ee;
+  --green-100: #cdebd8;
+  --green-400: #3fae6b;
+  --green-600: #1b6b3d;
+  --green-700: #15542f;
+
+  --red-50: #fdeeee;
+  --red-600: #b42318;
+  --red-700: #9b1c1c;
+
+  // --- Semantic roles ---------------------------------------------------------------------
+  --page: var(--grey-50);
+  --surface: #ffffff;
+  --surface-well: var(--grey-50);
+  --border: var(--grey-100); // decorative dividers
+  --border-strong: var(--grey-400); // a border that is the only edge of a control
+  --text-primary: var(--grey-900);
+  --text-secondary: var(--grey-600);
+  --text-tertiary: var(--grey-500);
+  --action: var(--grey-900);
+  --on-action: #ffffff;
+  --focus: var(--indigo-500);
+
+  // One colour per charge window - the same meaning on the dial, in history and in TOU.
+  --night: var(--indigo-500);
+  --night-strong: var(--indigo-600);
+  --night-tint: var(--indigo-50);
+  --night-on-tint: var(--indigo-700);
+  --day: var(--amber-400);
+  --day-strong: var(--amber-600);
+  --day-tint: var(--amber-50);
+  --day-on-tint: var(--amber-700);
+  --cheap: var(--green-400);
+  --cheap-strong: var(--green-600);
+  --cheap-tint: var(--green-50);
+  --cheap-on-tint: var(--green-700);
+
+  // --- Scales -------------------------------------------------------------------------------
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+
+  --radius-field: 12px;
+  --radius-card: 20px;
+  --radius-pill: 999px;
+
+  // Soft, tinted with the ink - chosen by height above the page, not by taste.
+  --shadow-1: 0 1px 2px rgba(21, 27, 40, 0.06), 0 1px 3px rgba(21, 27, 40, 0.05);
+  --shadow-2: 0 2px 6px rgba(21, 27, 40, 0.07), 0 4px 12px rgba(21, 27, 40, 0.05);
+  --shadow-4: 0 16px 40px rgba(21, 27, 40, 0.14), 0 4px 10px rgba(21, 27, 40, 0.06);
+
+  --font: 'Hanken Grotesk', -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+
+  // --- Motion -------------------------------------------------------------------------------
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 140ms;
+  --dur-fast: 180ms;
+  --dur-base: 240ms;
 }
 
+// --- Base: feel installed on a phone (mobile-native) --------------------------------------
 html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
   height: 100%;
-  @include mat.theme(
-    (
-      color: (
-        theme-type: light,
-        primary: mat.$blue-palette,
-        secondary: mat.$yellow-palette,
-        tertiary: mat.$red-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    )
-  );
 }
 
-html,
 body {
-  margin: 0;
-  min-height: 100vh;
   color-scheme: light;
-  background-color: var(--pv-cream);
-  color: var(--pv-charcoal);
-  font: var(--mat-sys-body-medium);
+  margin: 0;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: var(--text-base);
+  line-height: 1.5;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-button {
+h1,
+h2,
+h3 {
+  margin: 0;
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
   font-family: inherit;
+}
+
+button,
+a,
+[role='button'],
+.segmented label {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// --- Page scaffolding -------------------------------------------------------------------
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+
+  > div {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.page-lead {
+  color: var(--text-secondary);
+  max-width: 62ch;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.card-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card-hint {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  max-width: 68ch;
+}
+
+// --- Buttons: pills, 44px, one filled action per view ------------------------------------
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font: 600 var(--text-base) / 1 var(--font);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+}
+
+.btn-primary {
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.btn-stroked {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--grey-300);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-fast);
+
+  &:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--grey-700);
+  }
+
+  .btn-stroked:hover:not(:disabled) {
+    background: var(--grey-50);
+  }
+
+  .icon-btn:hover:not(:disabled) {
+    background: var(--grey-100);
+    color: var(--text-primary);
+  }
+}
+
+// --- Fields: label above, native control -------------------------------------------------
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+
+  > label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+}
+
+.field-hint {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.field-error {
+  font-size: var(--text-sm);
+  color: var(--red-700);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end; // a label that wraps pushes upwards, inputs stay on one line
+  gap: var(--space-4);
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: 400 var(--text-base) var(--font); // 16px: iOS zooms into anything smaller
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--indigo-100);
+  }
+
+  &[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &.ng-invalid.ng-touched {
+    border-color: var(--red-600);
+  }
+}
+
+// An input with a unit inside its right edge ("kWh", "%").
+.input-group {
+  position: relative;
+  display: flex;
+
+  .input {
+    padding-right: 64px;
+  }
+
+  .suffix {
+    position: absolute;
+    right: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-weight: 500;
+    pointer-events: none;
+  }
+}
+
+// --- Segmented control (pill radio group) -----------------------------------------------
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--grey-100);
+
+  label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition:
+      transform var(--dur-press) var(--ease-out),
+      background-color var(--dur-fast),
+      color var(--dur-fast);
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &:has(input:checked) {
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-1);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--focus);
+      outline-offset: 1px;
+    }
+  }
+
+  // The radio sits over its own label, invisible - still a real, keyboard-reachable radio.
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+// --- Window tones: one colour per charge window, everywhere ------------------------------
+.tone-night {
+  --tone: var(--night);
+  --tone-strong: var(--night-strong);
+  --tone-tint: var(--night-tint);
+  --tone-on-tint: var(--night-on-tint);
+}
+
+.tone-day {
+  --tone: var(--day);
+  --tone-strong: var(--day-strong);
+  --tone-tint: var(--day-tint);
+  --tone-on-tint: var(--day-on-tint);
+}
+
+.tone-cheap {
+  --tone: var(--cheap);
+  --tone-strong: var(--cheap-strong);
+  --tone-tint: var(--cheap-tint);
+  --tone-on-tint: var(--cheap-on-tint);
+}
+
+.tone-neutral {
+  --tone: var(--grey-400);
+  --tone-strong: var(--grey-600);
+  --tone-tint: var(--grey-100);
+  --tone-on-tint: var(--grey-700);
+}
+
+// --- Chips --------------------------------------------------------------------------------
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--tone-tint, var(--grey-100));
+  color: var(--tone-on-tint, var(--text-secondary));
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+    font-variation-settings: 'FILL' 1, 'wght' 500;
+  }
+}
+
+// --- Lists (instead of tables) ----------------------------------------------------------
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.list-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--tone-tint, var(--grey-100));
+  color: var(--tone-strong, var(--text-secondary));
+
+  .material-symbols-rounded {
+    font-size: 22px;
+    font-variation-settings: 'FILL' 1, 'wght' 500;
+  }
+}
+
+.list-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list-title {
+  font-weight: 600;
+}
+
+.list-sub {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.list-end {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  text-align: right;
+}
+
+// --- Feedback boxes ---------------------------------------------------------------------
+.error-box,
+.warning-box,
+.success-box,
+.empty-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border-radius: var(--radius-field);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+
+  .material-symbols-rounded {
+    font-size: 20px;
+    flex: none;
+  }
+
+  a {
+    font-weight: 600;
+    text-underline-offset: 2px;
+  }
+}
+
+.error-box {
+  background: var(--red-50);
+  color: var(--red-700);
+}
+
+.warning-box {
+  background: var(--amber-50);
+  color: var(--amber-700);
+}
+
+.success-box {
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.empty-box {
+  background: var(--surface-well);
+  color: var(--text-secondary);
+}
+
+// Something appeared because of what you did.
+.appear {
+  animation: appear var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+// A small spinner (role="progressbar").
+.spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid var(--grey-200);
+  border-top-color: var(--text-primary);
+  animation: spin 0.8s linear infinite;
+  flex: none;
+}
+
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  padding-block: var(--space-4);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Route change: a quiet native-like cross-fade (View Transitions); the shell stays put.
+::view-transition-old(root) {
+  animation: 120ms var(--ease-out) both vt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 220ms var(--ease-out) both vt-fade-in;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.hide-mobile {
+  @media (max-width: 600px) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: var(--space-5) var(--space-4) calc(110px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .page-title {
+    font-size: var(--text-2xl);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }

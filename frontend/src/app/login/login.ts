@@ -2,17 +2,13 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../core/auth.service';
 import { EnergyPlanningApi } from '../core/energy-planning-api.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })

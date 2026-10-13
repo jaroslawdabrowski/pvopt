@@ -18,10 +18,11 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('shows the top nav only when authenticated', () => {
+  it('shows the navigation only when authenticated', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('nav.topnav')).toBeNull();
+    expect(compiled.querySelector('.sidebar')).toBeNull();
+    expect(compiled.querySelector('.tabbar')).toBeNull();
   });
 });

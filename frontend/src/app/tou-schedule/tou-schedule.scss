@@ -1,67 +1,44 @@
-.tou-schedule {
-  max-width: 860px;
-  margin: 0 auto;
-
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    h1 {
-      margin: 0;
-      font: var(--mat-sys-headline-medium);
-    }
-  }
-
-  .subtitle {
-    color: var(--mat-sys-on-surface-variant);
-    margin: 0.25rem 0 1.5rem;
-  }
-
-  .spinner {
-    display: flex;
-    justify-content: center;
-    padding: 3rem 0;
-  }
-
-  .error {
-    color: var(--mat-sys-error);
-  }
-}
-
-.schedule-card {
+.timeline {
+  position: relative;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--grey-100);
   overflow: hidden;
-  border-radius: 0.5rem;
-  border-top: 5px solid var(--pv-blue);
 }
 
-.schedule-table {
-  width: 100%;
+// Every slot boundary is visible; governed slots carry their window's colour,
+// and a slot that may charge from the grid is drawn solid instead of tinted.
+.segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--tone-tint);
+  border-left: 2px solid var(--surface);
 
-  th.mat-mdc-header-cell {
-    font-weight: 600;
-  }
-
-  tr.governed {
-    background: color-mix(in srgb, var(--pv-yellow) 18%, transparent);
-  }
-
-  .muted {
-    color: var(--mat-sys-on-surface-variant);
+  &.charging {
+    background: var(--tone);
   }
 }
 
-mat-chip.on {
-  --mat-chip-elevated-container-color: color-mix(in srgb, var(--pv-green) 55%, white);
-  --mat-chip-label-text-color: #2f4a35;
+.timeline-hours {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--space-3));
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-tertiary);
 }
 
-mat-chip.off {
-  --mat-chip-elevated-container-color: color-mix(in srgb, var(--mat-sys-outline) 15%, white);
-  --mat-chip-label-text-color: var(--mat-sys-on-surface-variant);
+.list-row {
+  align-items: center;
 }
 
-mat-chip.window {
-  --mat-chip-elevated-container-color: color-mix(in srgb, var(--pv-red) 45%, white);
-  --mat-chip-label-text-color: #7a2e11;
+.list-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
 }

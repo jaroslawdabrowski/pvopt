@@ -1,132 +1,169 @@
-<section class="settings">
-  <h1>{{ 'settings.title' | translate }}</h1>
-  <p class="subtitle">{{ 'settings.subtitle' | translate }}</p>
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'settings.title' | translate }}</h1>
+      <p class="page-lead">{{ 'settings.subtitle' | translate }}</p>
+    </div>
+  </header>
 
   @if (loading()) {
-    <div class="spinner">
-      <mat-spinner diameter="36" />
-    </div>
+    <div class="loading-row" role="progressbar"><span class="spinner"></span>{{ 'settings.loading' | translate }}</div>
   } @else {
     @if (!configured()) {
-      <div class="banner not-configured">
-        <mat-icon>info</mat-icon>
+      <p class="warning-box">
+        <span class="material-symbols-rounded" aria-hidden="true">info</span>
         <span>{{ 'settings.notConfiguredBanner' | translate }}</span>
-      </div>
-    }
-    @if (savedJustNow()) {
-      <div class="banner saved">
-        <mat-icon>check_circle</mat-icon>
-        <span>{{ 'settings.saved' | translate }}</span>
-      </div>
-    }
-    @if (errorKey()) {
-      <p class="error">{{ errorKey() | translate }}</p>
+      </p>
     }
 
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-card appearance="outlined" class="section" formGroupName="planning">
-        <h2>{{ 'settings.planning.title' | translate }}</h2>
-        <div class="grid">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.planning.minSoc' | translate }}</mat-label>
-            <input matInput type="number" formControlName="minSocPercent" />
-            <span matTextSuffix>%</span>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.planning.fullSoc' | translate }}</mat-label>
-            <input matInput type="number" formControlName="fullSocPercent" />
-            <span matTextSuffix>%</span>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.planning.dailyConsumption' | translate }}</mat-label>
-            <input matInput type="number" step="0.1" formControlName="dailyConsumptionEstimateKwh" />
-            <span matTextSuffix>kWh</span>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.planning.afternoonConsumption' | translate }}</mat-label>
-            <input matInput type="number" step="0.1" formControlName="afternoonConsumptionEstimateKwh" />
-            <span matTextSuffix>kWh</span>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.planning.safetyMargin' | translate }}</mat-label>
-            <input matInput type="number" step="0.05" formControlName="forecastSafetyMarginRatio" />
-          </mat-form-field>
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="card" formGroupName="planning">
+        <div>
+          <h2 class="card-title">{{ 'settings.planning.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.planning.hint' | translate }}</p>
         </div>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ 'settings.planning.tariffWindows' | translate }}</mat-label>
-          <input matInput formControlName="cheapTariffWindows" placeholder="22:00-06:00, 13:00-15:00" />
-          <mat-hint>{{ 'settings.planning.tariffWindowsHint' | translate }}</mat-hint>
-        </mat-form-field>
-      </mat-card>
-
-      <mat-card appearance="outlined" class="section" formGroupName="schedule">
-        <h2>{{ 'settings.schedule.title' | translate }}</h2>
-        <div class="grid">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.schedule.overnightTime' | translate }}</mat-label>
-            <input matInput type="time" formControlName="overnightTime" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.schedule.afternoonTime' | translate }}</mat-label>
-            <input matInput type="time" formControlName="afternoonTime" />
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <mat-card appearance="outlined" class="section" formGroupName="forecast">
-        <h2>{{ 'settings.forecast.title' | translate }}</h2>
-        <div class="grid">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.forecast.latitude' | translate }}</mat-label>
-            <input matInput type="number" step="0.0001" formControlName="latitude" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.forecast.longitude' | translate }}</mat-label>
-            <input matInput type="number" step="0.0001" formControlName="longitude" />
-          </mat-form-field>
-        </div>
-
-        <p class="directions-hint">{{ 'settings.forecast.directionsHint' | translate }}</p>
-        <div class="directions">
-          @for (direction of ['north', 'east', 'south', 'west']; track direction) {
-            <div class="direction" [formGroupName]="direction">
-              <h3>{{ ('settings.forecast.direction.' + direction) | translate }}</h3>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'settings.forecast.declination' | translate }}</mat-label>
-                <input matInput type="number" formControlName="declinationDegrees" />
-                <span matTextSuffix>&deg;</span>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'settings.forecast.kwp' | translate }}</mat-label>
-                <input matInput type="number" step="0.1" formControlName="kwp" />
-                <span matTextSuffix>kWp</span>
-              </mat-form-field>
+        <div class="field-grid">
+          <div class="field">
+            <label for="minSoc">{{ 'settings.planning.minSoc' | translate }}</label>
+            <div class="input-group">
+              <input id="minSoc" class="input num" type="number" inputmode="numeric" formControlName="minSocPercent" />
+              <span class="suffix">%</span>
             </div>
+          </div>
+          <div class="field">
+            <label for="fullSoc">{{ 'settings.planning.fullSoc' | translate }}</label>
+            <div class="input-group">
+              <input id="fullSoc" class="input num" type="number" inputmode="numeric" formControlName="fullSocPercent" />
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="dailyConsumption">{{ 'settings.planning.dailyConsumption' | translate }}</label>
+            <div class="input-group">
+              <input id="dailyConsumption" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="dailyConsumptionEstimateKwh" />
+              <span class="suffix">kWh</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="afternoonConsumption">{{ 'settings.planning.afternoonConsumption' | translate }}</label>
+            <div class="input-group">
+              <input id="afternoonConsumption" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="afternoonConsumptionEstimateKwh" />
+              <span class="suffix">kWh</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="safetyMargin">{{ 'settings.planning.safetyMargin' | translate }}</label>
+            <div class="input-group">
+              <input id="safetyMargin" class="input num" type="number" inputmode="decimal" step="0.05" formControlName="forecastSafetyMarginRatio" />
+              <span class="suffix">×</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tariffWindows">{{ 'settings.planning.tariffWindows' | translate }}</label>
+          <input id="tariffWindows" class="input num" formControlName="cheapTariffWindows" placeholder="22:00-06:00, 13:00-15:00" aria-describedby="tariffWindowsHint" />
+          <span id="tariffWindowsHint" class="field-hint">{{ 'settings.planning.tariffWindowsHint' | translate }}</span>
+        </div>
+      </div>
+
+      <div class="card" formGroupName="schedule">
+        <div>
+          <h2 class="card-title">{{ 'settings.schedule.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.schedule.hint' | translate }}</p>
+        </div>
+        <div class="field-grid">
+          <div class="field tone-night">
+            <label for="overnightTime"><span class="material-symbols-rounded label-icon" aria-hidden="true">bedtime</span>{{ 'settings.schedule.overnightTime' | translate }}</label>
+            <input id="overnightTime" class="input num" type="time" formControlName="overnightTime" />
+          </div>
+          <div class="field tone-day">
+            <label for="afternoonTime"><span class="material-symbols-rounded label-icon" aria-hidden="true">wb_sunny</span>{{ 'settings.schedule.afternoonTime' | translate }}</label>
+            <input id="afternoonTime" class="input num" type="time" formControlName="afternoonTime" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card" formGroupName="forecast">
+        <div>
+          <h2 class="card-title">{{ 'settings.forecast.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.forecast.directionsHint' | translate }}</p>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="latitude">{{ 'settings.forecast.latitude' | translate }}</label>
+            <input id="latitude" class="input num" type="number" inputmode="decimal" step="0.0001" formControlName="latitude" placeholder="52.2297" />
+          </div>
+          <div class="field">
+            <label for="longitude">{{ 'settings.forecast.longitude' | translate }}</label>
+            <input id="longitude" class="input num" type="number" inputmode="decimal" step="0.0001" formControlName="longitude" placeholder="21.0122" />
+          </div>
+        </div>
+
+        <div class="directions">
+          @for (direction of directions; track direction) {
+            <fieldset class="direction" [formGroupName]="direction" [class.has-panel]="hasPanel(direction)">
+              <legend>
+                <span class="material-symbols-rounded" aria-hidden="true">{{ direction }}</span>
+                {{ ('settings.forecast.direction.' + direction) | translate }}
+                @if (!hasPanel(direction)) {
+                  <span class="no-panel">{{ 'settings.forecast.noPanel' | translate }}</span>
+                }
+              </legend>
+              <div class="field">
+                <label [for]="direction + '-kwp'">{{ 'settings.forecast.kwp' | translate }}</label>
+                <div class="input-group">
+                  <input [id]="direction + '-kwp'" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="kwp" />
+                  <span class="suffix">kWp</span>
+                </div>
+              </div>
+              <div class="field">
+                <label [for]="direction + '-declination'">{{ 'settings.forecast.declination' | translate }}</label>
+                <div class="input-group">
+                  <input [id]="direction + '-declination'" class="input num" type="number" inputmode="numeric" formControlName="declinationDegrees" />
+                  <span class="suffix">&deg;</span>
+                </div>
+              </div>
+            </fieldset>
           }
         </div>
-      </mat-card>
+      </div>
 
-      <mat-card appearance="outlined" class="section" formGroupName="inverterConnection">
-        <h2>{{ 'settings.inverter.title' | translate }}</h2>
-        <p class="section-hint">{{ 'settings.inverter.hint' | translate }}</p>
-        <div class="grid">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.inverter.host' | translate }}</mat-label>
-            <input matInput formControlName="host" placeholder="192.168.1.100" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.inverter.port' | translate }}</mat-label>
-            <input matInput type="number" formControlName="port" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'settings.inverter.loggerSerial' | translate }}</mat-label>
-            <input matInput type="number" formControlName="loggerSerial" />
-          </mat-form-field>
+      <div class="card" formGroupName="inverterConnection">
+        <div>
+          <h2 class="card-title">{{ 'settings.inverter.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.inverter.hint' | translate }}</p>
         </div>
-      </mat-card>
+        <div class="field-grid">
+          <div class="field">
+            <label for="host">{{ 'settings.inverter.host' | translate }}</label>
+            <input id="host" class="input num" formControlName="host" placeholder="192.168.1.100" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="port">{{ 'settings.inverter.port' | translate }}</label>
+            <input id="port" class="input num" type="number" inputmode="numeric" formControlName="port" />
+          </div>
+          <div class="field">
+            <label for="loggerSerial">{{ 'settings.inverter.loggerSerial' | translate }}</label>
+            <input id="loggerSerial" class="input num" type="number" inputmode="numeric" formControlName="loggerSerial" />
+          </div>
+        </div>
+      </div>
 
-      <div class="actions">
-        <button mat-flat-button type="submit" [disabled]="saving()">
+      <div class="save-bar">
+        <div class="save-status" aria-live="polite">
+          @if (errorKey()) {
+            <p class="error-box appear" role="alert">
+              <span class="material-symbols-rounded" aria-hidden="true">error</span>
+              <span>{{ errorKey() | translate }}</span>
+            </p>
+          } @else if (savedJustNow()) {
+            <p class="success-box appear">
+              <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+              <span>{{ 'settings.saved' | translate }}</span>
+            </p>
+          }
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="saving()">
           {{ (saving() ? 'settings.saving' : 'settings.save') | translate }}
         </button>
       </div>

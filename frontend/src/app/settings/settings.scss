@@ -1,109 +1,117 @@
-.settings {
-  max-width: 50rem;
-  margin: 0 auto;
-
-  h1 {
-    margin: 0;
-    font: var(--mat-sys-headline-medium);
-  }
-
-  .subtitle {
-    color: var(--mat-sys-on-surface-variant);
-    margin: 0.25rem 0 1.5rem;
-  }
-}
-
-.spinner {
-  display: flex;
-  justify-content: center;
-  padding: 3rem 0;
-}
-
-.banner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-
-  &.not-configured {
-    background: color-mix(in srgb, var(--pv-yellow) 30%, white);
-    color: #6b4e00;
-  }
-
-  &.saved {
-    background: color-mix(in srgb, var(--pv-green) 35%, white);
-    color: #2f4a35;
-  }
-}
-
-.error {
-  color: var(--mat-sys-error);
-}
-
 form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
 }
 
-.section {
-  border-radius: 0.5rem;
-  border-top: 5px solid var(--pv-blue);
-  padding: 1.25rem 1.5rem;
-
-  h2 {
-    margin: 0 0 0.75rem;
-    font-size: 1.1rem;
-  }
-
-  .section-hint {
-    color: var(--mat-sys-on-surface-variant);
-    font-size: 0.85rem;
-    margin: -0.25rem 0 0.75rem;
-  }
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem 1rem;
-}
-
-.full-width {
-  width: 100%;
-  margin-top: 0.5rem;
-}
-
-.directions-hint {
-  color: var(--mat-sys-on-surface-variant);
-  font-size: 0.85rem;
-  margin: 0.5rem 0;
+.label-icon {
+  font-size: 18px;
+  vertical-align: -4px;
+  margin-right: var(--space-1);
+  color: var(--tone-strong);
+  font-variation-settings: 'FILL' 1, 'wght' 500;
 }
 
 .directions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
 
-  .direction {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border-radius: 0.4rem;
-    background: color-mix(in srgb, var(--pv-blue) 8%, transparent);
+// A direction without panels stays quiet; one with panels gets the sun's tint -
+// the direction's name always says which one it is, colour only adds to it.
+.direction {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface-well);
+  transition: background-color var(--dur-fast) var(--ease-out);
 
-    h3 {
-      margin: 0;
-      font-size: 0.95rem;
+  &.has-panel {
+    background: var(--day-tint);
+
+    legend .material-symbols-rounded {
+      color: var(--day-strong);
     }
+  }
+
+  legend {
+    float: left; // keeps the legend inside the padded box instead of on the border
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    font-weight: 700;
+
+    .material-symbols-rounded {
+      font-size: 20px;
+      color: var(--text-tertiary);
+    }
+  }
+
+  .no-panel {
+    margin-left: auto;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+
+  .input {
+    background: var(--surface);
   }
 }
 
-.actions {
+// Saving is always one reach away on a long form.
+.save-bar {
+  position: sticky;
+  bottom: var(--space-4);
+  z-index: 5;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-4);
+
+  .btn {
+    flex: none;
+  }
+}
+
+.save-status {
+  flex: 1;
+  min-width: 0;
+
+  p {
+    padding-block: var(--space-2);
+  }
+}
+
+@media (max-width: 900px) {
+  .save-bar {
+    // clears the floating tab bar
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 600px) {
+  .save-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .save-status:empty {
+    display: none;
+  }
 }
