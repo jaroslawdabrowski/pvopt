@@ -53,8 +53,10 @@ the Material toolbar/tables read as a component demo. Redesigned 2026-10-13.
   colour (parsed from the settings' `cheapTariffWindows`, `dashboard/tariff-windows.ts`), ink
   ticks at the two decision times, a dot for "now", and the battery SOC as the big number in the
   middle with the inner ring filled to it. Each window that holds a reserve (its latest decision
-  charges from the grid) gets a haloed notch on the battery ring at its target SOC, in the window's
-  colour and labelled with the percentage, and the legend repeats it per window ("zapas 36%" /
+  charges from the grid) gets a badge with its target SOC at the middle of its arc - a white pill
+  outlined in the window's colour. Reserves sit on the arcs, not on the battery ring: the outer ring
+  is time and the inner one charge level, and a notch at "36% of the way round" on the inner ring
+  read as a time of day. The legend repeats it per window ("zapas 36%" /
   "bez ładowania") - the battery now and the plan for it in one picture. The SOC ring filling up once on load is the app's
   only orchestrated motion.
 - **TOU page**: a thin 00-24 bar of the six slots (governed slots tinted in their window's

@@ -14,11 +14,6 @@ function pointAt(hours: number, radius: number): { x: number; y: number } {
   return { x: CENTER + radius * Math.sin(angle), y: CENTER - radius * Math.cos(angle) };
 }
 
-/** A point on a ring at {@code fraction} of a full turn, clockwise from the top (the battery ring's 0%). */
-function pointOnRing(fraction: number, radius: number): { x: number; y: number } {
-  return pointAt(fraction * 24, radius);
-}
-
 export interface ReserveMark {
   tone: WindowTone;
   soc: number;
@@ -66,15 +61,15 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
         [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
       />
 
-      @for (marker of reserveMarkers(); track marker.tone) {
-        <g class="reserve-marker" [class]="'tone-' + marker.tone">
-          <line class="reserve-halo" [attr.x1]="marker.x1" [attr.y1]="marker.y1" [attr.x2]="marker.x2" [attr.y2]="marker.y2" />
-          <line class="reserve-tick" [attr.x1]="marker.x1" [attr.y1]="marker.y1" [attr.x2]="marker.x2" [attr.y2]="marker.y2" />
-          <text class="reserve-label" [attr.x]="marker.labelX" [attr.y]="marker.labelY">{{ marker.soc }}%</text>
+      <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7" />
+
+      @for (badge of reserveBadges(); track badge.tone) {
+        <g class="reserve-badge" [class]="'tone-' + badge.tone">
+          <rect [attr.x]="badge.x - badgeWidth / 2" [attr.y]="badge.y - badgeHeight / 2" [attr.width]="badgeWidth"
+                [attr.height]="badgeHeight" [attr.rx]="badgeHeight / 2" />
+          <text [attr.x]="badge.x" [attr.y]="badge.y">{{ badge.soc }}%</text>
         </g>
       }
-
-      <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7" />
     </svg>
 
     <div class="dial-centre">
@@ -90,7 +85,7 @@ export class DayDial {
   /** Decision times as hours past midnight (e.g. 21.75 for 21:45). */
   readonly decisionHours = input<number[]>([]);
   readonly now = input.required<Date>();
-  /** The SOC each cheap window holds (its grid-charge target) - drawn as a notch on the battery ring. */
+  /** The SOC each cheap window holds (its grid-charge target) - drawn as a badge on that window's arc. */
   readonly reserves = input<ReserveMark[]>([]);
 
   protected readonly center = CENTER;
@@ -124,19 +119,23 @@ export class DayDial {
     return pointAt(now.getHours() + now.getMinutes() / 60, DAY_RING_RADIUS);
   });
 
-  protected readonly reserveMarkers = computed(() => {
-    const sorted = [...this.reserves()].sort((a, b) => a.soc - b.soc);
-    return sorted.map((reserve, i) => {
-      const fraction = Math.min(100, Math.max(0, reserve.soc)) / 100;
-      const inner = pointOnRing(fraction, SOC_RING_RADIUS - 9);
-      const outer = pointOnRing(fraction, SOC_RING_RADIUS + 9);
-      // Two reserves a few points apart would print on top of each other - push the second one inwards.
-      const crowded = i > 0 && reserve.soc - sorted[i - 1].soc < 6;
-      const label = pointOnRing(fraction, SOC_RING_RADIUS - (crowded ? 30 : 19));
-      return { tone: reserve.tone, soc: reserve.soc, x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y,
-        labelX: label.x, labelY: label.y };
-    });
-  });
+  protected readonly badgeWidth = 38;
+  protected readonly badgeHeight = 20;
+
+  /**
+   * A window's reserve sits on that window's arc, at its middle: the outer ring is time, so
+   * "36%" on the night arc reads as "overnight the battery holds 36%". The inner ring stays a
+   * plain charge level - putting reserves on it mixed two scales on one circle.
+   */
+  protected readonly reserveBadges = computed(() =>
+    this.reserves().flatMap((reserve) => {
+      const window = this.windows().find((w) => w.tone === reserve.tone);
+      if (!window) return [];
+      const span = (window.endHours - window.startHours + 24) % 24 || 24;
+      const middle = pointAt(window.startHours + span / 2, DAY_RING_RADIUS);
+      return [{ tone: reserve.tone, soc: reserve.soc, x: middle.x, y: middle.y }];
+    })
+  );
 
   protected readonly socOffset = computed(() => {
     const soc = Math.min(100, Math.max(0, this.socPercent()));
