@@ -24,7 +24,9 @@
     "settingsNotConfigured": "Proces nie jest jeszcze skonfigurowany, więc nie ma czego pokazać.",
     "goToSettings": "Uzupełnij ustawienia",
     "periodLabel": "drogie godziny {{from}}–{{to}}",
-    "noForecast": "Nie było prognozy PV - decyzję policzono tak, jakby słońca nie było."
+    "noForecast": "Nie było prognozy PV - decyzję policzono tak, jakby słońca nie było.",
+    "reserveFlat": "Najwięcej brakuje do {{hour}} - {{kwh}} kWh, zanim panele nadrobią. Zużycie rozłożone równo, dopóki nie zbierze się profil godzinowy.",
+    "reserveLearned": "Najwięcej brakuje do {{hour}} - {{kwh}} kWh, zanim panele nadrobią. Zużycie rozłożone według zmierzonego profilu godzinowego."
   },
   "dashboard": {
     "loading": "Ładowanie...",
@@ -172,7 +174,7 @@
     "ALREADY_AT_TARGET_SOC": "Bateria ma już co najmniej {{targetSoc}}%, czyli zapas na to, czego nie pokryje słońce - pomijamy ładowanie z sieci.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
     "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
-    "FORECAST_INSUFFICIENT": "Prognoza na drogie godziny ({{forecastKwh}} kWh) nie pokryje zużycia ({{requiredKwh}} kWh), więc w tanim oknie bateria trzyma co najmniej {{targetSoc}}%. Jeśli będzie miała mniej, falownik doładuje ją z sieci, ale tylko do tego poziomu.",
+    "FORECAST_INSUFFICIENT": "Prognoza na drogie godziny to {{forecastKwh}} kWh przy zużyciu {{requiredKwh}} kWh, a słońce nie zdąży pokryć wszystkiego na czas. W tanim oknie bateria trzyma więc co najmniej {{targetSoc}}%. Jeśli będzie miała mniej, falownik doładuje ją z sieci, ale tylko do tego poziomu.",
     "RESERVE_HELD": "Bateria ({{soc}}%) ma już zapas na drogie godziny (potrzeba {{targetSoc}}%, prognoza {{forecastKwh}} kWh przy wymaganych {{requiredKwh}} kWh). Bez ładowania z sieci, ale w tanich godzinach bateria nie zejdzie poniżej {{targetSoc}}% - dom korzysta wtedy z taniej sieci."
   },
   "language": {

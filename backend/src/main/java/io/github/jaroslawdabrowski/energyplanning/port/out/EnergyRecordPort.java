@@ -17,6 +17,9 @@ public interface EnergyRecordPort {
     /** The snapshot closest to {@code at}, if one was taken within {@code tolerance} of it. */
     Optional<EnergySnapshot> findSnapshotNear(LocalDateTime at, Duration tolerance);
 
+    /** Every snapshot taken at or after {@code since}, oldest first. */
+    List<EnergySnapshot> findSnapshotsSince(LocalDateTime since);
+
     /** Saves an outcome, replacing one already recorded for the same window and period start. */
     void saveOutcome(PeriodOutcome outcome);
 

@@ -3,6 +3,7 @@ package io.github.jaroslawdabrowski.energyplanning.adapter.out.forecast.forecast
 import org.junit.jupiter.api.Test;
 
 import io.github.jaroslawdabrowski.energyplanning.domain.DirectionPanelSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
 import io.github.jaroslawdabrowski.energyplanning.domain.ForecastSettings;
 
 import java.time.Clock;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.offset;
 
 class ForecastSolarAdapterTest {
 
@@ -62,54 +64,64 @@ class ForecastSolarAdapterTest {
     private final ForecastSolarAdapter adapter = new ForecastSolarAdapter(client, clock);
     private final ForecastSettings oneWestPlane = new ForecastSettings(52, 21, none(), none(), none(),
             new DirectionPanelSettings(30, 5.0));
-    private final LocalDateTime morningFrom = LocalDateTime.of(2026, 1, 17, 6, 0);
-    private final LocalDateTime morningTo = LocalDateTime.of(2026, 1, 17, 13, 0);
+    private final ExpensivePeriod morning = new ExpensivePeriod(LocalDateTime.of(2026, 1, 17, 6, 0),
+            LocalDateTime.of(2026, 1, 17, 13, 0));
 
     @Test
     void reusesAResponseForAnHour() {
-        adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        adapter.productionProfile(morning, oneWestPlane);
         clock.advance(Duration.ofMinutes(50));
-        var forecast = adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        var forecast = adapter.productionProfile(morning, oneWestPlane);
 
         assertThat(client.calls).isEqualTo(1);
-        assertThat(forecast.expectedKwh()).isEqualTo(1.8);
+        assertThat(forecast.totalKwh()).isCloseTo(1.8, offset(1e-9));
     }
 
     @Test
     void asksAgainOnceTheResponseIsAnHourOld() {
-        adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        adapter.productionProfile(morning, oneWestPlane);
         clock.advance(Duration.ofMinutes(61));
-        adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        adapter.productionProfile(morning, oneWestPlane);
 
         assertThat(client.calls).isEqualTo(2);
     }
 
     @Test
     void fallsBackToTheLastGoodResponseWhenRateLimited() {
-        adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        adapter.productionProfile(morning, oneWestPlane);
         clock.advance(Duration.ofHours(9));
         client.failWith = new RuntimeException("Too Many Requests, status code 429");
 
-        var forecast = adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        var forecast = adapter.productionProfile(morning, oneWestPlane);
 
-        assertThat(forecast.expectedKwh()).isEqualTo(1.8);
+        assertThat(forecast.totalKwh()).isCloseTo(1.8, offset(1e-9));
     }
 
     @Test
     void failsWhenTheLastGoodResponseIsOverADayOld() {
-        adapter.productionBetween(morningFrom, morningTo, oneWestPlane);
+        adapter.productionProfile(morning, oneWestPlane);
         clock.advance(Duration.ofHours(25));
         client.failWith = new RuntimeException("Too Many Requests, status code 429");
 
-        assertThatThrownBy(() -> adapter.productionBetween(morningFrom, morningTo, oneWestPlane))
+        assertThatThrownBy(() -> adapter.productionProfile(morning, oneWestPlane))
                 .hasMessageContaining("429");
     }
 
     @Test
     void neverReadsAMissingDayAsZero() {
         // The series only reaches the 17th - asking for the 18th must fail, not return 0 kWh.
-        assertThatThrownBy(() -> adapter.productionBetween(LocalDateTime.of(2026, 1, 18, 6, 0),
-                LocalDateTime.of(2026, 1, 18, 13, 0), oneWestPlane)).hasMessageContaining("no data");
+        assertThatThrownBy(() -> adapter.productionProfile(new ExpensivePeriod(
+                LocalDateTime.of(2026, 1, 18, 6, 0), LocalDateTime.of(2026, 1, 18, 13, 0)), oneWestPlane)).hasMessageContaining("no data");
+    }
+
+    @Test
+    void splitsThePeriodIntoHourSlots() {
+        var profile = adapter.productionProfile(morning, oneWestPlane);
+
+        // 17th: 100 Wh by 08:00, 1800 Wh by 12:00 - step series, so 07-08 gets the first 0.1 kWh
+        // and 11-12 the remaining 1.7 kWh.
+        assertThat(profile.slotHours()).hasSize(7);
+        assertThat(profile.kwhPerSlot()).containsExactly(0.0, 0.1, 0.0, 0.0, 0.0, 1.7, 0.0);
     }
 
     private static DirectionPanelSettings none() {

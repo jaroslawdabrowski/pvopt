@@ -13,8 +13,9 @@ import java.util.Map;
  * {@link ChargeWindow} (overnight, afternoon) with different forecast/required
  * inputs - the decision rules themselves don't vary by window.
  *
- * The target is sized to the energy the forecast won't cover: the battery should hold
- * {@code minSoc} plus that shortfall, never more (capped at {@code fullSoc}). Charging
+ * The target is sized to the energy the forecast won't cover in time - the period's
+ * largest running deficit ({@link PeriodBalance#reserveKwh()}): the battery should hold
+ * {@code minSoc} plus that, never more (capped at {@code fullSoc}). Charging
  * further from the grid only fills the room tomorrow's sun would have used - under
  * net-billing that surplus is then exported for a fraction of what it cost to buy. With
  * an unknown battery capacity the shortfall can't be turned into a SOC, so a grid charge
@@ -32,11 +33,10 @@ public class ChargeDecisionPolicy {
             Instant now,
             ChargeWindow window,
             BatteryStatus battery,
-            ProductionForecast forecast,
-            double requiredKwh,
+            PeriodBalance balance,
             PlanningPolicyConfig config) {
 
-        double shortfallKwh = Math.max(0, requiredKwh - forecast.expectedKwh());
+        double shortfallKwh = balance.reserveKwh();
         int targetSoc = targetSocFor(shortfallKwh, config);
 
         if (battery.isBelow(config.minSocPercent()) && targetSoc == config.minSocPercent()) {
@@ -51,7 +51,7 @@ public class ChargeDecisionPolicy {
 
         if (shortfallKwh == 0) {
             return noCharge(now, window, DecisionReason.FORECAST_SUFFICIENT,
-                    Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)),
+                    Map.of("forecastKwh", tenths(balance.productionKwh()), "requiredKwh", tenths(balance.consumptionKwh())),
                     config.minSocPercent());
         }
 
@@ -67,8 +67,9 @@ public class ChargeDecisionPolicy {
                 true,
                 targetSoc,
                 DecisionReason.FORECAST_INSUFFICIENT,
-                Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh),
-                        "targetSoc", (double) targetSoc, "soc", (double) battery.socPercent()));
+                Map.of("forecastKwh", tenths(balance.productionKwh()), "requiredKwh", tenths(balance.consumptionKwh()),
+                        "reserveKwh", tenths(balance.reserveKwh()), "targetSoc", (double) targetSoc,
+                        "soc", (double) battery.socPercent()));
     }
 
     /** {@code minSoc} plus the shortfall as a share of the battery, rounded up, capped at {@code fullSoc}. */

@@ -23,10 +23,12 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeSet;
 
 /**
- * Measures what the decisions were about. At every cheap window boundary it snapshots the
- * inverter's daily counters; when a boundary is the end of an expensive period, the
+ * Measures what the decisions were about. Every full hour (and at every cheap window
+ * boundary) it snapshots the inverter's daily counters - the hourly ones give the daily
+ * consumption shape; when a boundary is the end of an expensive period, the
  * snapshot from the period's start is subtracted to get that period's outcome (load, PV,
  * grid import, SOC). Recent outcomes then replace the hand-entered consumption estimates.
  *
@@ -87,7 +89,13 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
 
     @Override
     public List<LocalTime> snapshotTimes(ProcessSettings settings) {
-        return calendar(settings).boundaryTimes();
+        // Every full hour (the hourly consumption shape) plus any window boundary that isn't one.
+        var times = new TreeSet<LocalTime>();
+        for (int hour = 0; hour < 24; hour++) {
+            times.add(LocalTime.of(hour, 0));
+        }
+        times.addAll(calendar(settings).boundaryTimes());
+        return List.copyOf(times);
     }
 
     @Override

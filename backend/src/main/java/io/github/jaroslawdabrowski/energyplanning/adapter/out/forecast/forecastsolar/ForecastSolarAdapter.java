@@ -6,7 +6,8 @@ import org.jboss.logging.Logger;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.github.jaroslawdabrowski.energyplanning.domain.CompassDirection;
 import io.github.jaroslawdabrowski.energyplanning.domain.ForecastSettings;
-import io.github.jaroslawdabrowski.energyplanning.domain.ProductionForecast;
+import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
+import io.github.jaroslawdabrowski.energyplanning.domain.ProductionProfile;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ForecastPort;
 
 import java.time.Clock;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * The only adapter that knows about api.forecast.solar - outward (through
- * ForecastPort) only the domain-level ProductionForecast (date + kWh) is exposed.
+ * ForecastPort) only the domain-level ProductionProfile (kWh per hour of a period) is exposed.
  * Only the hourly cumulative {@code watt_hours} series is used: the planner asks for
  * production within specific hours (the expensive period after a cheap window), not
  * whole-day totals.
@@ -74,11 +75,20 @@ public class ForecastSolarAdapter implements ForecastPort {
     }
 
     @Override
-    public ProductionForecast productionBetween(LocalDateTime from, LocalDateTime to, ForecastSettings settings) {
-        double wattHours = activeDirections(settings).stream()
-                .mapToLong(direction -> wattHoursBetween(wattHoursFor(settings, direction, from, to), from, to))
-                .sum();
-        return new ProductionForecast(from.toLocalDate(), wattHours / 1000.0);
+    public ProductionProfile productionProfile(ExpensivePeriod period, ForecastSettings settings) {
+        var slotHours = ProductionProfile.slotHoursFor(period);
+        double[] wattHours = new double[slotHours.size()];
+        for (CompassDirection direction : activeDirections(settings)) {
+            var series = wattHoursFor(settings, direction, period.from(), period.to());
+            LocalDateTime slotStart = period.from();
+            for (int i = 0; i < slotHours.size(); i++) {
+                LocalDateTime slotEnd = slotStart.plusMinutes(Math.round(slotHours.get(i) * 60));
+                wattHours[i] += wattHoursBetween(series, slotStart, slotEnd);
+                slotStart = slotEnd;
+            }
+        }
+        return new ProductionProfile(period.from(),
+                Arrays.stream(wattHours).map(wh -> wh / 1000.0).boxed().toList(), slotHours);
     }
 
     /** The plane's cumulative series covering [from, to] - from cache, the API, or a recent good response. */

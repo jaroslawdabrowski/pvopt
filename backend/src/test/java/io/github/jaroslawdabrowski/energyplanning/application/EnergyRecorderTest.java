@@ -71,9 +71,11 @@ class EnergyRecorderTest {
     }
 
     @Test
-    void takesSnapshotsAtEveryWindowBoundary() {
-        assertThat(recorder.snapshotTimes(new FixedSettings().load().orElseThrow()))
-                .containsExactly(LocalTime.of(6, 0), LocalTime.of(13, 0), LocalTime.of(15, 0), LocalTime.of(22, 0));
+    void takesSnapshotsEveryHourIncludingEveryWindowBoundary() {
+        var times = recorder.snapshotTimes(new FixedSettings().load().orElseThrow());
+
+        assertThat(times).hasSize(24).contains(LocalTime.of(6, 0), LocalTime.of(13, 0), LocalTime.of(15, 0),
+                LocalTime.of(22, 0));
     }
 
     private static final class FixedSettings implements ProcessSettingsPort {
@@ -135,6 +137,11 @@ class EnergyRecorderTest {
             return snapshots.stream()
                     .filter(s -> Duration.between(at, s.takenAt()).abs().compareTo(tolerance) <= 0)
                     .min(Comparator.comparing(s -> Duration.between(at, s.takenAt()).abs()));
+        }
+
+        @Override
+        public List<EnergySnapshot> findSnapshotsSince(LocalDateTime since) {
+            return snapshots.stream().filter(s -> !s.takenAt().isBefore(since)).toList();
         }
 
         @Override

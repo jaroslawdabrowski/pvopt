@@ -94,6 +94,12 @@
             </div>
           </div>
           <p class="reasoning">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</p>
+          @if (reserve(d.reasonParams); as r) {
+            <p class="reserve-line" data-testid="reserve-line">
+              <span class="material-symbols-rounded" aria-hidden="true">trending_down</span>
+              <span>{{ (r.learnedShape ? 'common.reserveLearned' : 'common.reserveFlat') | translate: { kwh: r.kwh, hour: r.hour } }}</span>
+            </p>
+          }
           @if (d.reasonParams['forecastUnavailable'] === 1) {
             <p class="warning-box">
               <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>

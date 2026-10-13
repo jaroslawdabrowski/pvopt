@@ -54,3 +54,19 @@ export function decisionVerdict(d: ChargeDecisionDto): 'chargeOn' | 'reserveHeld
 export function formatKwh(kwh: number, language: AppLanguage): string {
   return new Intl.NumberFormat(LOCALES[language], { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(kwh);
 }
+
+/** The period's largest running deficit and when it peaks - absent on decisions made before it was computed. */
+export function decisionReserve(params: Record<string, number>): { kwh: number; hour: string; learnedShape: boolean } | null {
+  const kwh = params['reserveKwh'];
+  const peak = params['reservePeakHour'];
+  return kwh === undefined || peak === undefined
+    ? null
+    : { kwh, hour: formatClock(peak), learnedShape: params['hourlyShape'] === 1 };
+}
+
+/** "9:00" / "9:30" - an hour of day as a clock time. */
+export function formatClock(hours: number): string {
+  const whole = Math.floor(hours) % 24;
+  const minutes = Math.round((hours - Math.floor(hours)) * 60);
+  return `${whole}:${String(minutes).padStart(2, '0')}`;
+}

@@ -8,7 +8,9 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator.LearnedConsumption;
 import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
-import io.github.jaroslawdabrowski.energyplanning.domain.ProductionForecast;
+import io.github.jaroslawdabrowski.energyplanning.domain.HourlyConsumptionProfile;
+import io.github.jaroslawdabrowski.energyplanning.domain.PeriodBalance;
+import io.github.jaroslawdabrowski.energyplanning.domain.ProductionProfile;
 import io.github.jaroslawdabrowski.energyplanning.domain.RunIssue;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlannedDecision;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningPolicyConfig;
@@ -98,15 +100,25 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
                 .orElse(settings.planning().consumptionAfter(window));
         double requiredKwh = consumptionKwh * settings.planning().forecastSafetyMarginRatio();
 
-        var decision = decisionPolicy.decide(clockPort.now(), window, battery,
-                forecast.orElseGet(() -> new ProductionForecast(period.from().toLocalDate(), 0)), requiredKwh,
-                policyConfig(settings))
+        // Hour by hour: consumption spread by the learned daily shape (flat until there is one),
+        // against PV per hour - the reserve is the largest running deficit, not the period total.
+        var slotHours = ProductionProfile.slotHoursFor(period);
+        var production = forecast.orElseGet(() -> new ProductionProfile(period.from(),
+                slotHours.stream().map(h -> 0.0).toList(), slotHours));
+        var shape = HourlyConsumptionProfile.learn(
+                energyRecordPort.findSnapshotsSince(clockPort.nowLocal().minus(EnergyRecorder.LEARNING_WINDOW)));
+        var balance = PeriodBalance.of(shape.spread(requiredKwh, period.from(), slotHours),
+                production.kwhPerSlot(), slotHours);
+
+        var decision = decisionPolicy.decide(clockPort.now(), window, battery, balance, policyConfig(settings))
                 .withReasonParams(Map.of(
                         "periodFromHour", hourOf(period.from()),
                         "periodToHour", hourOf(period.to()),
                         "consumptionKwh", consumptionKwh,
                         "learnedSamples", (double) learned.map(LearnedConsumption::samples).orElse(0),
-                        "forecastUnavailable", forecast.isPresent() ? 0.0 : 1.0));
+                        "forecastUnavailable", forecast.isPresent() ? 0.0 : 1.0,
+                        "reservePeakHour", hourOf(period.from().plusMinutes(Math.round(balance.peakHourOffset() * 60))),
+                        "hourlyShape", shape.covers(period.from(), slotHours.size()) ? 1.0 : 0.0));
 
         inverterPort.applyChargeSchedule(
                 new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
@@ -119,10 +131,10 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
      * Without a forecast the decision is made as if no sun were coming - a conservative grid
      * charge beats facing the expensive hours with an empty battery. Someone gets told.
      */
-    private Optional<ProductionForecast> forecastOrNone(ChargeWindow window, ExpensivePeriod period,
+    private Optional<ProductionProfile> forecastOrNone(ChargeWindow window, ExpensivePeriod period,
             ProcessSettings settings) {
         try {
-            return Optional.of(forecastPort.productionBetween(period.from(), period.to(), settings.forecast()));
+            return Optional.of(forecastPort.productionProfile(period, settings.forecast()));
         } catch (RuntimeException e) {
             issueReporter.report(new RunIssue(clockPort.now(), window, RunIssue.Kind.FORECAST_UNAVAILABLE,
                     String.valueOf(e.getMessage())), settings.notifications());

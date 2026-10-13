@@ -24,7 +24,9 @@
     "settingsNotConfigured": "The process isn't configured yet, so there's nothing to show.",
     "goToSettings": "Fill in the settings",
     "periodLabel": "expensive hours {{from}}–{{to}}",
-    "noForecast": "There was no PV forecast - the decision was made as if no sun was coming."
+    "noForecast": "There was no PV forecast - the decision was made as if no sun was coming.",
+    "reserveFlat": "The largest gap is by {{hour}} - {{kwh}} kWh before the panels catch up. Consumption spread evenly until an hourly profile is collected.",
+    "reserveLearned": "The largest gap is by {{hour}} - {{kwh}} kWh before the panels catch up. Consumption spread by the measured hourly profile."
   },
   "dashboard": {
     "loading": "Loading...",
@@ -172,7 +174,7 @@
     "ALREADY_AT_TARGET_SOC": "The battery already holds at least {{targetSoc}}%, enough for what the sun won't cover - skipping grid charging.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
     "FORECAST_SUFFICIENT": "Production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
-    "FORECAST_INSUFFICIENT": "The forecast for the expensive hours ({{forecastKwh}} kWh) won't cover consumption ({{requiredKwh}} kWh), so during the cheap window the battery keeps at least {{targetSoc}}%. If it has less, the inverter tops it up from the grid - only to that level.",
+    "FORECAST_INSUFFICIENT": "The forecast for the expensive hours is {{forecastKwh}} kWh against {{requiredKwh}} kWh of consumption, and the sun won't cover it all in time. So during the cheap window the battery keeps at least {{targetSoc}}%. If it has less, the inverter tops it up from the grid - only to that level.",
     "RESERVE_HELD": "The battery ({{soc}}%) already holds enough for the expensive hours ({{targetSoc}}% needed, forecast {{forecastKwh}} kWh against {{requiredKwh}} kWh required). No grid charge, but it won't drop below {{targetSoc}}% during the cheap hours - the house runs on the cheap grid meanwhile."
   },
   "language": {
