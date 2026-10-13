@@ -8,6 +8,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator.LearnedConsumption;
 import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
+import io.github.jaroslawdabrowski.energyplanning.domain.ForecastCalibration;
 import io.github.jaroslawdabrowski.energyplanning.domain.HourlyConsumptionProfile;
 import io.github.jaroslawdabrowski.energyplanning.domain.PeriodBalance;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProductionProfile;
@@ -33,6 +34,7 @@ import io.github.jaroslawdabrowski.energyplanning.port.out.RunIssuePort;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,8 +105,11 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
         // Hour by hour: consumption spread by the learned daily shape (flat until there is one),
         // against PV per hour - the reserve is the largest running deficit, not the period total.
         var slotHours = ProductionProfile.slotHoursFor(period);
-        var production = forecast.orElseGet(() -> new ProductionProfile(period.from(),
+        var rawProduction = forecast.orElseGet(() -> new ProductionProfile(period.from(),
                 slotHours.stream().map(h -> 0.0).toList(), slotHours));
+        // Corrected by how far the forecast has been off for this window lately (1.0 until known).
+        var calibration = forecastCalibration(window);
+        var production = rawProduction.scaledBy(calibration.map(ForecastCalibration.Factor::value).orElse(1.0));
         var shape = HourlyConsumptionProfile.learn(
                 energyRecordPort.findSnapshotsSince(clockPort.nowLocal().minus(EnergyRecorder.LEARNING_WINDOW)));
         var balance = PeriodBalance.of(shape.spread(requiredKwh, period.from(), slotHours),
@@ -118,7 +123,10 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
                         "learnedSamples", (double) learned.map(LearnedConsumption::samples).orElse(0),
                         "forecastUnavailable", forecast.isPresent() ? 0.0 : 1.0,
                         "reservePeakHour", hourOf(period.from().plusMinutes(Math.round(balance.peakHourOffset() * 60))),
-                        "hourlyShape", shape.covers(period.from(), slotHours.size()) ? 1.0 : 0.0));
+                        "hourlyShape", shape.covers(period.from(), slotHours.size()) ? 1.0 : 0.0,
+                        "forecastRawKwh", Math.round(rawProduction.totalKwh() * 10) / 10.0,
+                        "calibrationFactor", calibration.map(ForecastCalibration.Factor::value).orElse(1.0),
+                        "calibrationSamples", (double) calibration.map(ForecastCalibration.Factor::samples).orElse(0)));
 
         inverterPort.applyChargeSchedule(
                 new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
@@ -173,6 +181,29 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
                     .findFirst();
             return new PlannedDecision(decision, outcome);
         }).toList();
+    }
+
+    /**
+     * Pairs recent measured periods of this window with the forecast the last decision for
+     * each of them used - the raw, uncalibrated one (otherwise the correction would feed on
+     * itself). Decisions without a forecast, or from before forecasts were per period, don't count.
+     */
+    private Optional<ForecastCalibration.Factor> forecastCalibration(ChargeWindow window) {
+        var now = clockPort.now();
+        var latestPerPeriod = new LinkedHashMap<LocalDateTime, ForecastCalibration.Sample>();
+        for (var planned : history(now.minus(EnergyRecorder.LEARNING_WINDOW), now)) {
+            var decision = planned.decision();
+            var params = decision.reasonParams();
+            if (decision.window() != window || planned.outcome().isEmpty()
+                    || params.getOrDefault("forecastUnavailable", 0.0) == 1.0 || !params.containsKey("periodFromHour")) {
+                continue;
+            }
+            double forecastKwh = params.getOrDefault("forecastRawKwh", params.getOrDefault("forecastKwh", 0.0));
+            var outcome = planned.outcome().get();
+            // history() is oldest first - a later decision for the same period replaces an earlier one.
+            latestPerPeriod.put(outcome.from(), new ForecastCalibration.Sample(forecastKwh, outcome.pvKwh()));
+        }
+        return ForecastCalibration.learn(List.copyOf(latestPerPeriod.values()));
     }
 
     /** Measured consumption of this window's period over recent days, when there's enough of it. */

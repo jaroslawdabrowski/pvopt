@@ -26,7 +26,8 @@
     "periodLabel": "expensive hours {{from}}–{{to}}",
     "noForecast": "There was no PV forecast - the decision was made as if no sun was coming.",
     "reserveFlat": "The largest gap is by {{hour}} - {{kwh}} kWh before the panels catch up. Consumption spread evenly until an hourly profile is collected.",
-    "reserveLearned": "The largest gap is by {{hour}} - {{kwh}} kWh before the panels catch up. Consumption spread by the measured hourly profile."
+    "reserveLearned": "The largest gap is by {{hour}} - {{kwh}} kWh before the panels catch up. Consumption spread by the measured hourly profile.",
+    "calibrated": "Forecast corrected ×{{factor}} from {{samples}} measured days: {{raw}} → {{kwh}} kWh."
   },
   "dashboard": {
     "loading": "Loading...",

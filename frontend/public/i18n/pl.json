@@ -26,7 +26,8 @@
     "periodLabel": "drogie godziny {{from}}–{{to}}",
     "noForecast": "Nie było prognozy PV - decyzję policzono tak, jakby słońca nie było.",
     "reserveFlat": "Najwięcej brakuje do {{hour}} - {{kwh}} kWh, zanim panele nadrobią. Zużycie rozłożone równo, dopóki nie zbierze się profil godzinowy.",
-    "reserveLearned": "Najwięcej brakuje do {{hour}} - {{kwh}} kWh, zanim panele nadrobią. Zużycie rozłożone według zmierzonego profilu godzinowego."
+    "reserveLearned": "Najwięcej brakuje do {{hour}} - {{kwh}} kWh, zanim panele nadrobią. Zużycie rozłożone według zmierzonego profilu godzinowego.",
+    "calibrated": "Prognoza skorygowana ×{{factor}} według {{samples}} zmierzonych dni: {{raw}} → {{kwh}} kWh."
   },
   "dashboard": {
     "loading": "Ładowanie...",

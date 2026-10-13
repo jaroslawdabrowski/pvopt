@@ -100,6 +100,12 @@
               <span>{{ (r.learnedShape ? 'common.reserveLearned' : 'common.reserveFlat') | translate: { kwh: r.kwh, hour: r.hour } }}</span>
             </p>
           }
+          @if (d.reasonParams['calibrationSamples'] > 0) {
+            <p class="reserve-line" data-testid="calibration-line">
+              <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+              <span>{{ 'common.calibrated' | translate: { factor: d.reasonParams['calibrationFactor'], samples: d.reasonParams['calibrationSamples'], raw: d.reasonParams['forecastRawKwh'], kwh: d.reasonParams['forecastKwh'] } }}</span>
+            </p>
+          }
           @if (d.reasonParams['forecastUnavailable'] === 1) {
             <p class="warning-box">
               <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
