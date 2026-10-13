@@ -4,13 +4,21 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * Decision engine: whether it's worth enabling grid charging for a given window.
+ * Decision engine: whether it's worth enabling grid charging for a given window, and to
+ * what SOC.
  *
  * Pure business logic - no framework annotations, no IO. All inputs (including
  * "now", and how much forecast is "required") are passed as arguments, so the
  * result is fully deterministic and testable without mocks. Called once per
  * {@link ChargeWindow} (overnight, afternoon) with different forecast/required
  * inputs - the decision rules themselves don't vary by window.
+ *
+ * The target is sized to the energy the forecast won't cover: the battery should hold
+ * {@code minSoc} plus that shortfall, never more (capped at {@code fullSoc}). Charging
+ * further from the grid only fills the room tomorrow's sun would have used - under
+ * net-billing that surplus is then exported for a fraction of what it cost to buy. With
+ * an unknown battery capacity the shortfall can't be turned into a SOC, so a grid charge
+ * falls back to {@code fullSoc}.
  */
 public class ChargeDecisionPolicy {
 
@@ -22,12 +30,10 @@ public class ChargeDecisionPolicy {
             double requiredKwh,
             PlanningPolicyConfig config) {
 
-        if (battery.isAtOrAbove(config.fullSocPercent())) {
-            return noCharge(now, window, DecisionReason.ALREADY_AT_TARGET_SOC,
-                    Map.of("targetSoc", (double) config.fullSocPercent()), config.minSocPercent());
-        }
+        double shortfallKwh = Math.max(0, requiredKwh - forecast.expectedKwh());
+        int targetSoc = targetSocFor(shortfallKwh, config);
 
-        if (battery.isBelow(config.minSocPercent())) {
+        if (battery.isBelow(config.minSocPercent()) && targetSoc == config.minSocPercent()) {
             return new ChargeDecision(
                     now,
                     window,
@@ -37,19 +43,37 @@ public class ChargeDecisionPolicy {
                     Map.of("soc", (double) battery.socPercent(), "minSoc", (double) config.minSocPercent()));
         }
 
-        if (forecast.coversAtLeast(requiredKwh)) {
+        if (shortfallKwh == 0) {
             return noCharge(now, window, DecisionReason.FORECAST_SUFFICIENT,
                     Map.of("forecastKwh", forecast.expectedKwh(), "requiredKwh", requiredKwh), config.minSocPercent());
+        }
+
+        if (battery.isAtOrAbove(targetSoc)) {
+            return noCharge(now, window, DecisionReason.ALREADY_AT_TARGET_SOC,
+                    Map.of("targetSoc", (double) targetSoc, "soc", (double) battery.socPercent()),
+                    config.minSocPercent());
         }
 
         return new ChargeDecision(
                 now,
                 window,
                 true,
-                config.fullSocPercent(),
+                targetSoc,
                 DecisionReason.FORECAST_INSUFFICIENT,
                 Map.of("forecastKwh", forecast.expectedKwh(), "requiredKwh", requiredKwh,
-                        "targetSoc", (double) config.fullSocPercent()));
+                        "targetSoc", (double) targetSoc));
+    }
+
+    /** {@code minSoc} plus the shortfall as a share of the battery, rounded up, capped at {@code fullSoc}. */
+    static int targetSocFor(double shortfallKwh, PlanningPolicyConfig config) {
+        if (shortfallKwh <= 0) {
+            return config.minSocPercent();
+        }
+        if (!config.knowsCapacity()) {
+            return config.fullSocPercent();
+        }
+        int extraPercent = (int) Math.ceil(shortfallKwh / config.batteryCapacityKwh() * 100 - 1e-9);
+        return Math.min(config.fullSocPercent(), config.minSocPercent() + extraPercent);
     }
 
     private ChargeDecision noCharge(Instant now, ChargeWindow window, DecisionReason reason,

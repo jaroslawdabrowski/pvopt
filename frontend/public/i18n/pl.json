@@ -95,7 +95,8 @@
       "safetyMargin": "Zapas na prognozę",
       "tariffWindows": "Tanie okna taryfowe",
       "tariffWindowsHint": "Zakresy HH:mm-HH:mm oddzielone przecinkami, np. 22:00-06:00, 13:00-15:00",
-      "hint": "Progi baterii i szacowane zużycie, z którymi porównywana jest prognoza produkcji."
+      "hint": "Progi baterii i szacowane zużycie, z którymi porównywana jest prognoza produkcji.",
+      "batteryCapacity": "Pojemność baterii (użyteczna)"
     },
     "schedule": {
       "title": "Harmonogram dobowy",
@@ -133,10 +134,10 @@
     "AFTERNOON": "Popołudnie"
   },
   "reason": {
-    "ALREADY_AT_TARGET_SOC": "Magazyn już naładowany do poziomu docelowego ({{targetSoc}}%).",
+    "ALREADY_AT_TARGET_SOC": "Bateria ma już co najmniej {{targetSoc}}%, czyli zapas na to, czego nie pokryje słońce - pomijamy ładowanie z sieci.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
     "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
-    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) niewystarczająca (wymagane {{requiredKwh}} kWh) - ładujemy do {{targetSoc}}% tanim prądem z sieci."
+    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) nie wystarczy (wymagane {{requiredKwh}} kWh) - doładowujemy z sieci tylko brakującą energię, do {{targetSoc}}%."
   },
   "language": {
     "label": "Język",

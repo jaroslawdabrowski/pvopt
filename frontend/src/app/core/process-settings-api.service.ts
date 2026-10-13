@@ -11,6 +11,7 @@ export interface ProcessSettingsDto {
   planning: {
     minSocPercent: number;
     fullSocPercent: number;
+    batteryCapacityKwh: number;
     dailyConsumptionEstimateKwh: number;
     afternoonConsumptionEstimateKwh: number;
     forecastSafetyMarginRatio: number;
@@ -46,6 +47,7 @@ export function blankProcessSettings(): ProcessSettingsDto {
     planning: {
       minSocPercent: 20,
       fullSocPercent: 100,
+      batteryCapacityKwh: 0,
       dailyConsumptionEstimateKwh: 0,
       afternoonConsumptionEstimateKwh: 0,
       forecastSafetyMarginRatio: 1.2,

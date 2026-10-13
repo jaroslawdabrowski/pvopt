@@ -8,7 +8,11 @@ import java.util.List;
  * by the user via the settings panel instead of static configuration.
  *
  * @param minSocPercent                     absolute minimum SOC - below it we always charge from the grid
- * @param fullSocPercent                    target SOC level for a full grid charge
+ * @param fullSocPercent                    the highest SOC a grid charge may target
+ * @param batteryCapacityKwh                usable battery capacity - turns a missing amount of energy into
+ *                                          a target SOC; {@code 0} means unknown (settings saved before this
+ *                                          field existed), in which case a grid charge always goes to
+ *                                          {@code fullSocPercent}
  * @param dailyConsumptionEstimateKwh       estimated total daily consumption, used by the overnight decision
  * @param afternoonConsumptionEstimateKwh   estimated consumption for the rest of the day, used by the afternoon decision
  * @param forecastSafetyMarginRatio         multiplier applied to the daily consumption estimate for the overnight decision
@@ -17,6 +21,7 @@ import java.util.List;
 public record PlanningSettings(
         int minSocPercent,
         int fullSocPercent,
+        double batteryCapacityKwh,
         double dailyConsumptionEstimateKwh,
         double afternoonConsumptionEstimateKwh,
         double forecastSafetyMarginRatio,
@@ -28,6 +33,9 @@ public record PlanningSettings(
         }
         if (minSocPercent > fullSocPercent) {
             throw new IllegalArgumentException("minSocPercent cannot be greater than fullSocPercent");
+        }
+        if (batteryCapacityKwh < 0) {
+            throw new IllegalArgumentException("batteryCapacityKwh cannot be negative, was " + batteryCapacityKwh);
         }
         if (dailyConsumptionEstimateKwh < 0 || afternoonConsumptionEstimateKwh < 0) {
             throw new IllegalArgumentException("consumption estimates cannot be negative");

@@ -95,7 +95,8 @@
       "safetyMargin": "Forecast safety margin",
       "tariffWindows": "Cheap tariff windows",
       "tariffWindowsHint": "Comma-separated HH:mm-HH:mm ranges, e.g. 22:00-06:00, 13:00-15:00",
-      "hint": "Battery thresholds and estimated consumption that the production forecast is compared against."
+      "hint": "Battery thresholds and estimated consumption that the production forecast is compared against.",
+      "batteryCapacity": "Battery capacity (usable)"
     },
     "schedule": {
       "title": "Daily schedule",
@@ -133,10 +134,10 @@
     "AFTERNOON": "Afternoon"
   },
   "reason": {
-    "ALREADY_AT_TARGET_SOC": "Battery is already at the target level ({{targetSoc}}%).",
+    "ALREADY_AT_TARGET_SOC": "The battery already holds at least {{targetSoc}}%, enough for what the sun won't cover - skipping grid charging.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
     "FORECAST_SUFFICIENT": "Production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
-    "FORECAST_INSUFFICIENT": "Production forecast ({{forecastKwh}} kWh) is insufficient (required {{requiredKwh}} kWh) - charging to {{targetSoc}}% with cheap grid power."
+    "FORECAST_INSUFFICIENT": "Forecast production ({{forecastKwh}} kWh) falls short (needed {{requiredKwh}} kWh) - charging from the grid only for the missing energy, to {{targetSoc}}%."
   },
   "language": {
     "label": "Language",

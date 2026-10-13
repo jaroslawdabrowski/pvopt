@@ -115,6 +115,7 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     }
 
     private static PlanningPolicyConfig policyConfig(ProcessSettings settings) {
-        return new PlanningPolicyConfig(settings.planning().minSocPercent(), settings.planning().fullSocPercent());
+        return new PlanningPolicyConfig(settings.planning().minSocPercent(), settings.planning().fullSocPercent(),
+                settings.planning().batteryCapacityKwh());
     }
 }
