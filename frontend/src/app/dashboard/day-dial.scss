@@ -42,11 +42,35 @@ svg {
   dominant-baseline: central;
 }
 
-// A decision time: a small diamond (the flowchart decision symbol) sitting on the day ring.
-.decision-mark rect {
-  fill: var(--surface);
-  stroke: var(--grey-900);
-  stroke-width: 2.5;
+// Markers on the day ring: round chips with an icon. Decisions are white with an ink icon,
+// "now" is ink with a white sun or moon - it moves, so it's the heavier one.
+.chip-icon {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(21, 27, 40, 0.25);
+  cursor: default;
+
+  .material-symbols-rounded {
+    font-size: 17px;
+    font-variation-settings: 'FILL' 1, 'wght' 600;
+  }
+
+  &.decision {
+    background: var(--surface);
+    color: var(--grey-900);
+    border: 2px solid var(--grey-900);
+  }
+
+  &.now {
+    background: var(--grey-900);
+    color: var(--amber-400);
+    border: 2px solid var(--surface);
+  }
 }
 
 .soc-track {
@@ -89,11 +113,6 @@ svg {
   }
 }
 
-.now-dot {
-  fill: var(--grey-900);
-  stroke: var(--surface);
-  stroke-width: 3;
-}
 
 .dial-centre {
   position: absolute;
@@ -128,6 +147,15 @@ svg {
 @media (max-width: 600px) {
   :host {
     max-width: 240px;
+  }
+
+  .chip-icon {
+    width: 22px;
+    height: 22px;
+
+    .material-symbols-rounded {
+      font-size: 15px;
+    }
   }
 
   .soc {

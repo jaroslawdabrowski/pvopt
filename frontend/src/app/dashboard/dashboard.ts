@@ -88,17 +88,22 @@ export class Dashboard implements OnInit, OnDestroy {
 
   readonly windows = computed(() => parseTariffWindows(this.settings()?.planning.cheapTariffWindows ?? []));
 
+  readonly nowIcon = computed(() => {
+    const hour = this.now().getHours();
+    return hour >= 6 && hour < 18 ? 'light_mode' : 'dark_mode';
+  });
+
   readonly decisionMarks = computed<DecisionMark[]>(() => {
     const schedule = this.settings()?.schedule;
     if (!schedule) return [];
-    const marks: [string | undefined, string][] = [
-      [schedule.overnightTime, 'dashboard.dialDecision.OVERNIGHT'],
-      [schedule.overnightRecheckTime, 'dashboard.dialDecision.RECHECK'],
-      [schedule.afternoonTime, 'dashboard.dialDecision.AFTERNOON']
+    const marks: [string | undefined, string, string][] = [
+      [schedule.overnightTime, 'bolt', 'dashboard.dialDecision.OVERNIGHT'],
+      [schedule.overnightRecheckTime, 'update', 'dashboard.dialDecision.RECHECK'],
+      [schedule.afternoonTime, 'bolt', 'dashboard.dialDecision.AFTERNOON']
     ];
-    return marks.flatMap(([time, titleKey]) => {
+    return marks.flatMap(([time, icon, titleKey]) => {
       const hours = time ? hoursOf(time) : null;
-      return hours === null ? [] : [{ hours, titleKey, time: time! }];
+      return hours === null ? [] : [{ hours, icon, titleKey, time: time! }];
     });
   });
 

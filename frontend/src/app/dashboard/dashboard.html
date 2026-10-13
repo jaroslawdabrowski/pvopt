@@ -59,9 +59,11 @@
                 </li>
               }
               <li class="key">
-                <svg class="key-decision" viewBox="-8 -8 16 16" aria-hidden="true"><rect x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)" /></svg>
+                <span class="key-chip decision" aria-hidden="true"><span class="material-symbols-rounded">bolt</span></span>
                 <span class="legend-name">{{ 'dashboard.keyDecision' | translate }}</span>
-                <span class="key-now" aria-hidden="true"></span>
+                <span class="key-chip decision" aria-hidden="true"><span class="material-symbols-rounded">update</span></span>
+                <span class="legend-name">{{ 'dashboard.keyRecheck' | translate }}</span>
+                <span class="key-chip now" aria-hidden="true"><span class="material-symbols-rounded">{{ nowIcon() }}</span></span>
                 <span class="legend-name">{{ 'dashboard.keyNow' | translate }}</span>
               </li>
             </ul>

@@ -50,9 +50,11 @@ the Material toolbar/tables read as a component demo. Redesigned 2026-10-13.
   Icons: **Material Symbols Rounded** (plain `<span class="material-symbols-rounded">`).
 - **The one memorable element: the day dial on the dashboard** (`dashboard/day-dial.ts`). The
   day as a 24 h ring, midnight at the top: the cheap G12 windows as arcs in their window's
-  colour (parsed from the settings' `cheapTariffWindows`, `dashboard/tariff-windows.ts`), white
-  diamonds (the flowchart decision symbol) at the decision times, a dot for "now" - both explained
-  by a key under the legend, with hover titles, and the battery SOC as the big number in the
+  colour (parsed from the settings' `cheapTariffWindows`, `dashboard/tariff-windows.ts`), round
+  icon chips on the day ring - white with an ink `bolt` at each decision time (`update` for the
+  03:30 recheck), an ink one with a sun by day / moon at night for "now" - explained by a key under
+  the legend, with hover titles. The chips are HTML laid over the SVG (positions in % of the
+  viewBox), because icon-font ligatures inside SVG `<text>` aren't reliable everywhere, and the battery SOC as the big number in the
   middle with the inner ring filled to it. Each window that holds a reserve (its latest decision
   charges from the grid) gets a badge with its target SOC at the middle of its arc - a white pill
   outlined in the window's colour. Reserves sit on the arcs, not on the battery ring: the outer ring

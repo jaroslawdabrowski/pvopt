@@ -76,7 +76,8 @@
       "OVERNIGHT": "Decyzja nocna o {{time}}",
       "RECHECK": "Ponowne przeliczenie nocy o {{time}}",
       "AFTERNOON": "Decyzja popołudniowa o {{time}}"
-    }
+    },
+    "keyRecheck": "przeliczenie"
   },
   "history": {
     "title": "Historia decyzji",

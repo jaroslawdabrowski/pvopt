@@ -76,7 +76,8 @@
       "OVERNIGHT": "Overnight decision at {{time}}",
       "RECHECK": "Overnight recheck at {{time}}",
       "AFTERNOON": "Afternoon decision at {{time}}"
-    }
+    },
+    "keyRecheck": "recheck"
   },
   "history": {
     "title": "Decision history",

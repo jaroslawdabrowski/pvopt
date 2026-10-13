@@ -18,6 +18,8 @@ function pointAt(hours: number, radius: number): { x: number; y: number } {
 export interface DecisionMark {
   /** Hours past midnight, e.g. 21.75 for 21:45. */
   hours: number;
+  /** Material Symbols name shown in the chip. */
+  icon: string;
   /** Translation key for the hover title, with a {{time}} placeholder. */
   titleKey: string;
   time: string;
@@ -54,12 +56,7 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
       @for (label of hourLabels(); track label.text) {
         <text class="hour-label" [attr.x]="label.x" [attr.y]="label.y">{{ label.text }}</text>
       }
-      @for (mark of decisionMarkers(); track $index) {
-        <g class="decision-mark" [attr.transform]="'translate(' + mark.x + ' ' + mark.y + ') rotate(45)'">
-          <title>{{ mark.titleKey | translate: { time: mark.time } }}</title>
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" />
-        </g>
-      }
+
 
       <circle class="soc-track" [attr.cx]="center" [attr.cy]="center" [attr.r]="socRadius" />
       <circle
@@ -73,9 +70,6 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
         [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
       />
 
-      <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7">
-        <title>{{ 'dashboard.dialNow' | translate }}</title>
-      </circle>
 
       @for (badge of reserveBadges(); track badge.tone) {
         <g class="reserve-badge" [class]="'tone-' + badge.tone">
@@ -85,6 +79,19 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
         </g>
       }
     </svg>
+
+    <!-- Icon chips are HTML over the SVG (positions in % of the 240-unit viewBox): the icon font
+         renders reliably here, which ligatures inside SVG <text> don't in every browser. -->
+    @for (mark of decisionMarkers(); track $index) {
+      <span class="chip-icon decision" [style.left.%]="mark.left" [style.top.%]="mark.top"
+            [attr.title]="mark.titleKey | translate: { time: mark.time }">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ mark.icon }}</span>
+      </span>
+    }
+    <span class="chip-icon now" [style.left.%]="nowChip().left" [style.top.%]="nowChip().top"
+          [attr.title]="'dashboard.dialNow' | translate">
+      <span class="material-symbols-rounded" aria-hidden="true">{{ nowChip().icon }}</span>
+    </span>
 
     <div class="dial-centre">
       <span class="soc num">{{ socPercent() }}<span class="unit">%</span></span>
@@ -128,14 +135,19 @@ export class DayDial {
   protected readonly decisionMarkers = computed(() =>
     this.decisions().map((decision) => {
       const p = pointAt(decision.hours, DAY_RING_RADIUS);
-      return { x: p.x, y: p.y, titleKey: decision.titleKey, time: decision.time };
+      return { left: (p.x / 240) * 100, top: (p.y / 240) * 100, icon: decision.icon,
+        titleKey: decision.titleKey, time: decision.time };
     })
   );
 
-  protected readonly nowPoint = computed(() => {
+  /** "Now" on the day ring: a sun by day, a moon at night. */
+  protected readonly nowChip = computed(() => {
     const now = this.now();
-    return pointAt(now.getHours() + now.getMinutes() / 60, DAY_RING_RADIUS);
+    const hours = now.getHours() + now.getMinutes() / 60;
+    const p = pointAt(hours, DAY_RING_RADIUS);
+    return { left: (p.x / 240) * 100, top: (p.y / 240) * 100, icon: hours >= 6 && hours < 18 ? 'light_mode' : 'dark_mode' };
   });
+
 
   protected readonly badgeWidth = 38;
   protected readonly badgeHeight = 20;

@@ -48,27 +48,36 @@
   .key {
     margin-top: var(--space-1);
 
-    .legend-name + .key-now {
+    flex-wrap: wrap;
+
+    .legend-name + .key-chip {
       margin-left: var(--space-3);
     }
   }
 
-  .key-decision {
-    width: 14px;
-    height: 14px;
-
-    rect {
-      fill: var(--surface);
-      stroke: var(--grey-900);
-      stroke-width: 2;
-    }
-  }
-
-  .key-now {
-    width: 10px;
-    height: 10px;
+  .key-chip {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: var(--grey-900);
+
+    .material-symbols-rounded {
+      font-size: 13px;
+      font-variation-settings: 'FILL' 1, 'wght' 600;
+    }
+
+    &.decision {
+      background: var(--surface);
+      color: var(--grey-900);
+      border: 1.5px solid var(--grey-900);
+    }
+
+    &.now {
+      background: var(--grey-900);
+      color: var(--amber-400);
+    }
   }
 
   .legend-decision {
