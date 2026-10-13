@@ -19,6 +19,11 @@ import java.util.Map;
  * net-billing that surplus is then exported for a fraction of what it cost to buy. With
  * an unknown battery capacity the shortfall can't be turned into a SOC, so a grid charge
  * falls back to {@code fullSoc}.
+ *
+ * The written target is also the slot's floor for the whole cheap window. When the
+ * battery already holds the needed reserve, the floor is that reserve rather than
+ * {@code minSoc}: cheap-hour load is then served by the (cheap) grid instead of draining
+ * the energy the expensive hours after the window need.
  */
 public class ChargeDecisionPolicy {
 
@@ -49,9 +54,13 @@ public class ChargeDecisionPolicy {
         }
 
         if (battery.isAtOrAbove(targetSoc)) {
-            return noCharge(now, window, DecisionReason.ALREADY_AT_TARGET_SOC,
-                    Map.of("targetSoc", (double) targetSoc, "soc", (double) battery.socPercent()),
-                    config.minSocPercent());
+            // The battery already holds what the expensive hours need - no grid charge, but
+            // keep that much in it through the cheap window (the house runs on cheap grid
+            // meanwhile) instead of letting it drain to minSoc on cheap-hour load and then
+            // facing the expensive period short.
+            return new ChargeDecision(now, window, false, targetSoc, DecisionReason.RESERVE_HELD,
+                    Map.of("targetSoc", (double) targetSoc, "soc", (double) battery.socPercent(),
+                            "forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)));
         }
 
         return new ChargeDecision(
@@ -87,8 +96,9 @@ public class ChargeDecisionPolicy {
         // maintain, enforced regardless of the grid-charge-enable flag - confirmed by
         // observation: writing the battery's current SOC here (e.g. 70%) meant the
         // inverter topped up from the grid overnight the moment SOC dropped below 70%,
-        // even with grid-charge OFF. When we don't want any grid charging, the floor
-        // must be the safety minimum, not wherever the battery happened to be.
+        // even with grid-charge OFF. So the floor is never "wherever the battery happened
+        // to be": it's the safety minimum when nothing needs holding, or the computed
+        // reserve (RESERVE_HELD above) - which is exactly what we'd charge to anyway.
         return new ChargeDecision(now, window, false, minSocPercent, reason, params);
     }
 }

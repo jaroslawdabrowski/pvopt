@@ -17,17 +17,15 @@ class ChargeDecisionPolicyTest {
     private static final double REQUIRED_KWH = 18.0;
 
     @Test
-    void doesNotChargeWhenAlreadyFull() {
+    void holdsTheNeededReserveWhenAlreadyFull() {
+        // 18 kWh needed, nothing forecast -> capped at 100%; the battery is there already.
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), forecast(0.0),
                 REQUIRED_KWH, config);
 
         assertThat(decision.chargeFromGrid()).isFalse();
         assertThat(decision.window()).isEqualTo(ChargeWindow.OVERNIGHT);
-        assertThat(decision.reason()).isEqualTo(DecisionReason.ALREADY_AT_TARGET_SOC);
-        // The inverter enforces target-SOC as a floor regardless of the grid-charge-enable
-        // flag - writing the battery's current SOC here would make it top up from the grid
-        // the moment SOC drifts down, even with charging nominally off.
-        assertThat(decision.targetSocPercent()).isEqualTo(20);
+        assertThat(decision.reason()).isEqualTo(DecisionReason.RESERVE_HELD);
+        assertThat(decision.targetSocPercent()).isEqualTo(100);
     }
 
     @Test
@@ -92,14 +90,24 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void doesNotChargeWhenTheBatteryAlreadyHoldsTheShortfall() {
-        // 3.5 kWh short -> 55% needed, battery is at 60%.
+    void holdsTheReserveThroughTheCheapWindowWhenTheBatteryAlreadyHasIt() {
+        // 3.5 kWh short -> 55% needed, battery is at 60%: no grid charge, but the floor stays
+        // at 55% so cheap-hour load doesn't eat what the expensive hours need.
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), forecast(14.5),
                 REQUIRED_KWH, config);
 
         assertThat(decision.chargeFromGrid()).isFalse();
-        assertThat(decision.reason()).isEqualTo(DecisionReason.ALREADY_AT_TARGET_SOC);
-        assertThat(decision.reasonParams()).containsEntry("targetSoc", 55.0);
+        assertThat(decision.reason()).isEqualTo(DecisionReason.RESERVE_HELD);
+        assertThat(decision.targetSocPercent()).isEqualTo(55);
+        assertThat(decision.reasonParams()).containsEntry("soc", 60.0).containsEntry("targetSoc", 55.0);
+    }
+
+    @Test
+    void letsTheBatteryDrainToMinimumWhenTheForecastCoversEverything() {
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(80), forecast(25.0),
+                REQUIRED_KWH, config);
+
+        assertThat(decision.chargeFromGrid()).isFalse();
         assertThat(decision.targetSocPercent()).isEqualTo(20);
     }
 

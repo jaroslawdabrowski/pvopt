@@ -53,7 +53,8 @@
     "today": "today",
     "tomorrow": "tomorrow",
     "runTitle": "Decide now",
-    "runHint": "Recalculates the decision for a window from the current forecast and writes it to the inverter straight away."
+    "runHint": "Recalculates the decision for a window from the current forecast and writes it to the inverter straight away.",
+    "reserveHeld": "Not charging, holding {{targetSoc}}%"
   },
   "history": {
     "title": "Decision history",
@@ -64,7 +65,8 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "chargeOn": "Grid charge to {{targetSoc}}%",
-    "chargeOff": "No grid charge"
+    "chargeOff": "No grid charge",
+    "reserveHeld": "No grid charge, holding {{targetSoc}}%"
   },
   "touSchedule": {
     "title": "Inverter schedule",
@@ -140,7 +142,8 @@
     "ALREADY_AT_TARGET_SOC": "The battery already holds at least {{targetSoc}}%, enough for what the sun won't cover - skipping grid charging.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
     "FORECAST_SUFFICIENT": "Production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
-    "FORECAST_INSUFFICIENT": "Forecast production ({{forecastKwh}} kWh) falls short (needed {{requiredKwh}} kWh) - charging from the grid only for the missing energy, to {{targetSoc}}%."
+    "FORECAST_INSUFFICIENT": "Forecast production ({{forecastKwh}} kWh) falls short (needed {{requiredKwh}} kWh) - charging from the grid only for the missing energy, to {{targetSoc}}%.",
+    "RESERVE_HELD": "The battery ({{soc}}%) already holds enough for the expensive hours ({{targetSoc}}% needed, forecast {{forecastKwh}} kWh against {{requiredKwh}} kWh required). No grid charge, but it won't drop below {{targetSoc}}% during the cheap hours - the house runs on the cheap grid meanwhile."
   },
   "language": {
     "label": "Language",

@@ -72,7 +72,7 @@
             <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">{{ d.chargeFromGrid ? 'battery_charging_full' : iconOf(d.window) }}</span></span>
             <div class="list-main">
               <p class="decision-verdict" data-testid="decision-verdict">
-                {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
+                {{ ('dashboard.' + verdict(d)) | translate: { targetSoc: d.targetSocPercent } }}
               </p>
               <p class="list-sub">
                 {{ ('window.' + d.window) | translate }}, {{ dayAndTime(d.decidedAt) }}@if (period(d.reasonParams); as p) {, {{ 'common.periodLabel' | translate: p }}}

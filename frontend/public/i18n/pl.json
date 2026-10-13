@@ -53,7 +53,8 @@
     "today": "dziś",
     "tomorrow": "jutro",
     "runTitle": "Zdecyduj teraz",
-    "runHint": "Przelicza decyzję dla wybranego okna na podstawie aktualnej prognozy i od razu zapisuje ją w falowniku."
+    "runHint": "Przelicza decyzję dla wybranego okna na podstawie aktualnej prognozy i od razu zapisuje ją w falowniku.",
+    "reserveHeld": "Bez ładowania, trzyma {{targetSoc}}%"
   },
   "history": {
     "title": "Historia decyzji",
@@ -64,7 +65,8 @@
     "today": "Dziś",
     "yesterday": "Wczoraj",
     "chargeOn": "Ładowanie z sieci do {{targetSoc}}%",
-    "chargeOff": "Bez ładowania z sieci"
+    "chargeOff": "Bez ładowania z sieci",
+    "reserveHeld": "Bez ładowania, zapas {{targetSoc}}%"
   },
   "touSchedule": {
     "title": "Harmonogram falownika",
@@ -140,7 +142,8 @@
     "ALREADY_AT_TARGET_SOC": "Bateria ma już co najmniej {{targetSoc}}%, czyli zapas na to, czego nie pokryje słońce - pomijamy ładowanie z sieci.",
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
     "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
-    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) nie wystarczy (wymagane {{requiredKwh}} kWh) - doładowujemy z sieci tylko brakującą energię, do {{targetSoc}}%."
+    "FORECAST_INSUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) nie wystarczy (wymagane {{requiredKwh}} kWh) - doładowujemy z sieci tylko brakującą energię, do {{targetSoc}}%.",
+    "RESERVE_HELD": "Bateria ({{soc}}%) ma już zapas na drogie godziny (potrzeba {{targetSoc}}%, prognoza {{forecastKwh}} kWh przy wymaganych {{requiredKwh}} kWh). Bez ładowania z sieci, ale w tanich godzinach bateria nie zejdzie poniżej {{targetSoc}}% - dom korzysta wtedy z taniej sieci."
   },
   "language": {
     "label": "Język",

@@ -1,4 +1,5 @@
 import { AppLanguage } from './language.service';
+import { ChargeDecisionDto } from './energy-planning-api.service';
 
 const LOCALES: Record<AppLanguage, string> = { pl: 'pl-PL', en: 'en-GB' };
 
@@ -41,4 +42,10 @@ export function decisionPeriod(params: Record<string, number>): { from: string; 
   const from = params['periodFromHour'];
   const to = params['periodToHour'];
   return from === undefined || to === undefined ? null : { from: formatHour(from), to: formatHour(to) };
+}
+
+/** Which verdict a decision reads as: charging, holding a reserve without charging, or neither. */
+export function decisionVerdict(d: ChargeDecisionDto): 'chargeOn' | 'reserveHeld' | 'chargeOff' {
+  if (d.chargeFromGrid) return 'chargeOn';
+  return d.reasonCode === 'RESERVE_HELD' ? 'reserveHeld' : 'chargeOff';
 }

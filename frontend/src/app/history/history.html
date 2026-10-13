@@ -27,7 +27,7 @@
               <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">{{ iconOf(d.window) }}</span></span>
               <span class="list-main">
                 <span class="list-title">
-                  {{ (d.chargeFromGrid ? 'history.chargeOn' : 'history.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
+                  {{ ('history.' + verdict(d)) | translate: { targetSoc: d.targetSocPercent } }}
                 </span>
                 <span class="reason">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</span>
               </span>
