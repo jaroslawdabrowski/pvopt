@@ -44,6 +44,33 @@
     font-weight: 600;
   }
 
+  // Explains the dial's two markers: diamonds = decision times, dot = now.
+  .key {
+    margin-top: var(--space-1);
+
+    .legend-name + .key-now {
+      margin-left: var(--space-3);
+    }
+  }
+
+  .key-decision {
+    width: 14px;
+    height: 14px;
+
+    rect {
+      fill: var(--surface);
+      stroke: var(--grey-900);
+      stroke-width: 2;
+    }
+  }
+
+  .key-now {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--grey-900);
+  }
+
   .legend-decision {
     padding: 2px var(--space-2);
     border-radius: var(--radius-pill);

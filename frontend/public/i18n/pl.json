@@ -68,7 +68,15 @@
     },
     "recheck": "ponownie",
     "legendReserve": "zapas {{soc}}%",
-    "legendNoCharge": "bez ładowania"
+    "legendNoCharge": "bez ładowania",
+    "keyDecision": "decyzja",
+    "keyNow": "teraz",
+    "dialNow": "Teraz",
+    "dialDecision": {
+      "OVERNIGHT": "Decyzja nocna o {{time}}",
+      "RECHECK": "Ponowne przeliczenie nocy o {{time}}",
+      "AFTERNOON": "Decyzja popołudniowa o {{time}}"
+    }
   },
   "history": {
     "title": "Historia decyzji",

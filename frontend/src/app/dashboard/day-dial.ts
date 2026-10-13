@@ -15,6 +15,14 @@ function pointAt(hours: number, radius: number): { x: number; y: number } {
   return { x: CENTER + radius * Math.sin(angle), y: CENTER - radius * Math.cos(angle) };
 }
 
+export interface DecisionMark {
+  /** Hours past midnight, e.g. 21.75 for 21:45. */
+  hours: number;
+  /** Translation key for the hover title, with a {{time}} placeholder. */
+  titleKey: string;
+  time: string;
+}
+
 export interface ReserveMark {
   tone: WindowTone;
   soc: number;
@@ -46,8 +54,11 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
       @for (label of hourLabels(); track label.text) {
         <text class="hour-label" [attr.x]="label.x" [attr.y]="label.y">{{ label.text }}</text>
       }
-      @for (tick of decisionTicks(); track $index) {
-        <line class="decision-tick" [attr.x1]="tick.x1" [attr.y1]="tick.y1" [attr.x2]="tick.x2" [attr.y2]="tick.y2" />
+      @for (mark of decisionMarkers(); track $index) {
+        <g class="decision-mark" [attr.transform]="'translate(' + mark.x + ' ' + mark.y + ') rotate(45)'">
+          <title>{{ mark.titleKey | translate: { time: mark.time } }}</title>
+          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" />
+        </g>
       }
 
       <circle class="soc-track" [attr.cx]="center" [attr.cy]="center" [attr.r]="socRadius" />
@@ -62,7 +73,9 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
         [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
       />
 
-      <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7" />
+      <circle class="now-dot" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="7">
+        <title>{{ 'dashboard.dialNow' | translate }}</title>
+      </circle>
 
       @for (badge of reserveBadges(); track badge.tone) {
         <g class="reserve-badge" [class]="'tone-' + badge.tone">
@@ -83,8 +96,8 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
 export class DayDial {
   readonly socPercent = input.required<number>();
   readonly windows = input<TariffWindowView[]>([]);
-  /** Decision times as hours past midnight (e.g. 21.75 for 21:45). */
-  readonly decisionHours = input<number[]>([]);
+  /** When the decisions run - a diamond (the flowchart decision symbol) on the day ring each. */
+  readonly decisions = input<DecisionMark[]>([]);
   readonly now = input.required<Date>();
   /** The SOC each cheap window holds (its grid-charge target) - drawn as a badge on that window's arc. */
   readonly reserves = input<ReserveMark[]>([]);
@@ -112,11 +125,10 @@ export class DayDial {
     }))
   );
 
-  protected readonly decisionTicks = computed(() =>
-    this.decisionHours().map((hours) => {
-      const inner = pointAt(hours, DAY_RING_RADIUS - 12);
-      const outer = pointAt(hours, DAY_RING_RADIUS + 12);
-      return { x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y };
+  protected readonly decisionMarkers = computed(() =>
+    this.decisions().map((decision) => {
+      const p = pointAt(decision.hours, DAY_RING_RADIUS);
+      return { x: p.x, y: p.y, titleKey: decision.titleKey, time: decision.time };
     })
   );
 

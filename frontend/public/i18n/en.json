@@ -68,7 +68,15 @@
     },
     "recheck": "recheck",
     "legendReserve": "reserve {{soc}}%",
-    "legendNoCharge": "no grid charge"
+    "legendNoCharge": "no grid charge",
+    "keyDecision": "decision",
+    "keyNow": "now",
+    "dialNow": "Now",
+    "dialDecision": {
+      "OVERNIGHT": "Overnight decision at {{time}}",
+      "RECHECK": "Overnight recheck at {{time}}",
+      "AFTERNOON": "Afternoon decision at {{time}}"
+    }
   },
   "history": {
     "title": "Decision history",

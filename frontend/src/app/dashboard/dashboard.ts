@@ -6,7 +6,7 @@ import { ProcessSettingsApi, ProcessSettingsDto } from '../core/process-settings
 import { settingsAwareErrorKey } from '../core/settings-error.util';
 import { LanguageService } from '../core/language.service';
 import { decisionPeriod, decisionReserve, decisionVerdict, formatDayAndTime, formatTime } from '../core/format';
-import { DayDial, ReserveMark } from './day-dial';
+import { DayDial, DecisionMark, ReserveMark } from './day-dial';
 import { WindowTone, hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -88,13 +88,18 @@ export class Dashboard implements OnInit, OnDestroy {
 
   readonly windows = computed(() => parseTariffWindows(this.settings()?.planning.cheapTariffWindows ?? []));
 
-  readonly decisionHours = computed(() => {
+  readonly decisionMarks = computed<DecisionMark[]>(() => {
     const schedule = this.settings()?.schedule;
     if (!schedule) return [];
-    return [schedule.overnightTime, schedule.afternoonTime, schedule.overnightRecheckTime]
-      .filter((t): t is string => !!t)
-      .map(hoursOf)
-      .filter((h): h is number => h !== null);
+    const marks: [string | undefined, string][] = [
+      [schedule.overnightTime, 'dashboard.dialDecision.OVERNIGHT'],
+      [schedule.overnightRecheckTime, 'dashboard.dialDecision.RECHECK'],
+      [schedule.afternoonTime, 'dashboard.dialDecision.AFTERNOON']
+    ];
+    return marks.flatMap(([time, titleKey]) => {
+      const hours = time ? hoursOf(time) : null;
+      return hours === null ? [] : [{ hours, titleKey, time: time! }];
+    });
   });
 
   /** Both daily decisions, soonest first. */

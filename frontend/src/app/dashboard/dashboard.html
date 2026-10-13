@@ -36,7 +36,7 @@
 
     @if (status(); as s) {
       <div class="card hero">
-        <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisionHours]="decisionHours()" [now]="now()" [reserves]="reserves()" />
+        <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisions]="decisionMarks()" [now]="now()" [reserves]="reserves()" />
 
         <div class="hero-side">
           <span class="chip" [class]="s.tariffRate === 'CHEAP' ? 'tone-cheap' : 'tone-neutral'" data-testid="tariff-now">
@@ -58,6 +58,12 @@
                   }
                 </li>
               }
+              <li class="key">
+                <svg class="key-decision" viewBox="-8 -8 16 16" aria-hidden="true"><rect x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)" /></svg>
+                <span class="legend-name">{{ 'dashboard.keyDecision' | translate }}</span>
+                <span class="key-now" aria-hidden="true"></span>
+                <span class="legend-name">{{ 'dashboard.keyNow' | translate }}</span>
+              </li>
             </ul>
           }
 

@@ -42,10 +42,11 @@ svg {
   dominant-baseline: central;
 }
 
-.decision-tick {
+// A decision time: a small diamond (the flowchart decision symbol) sitting on the day ring.
+.decision-mark rect {
+  fill: var(--surface);
   stroke: var(--grey-900);
   stroke-width: 2.5;
-  stroke-linecap: round;
 }
 
 .soc-track {
