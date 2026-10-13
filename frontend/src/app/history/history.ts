@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi } from '../core/energy-planning-api.service';
 import { LanguageService } from '../core/language.service';
-import { dayKey, formatDayHeader, formatTime } from '../core/format';
+import { dayKey, decisionPeriod, formatDayHeader, formatTime } from '../core/format';
 
 interface DayGroup {
   key: string;
@@ -73,6 +73,8 @@ export class History implements OnInit {
   time(iso: string): string {
     return formatTime(iso, this.language());
   }
+
+  readonly period = decisionPeriod;
 
   toneOf(window: ChargeWindow): string {
     return window === 'OVERNIGHT' ? 'tone-night' : 'tone-day';

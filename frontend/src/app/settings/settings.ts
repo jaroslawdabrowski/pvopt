@@ -31,8 +31,8 @@ export class Settings implements OnInit {
       minSocPercent: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
       fullSocPercent: [100, [Validators.required, Validators.min(0), Validators.max(100)]],
       batteryCapacityKwh: [0, [Validators.required, Validators.min(0.1)]],
-      dailyConsumptionEstimateKwh: [0, [Validators.required, Validators.min(0)]],
-      afternoonConsumptionEstimateKwh: [0, [Validators.required, Validators.min(0)]],
+      consumptionAfterOvernightKwh: [0, [Validators.required, Validators.min(0)]],
+      consumptionAfterAfternoonKwh: [0, [Validators.required, Validators.min(0)]],
       forecastSafetyMarginRatio: [1.2, [Validators.required, Validators.min(0.01)]],
       cheapTariffWindows: ['', Validators.required]
     }),

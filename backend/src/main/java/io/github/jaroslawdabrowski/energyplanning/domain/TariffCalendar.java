@@ -1,6 +1,7 @@
 package io.github.jaroslawdabrowski.energyplanning.domain;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,39 @@ public class TariffCalendar {
 
     public TariffRate rateAt(LocalDateTime dateTime) {
         return currentWindow(dateTime).isPresent() ? TariffRate.CHEAP : TariffRate.EXPENSIVE;
+    }
+
+    /**
+     * Which configured window a {@link ChargeWindow} decision is for: the overnight decision
+     * owns the window that crosses midnight, the afternoon decision the first one that doesn't.
+     */
+    public TariffWindow windowFor(ChargeWindow chargeWindow) {
+        return cheapWindows.stream()
+                .filter(window -> window.crossesMidnight() == (chargeWindow == ChargeWindow.OVERNIGHT))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No cheap tariff window matches the " + chargeWindow
+                        + " decision - expected one window crossing midnight and one within the day"));
+    }
+
+    /**
+     * The expensive period that follows the next end of {@code window} after {@code now}, up to
+     * the start of the next cheap window. A decision made shortly before (or during) the window
+     * gets the period right after it - e.g. at 21:45, the overnight window's period is
+     * 06:00-13:00 tomorrow.
+     */
+    public ExpensivePeriod expensivePeriodAfter(TariffWindow window, LocalDateTime now) {
+        LocalDateTime from = nextOccurrence(window.end(), now);
+        LocalDateTime to = cheapWindows.stream()
+                .map(w -> nextOccurrence(w.start(), from))
+                .min(LocalDateTime::compareTo)
+                .orElseThrow();
+        return new ExpensivePeriod(from, to);
+    }
+
+    /** The first moment strictly after {@code after} at which the clock shows {@code time}. */
+    private static LocalDateTime nextOccurrence(LocalTime time, LocalDateTime after) {
+        LocalDateTime candidate = after.toLocalDate().atTime(time);
+        return candidate.isAfter(after) ? candidate : candidate.plusDays(1);
     }
 
     /**

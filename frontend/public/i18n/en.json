@@ -22,7 +22,8 @@
   },
   "common": {
     "settingsNotConfigured": "The process isn't configured yet, so there's nothing to show.",
-    "goToSettings": "Fill in the settings"
+    "goToSettings": "Fill in the settings",
+    "periodLabel": "expensive hours {{from}}–{{to}}"
   },
   "dashboard": {
     "loading": "Loading...",
@@ -90,13 +91,15 @@
       "title": "Planning policy",
       "minSoc": "Minimum SOC",
       "fullSoc": "Charge from the grid to",
-      "dailyConsumption": "Daily consumption estimate",
-      "afternoonConsumption": "Afternoon consumption estimate",
-      "safetyMargin": "Forecast safety margin",
+      "safetyMargin": "Consumption margin",
       "tariffWindows": "Cheap tariff windows",
       "tariffWindowsHint": "Comma-separated HH:mm-HH:mm ranges, e.g. 22:00-06:00, 13:00-15:00",
-      "hint": "Battery thresholds and estimated consumption that the production forecast is compared against.",
-      "batteryCapacity": "Battery capacity (usable)"
+      "hint": "Battery capacity and thresholds, and consumption in the expensive hours. Each decision weighs that consumption against the forecast for the same hours.",
+      "batteryCapacity": "Battery capacity (usable)",
+      "consumptionAfterOvernight": "Morning consumption",
+      "consumptionAfterOvernightHint": "In the expensive hours after the overnight window (6–13)",
+      "consumptionAfterAfternoon": "Evening consumption",
+      "consumptionAfterAfternoonHint": "In the expensive hours after the afternoon window (15–22)"
     },
     "schedule": {
       "title": "Daily schedule",

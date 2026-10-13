@@ -34,6 +34,9 @@
               <span class="list-end">
                 <span class="time num">{{ time(d.decidedAt) }}</span>
                 <span class="list-sub">{{ ('window.' + d.window) | translate }}</span>
+                @if (period(d.reasonParams); as p) {
+                  <span class="list-sub num hide-mobile">{{ p.from }}–{{ p.to }}</span>
+                }
               </span>
             </li>
           }

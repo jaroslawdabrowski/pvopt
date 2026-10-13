@@ -26,8 +26,8 @@ public record ProcessSettingsPayload(
             int minSocPercent,
             int fullSocPercent,
             double batteryCapacityKwh,
-            double dailyConsumptionEstimateKwh,
-            double afternoonConsumptionEstimateKwh,
+            double consumptionAfterOvernightKwh,
+            double consumptionAfterAfternoonKwh,
             double forecastSafetyMarginRatio,
             List<String> cheapTariffWindows) {
     }
@@ -65,7 +65,7 @@ public record ProcessSettingsPayload(
         var connection = settings.inverterConnection();
         return new ProcessSettingsPayload(
                 new PlanningPayload(planning.minSocPercent(), planning.fullSocPercent(),
-                        planning.batteryCapacityKwh(), planning.dailyConsumptionEstimateKwh(), planning.afternoonConsumptionEstimateKwh(),
+                        planning.batteryCapacityKwh(), planning.consumptionAfterOvernightKwh(), planning.consumptionAfterAfternoonKwh(),
                         planning.forecastSafetyMarginRatio(), planning.cheapTariffWindows()),
                 new SchedulePayload(schedule.overnightTime().toString(), schedule.afternoonTime().toString()),
                 new ForecastPayload(forecast.latitude(), forecast.longitude(),
@@ -79,7 +79,7 @@ public record ProcessSettingsPayload(
     public ProcessSettings toDomain() {
         return new ProcessSettings(
                 new PlanningSettings(planning.minSocPercent(), planning.fullSocPercent(),
-                        planning.batteryCapacityKwh(), planning.dailyConsumptionEstimateKwh(), planning.afternoonConsumptionEstimateKwh(),
+                        planning.batteryCapacityKwh(), planning.consumptionAfterOvernightKwh(), planning.consumptionAfterAfternoonKwh(),
                         planning.forecastSafetyMarginRatio(), planning.cheapTariffWindows()),
                 new ScheduleSettings(LocalTime.parse(schedule.overnightTime()), LocalTime.parse(schedule.afternoonTime())),
                 new ForecastSettings(forecast.latitude(), forecast.longitude(),

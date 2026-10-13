@@ -13,17 +13,19 @@ import java.util.List;
  *                                          a target SOC; {@code 0} means unknown (settings saved before this
  *                                          field existed), in which case a grid charge always goes to
  *                                          {@code fullSocPercent}
- * @param dailyConsumptionEstimateKwh       estimated total daily consumption, used by the overnight decision
- * @param afternoonConsumptionEstimateKwh   estimated consumption for the rest of the day, used by the afternoon decision
- * @param forecastSafetyMarginRatio         multiplier applied to the daily consumption estimate for the overnight decision
+ * @param consumptionAfterOvernightKwh      estimated consumption in the expensive hours after the overnight window
+ *                                          (G12: 06:00-13:00) - what the overnight charge has to cover
+ * @param consumptionAfterAfternoonKwh      estimated consumption in the expensive hours after the afternoon window
+ *                                          (G12: 15:00-22:00) - what the afternoon charge has to cover
+ * @param forecastSafetyMarginRatio         multiplier applied to both consumption estimates
  * @param cheapTariffWindows                cheap-tariff windows in "HH:mm-HH:mm" format, e.g. "22:00-06:00"
  */
 public record PlanningSettings(
         int minSocPercent,
         int fullSocPercent,
         double batteryCapacityKwh,
-        double dailyConsumptionEstimateKwh,
-        double afternoonConsumptionEstimateKwh,
+        double consumptionAfterOvernightKwh,
+        double consumptionAfterAfternoonKwh,
         double forecastSafetyMarginRatio,
         List<String> cheapTariffWindows) {
 
@@ -37,7 +39,7 @@ public record PlanningSettings(
         if (batteryCapacityKwh < 0) {
             throw new IllegalArgumentException("batteryCapacityKwh cannot be negative, was " + batteryCapacityKwh);
         }
-        if (dailyConsumptionEstimateKwh < 0 || afternoonConsumptionEstimateKwh < 0) {
+        if (consumptionAfterOvernightKwh < 0 || consumptionAfterAfternoonKwh < 0) {
             throw new IllegalArgumentException("consumption estimates cannot be negative");
         }
         if (forecastSafetyMarginRatio <= 0) {
@@ -47,5 +49,13 @@ public record PlanningSettings(
             throw new IllegalArgumentException("cheapTariffWindows must not be empty");
         }
         cheapTariffWindows = List.copyOf(cheapTariffWindows);
+    }
+
+    /** The consumption estimate for the expensive period a given decision has to cover. */
+    public double consumptionAfter(ChargeWindow window) {
+        return switch (window) {
+            case OVERNIGHT -> consumptionAfterOvernightKwh;
+            case AFTERNOON -> consumptionAfterAfternoonKwh;
+        };
     }
 }

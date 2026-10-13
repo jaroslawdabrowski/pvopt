@@ -28,3 +28,17 @@ export function dayKey(iso: string | Date): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
+
+/** "6" / "6:30" - an hour of day as people say it. */
+export function formatHour(hours: number): string {
+  const whole = Math.floor(hours);
+  const minutes = Math.round((hours - whole) * 60);
+  return minutes === 0 ? String(whole) : `${whole}:${String(minutes).padStart(2, '0')}`;
+}
+
+/** The expensive period a decision covered, from its reason params - absent on decisions made before it was recorded. */
+export function decisionPeriod(params: Record<string, number>): { from: string; to: string } | null {
+  const from = params['periodFromHour'];
+  const to = params['periodToHour'];
+  return from === undefined || to === undefined ? null : { from: formatHour(from), to: formatHour(to) };
+}

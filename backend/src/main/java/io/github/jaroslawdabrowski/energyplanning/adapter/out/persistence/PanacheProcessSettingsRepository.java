@@ -2,6 +2,7 @@ package io.github.jaroslawdabrowski.energyplanning.adapter.out.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -40,10 +41,35 @@ public class PanacheProcessSettingsRepository
 
     private ProcessSettings toDomain(ProcessSettingsEntity entity) {
         try {
-            return objectMapper.readValue(entity.settingsJson, ProcessSettings.class);
+            var json = (ObjectNode) objectMapper.readTree(entity.settingsJson);
+            migrateConsumptionEstimates((ObjectNode) json.get("planning"));
+            return objectMapper.treeToValue(json, ProcessSettings.class);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to deserialize process settings: " + entity.settingsJson, e);
         }
+    }
+
+    /**
+     * Settings saved before the per-period consumption estimates existed only have a daily
+     * total and a "rest of the day from the afternoon decision" figure. Derive the two
+     * expensive periods (G12: 7 of 24 hours in the morning, 7 of the ~11 hours after 12:45 in
+     * the evening) so the planner never silently sees 0 kWh - the next save from the
+     * Settings page writes the new fields and drops the old ones.
+     */
+    static void migrateConsumptionEstimates(ObjectNode planning) {
+        if (planning == null || planning.has("consumptionAfterOvernightKwh")) {
+            return;
+        }
+        double daily = planning.path("dailyConsumptionEstimateKwh").asDouble(0);
+        double afternoon = planning.path("afternoonConsumptionEstimateKwh").asDouble(0);
+        planning.put("consumptionAfterOvernightKwh", roundToTenth(daily * 7 / 24));
+        planning.put("consumptionAfterAfternoonKwh", roundToTenth(afternoon * 7 / 11));
+        planning.remove("dailyConsumptionEstimateKwh");
+        planning.remove("afternoonConsumptionEstimateKwh");
+    }
+
+    private static double roundToTenth(double value) {
+        return Math.round(value * 10) / 10.0;
     }
 
     private String writeSettings(ProcessSettings settings) {

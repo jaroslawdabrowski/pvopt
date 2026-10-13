@@ -12,8 +12,8 @@ export interface ProcessSettingsDto {
     minSocPercent: number;
     fullSocPercent: number;
     batteryCapacityKwh: number;
-    dailyConsumptionEstimateKwh: number;
-    afternoonConsumptionEstimateKwh: number;
+    consumptionAfterOvernightKwh: number;
+    consumptionAfterAfternoonKwh: number;
     forecastSafetyMarginRatio: number;
     cheapTariffWindows: string[];
   };
@@ -48,8 +48,8 @@ export function blankProcessSettings(): ProcessSettingsDto {
       minSocPercent: 20,
       fullSocPercent: 100,
       batteryCapacityKwh: 0,
-      dailyConsumptionEstimateKwh: 0,
-      afternoonConsumptionEstimateKwh: 0,
+      consumptionAfterOvernightKwh: 0,
+      consumptionAfterAfternoonKwh: 0,
       forecastSafetyMarginRatio: 1.2,
       cheapTariffWindows: ['22:00-06:00', '13:00-15:00']
     },

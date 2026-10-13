@@ -8,6 +8,10 @@ import java.time.LocalTime;
  */
 public record TariffWindow(LocalTime start, LocalTime end) {
 
+    public boolean crossesMidnight() {
+        return start.isAfter(end);
+    }
+
     public boolean contains(LocalTime time) {
         if (start.equals(end)) {
             return false;

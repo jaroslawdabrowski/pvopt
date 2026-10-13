@@ -22,7 +22,9 @@ import io.github.jaroslawdabrowski.energyplanning.port.out.PlanningHistoryPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ProcessSettingsPort;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The single orchestration point for both daily planning decisions: calls outbound
@@ -56,46 +58,50 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
 
     @Override
     public ChargeDecision planOvernightCharge() {
+        return plan(ChargeWindow.OVERNIGHT);
+    }
+
+    @Override
+    public ChargeDecision planAfternoonTopUp() {
+        return plan(ChargeWindow.AFTERNOON);
+    }
+
+    /**
+     * Both decisions weigh the same thing: the expensive period right after their cheap
+     * window (G12: 06-13 after the night, 15-22 after the afternoon) - its consumption
+     * estimate against the PV forecast for exactly those hours.
+     */
+    private ChargeDecision plan(ChargeWindow window) {
         var settings = loadSettingsOrThrow();
-        var nowLocal = clockPort.nowLocal();
+        var calendar = tariffCalendar(settings);
+        var period = calendar.expensivePeriodAfter(calendar.windowFor(window), clockPort.nowLocal());
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
-        var tomorrowForecast = forecastPort.forecastFor(nowLocal.toLocalDate().plusDays(1), settings.forecast());
-        double requiredKwh = settings.planning().dailyConsumptionEstimateKwh()
+        var forecast = forecastPort.productionBetween(period.from(), period.to(), settings.forecast());
+        double requiredKwh = settings.planning().consumptionAfter(window)
                 * settings.planning().forecastSafetyMarginRatio();
 
-        var decision = decisionPolicy.decide(clockPort.now(), ChargeWindow.OVERNIGHT, battery, tomorrowForecast,
-                requiredKwh, policyConfig(settings));
+        var decision = decisionPolicy.decide(clockPort.now(), window, battery, forecast, requiredKwh,
+                policyConfig(settings))
+                .withReasonParams(Map.of(
+                        "periodFromHour", hourOf(period.from()),
+                        "periodToHour", hourOf(period.to())));
 
         inverterPort.applyChargeSchedule(
-                new ChargeSchedule(ChargeWindow.OVERNIGHT, decision.chargeFromGrid(), decision.targetSocPercent()),
+                new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
                 settings.inverterConnection());
         historyPort.record(decision);
         return decision;
     }
 
-    @Override
-    public ChargeDecision planAfternoonTopUp() {
-        var settings = loadSettingsOrThrow();
-        var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
-        var remainingForecast = forecastPort.remainingToday(clockPort.nowLocal(), settings.forecast());
-        double requiredKwh = settings.planning().afternoonConsumptionEstimateKwh();
-
-        var decision = decisionPolicy.decide(clockPort.now(), ChargeWindow.AFTERNOON, battery, remainingForecast,
-                requiredKwh, policyConfig(settings));
-
-        inverterPort.applyChargeSchedule(
-                new ChargeSchedule(ChargeWindow.AFTERNOON, decision.chargeFromGrid(), decision.targetSocPercent()),
-                settings.inverterConnection());
-        historyPort.record(decision);
-        return decision;
+    private static double hourOf(LocalDateTime moment) {
+        return moment.getHour() + moment.getMinute() / 60.0;
     }
 
     @Override
     public EnergyStatus currentStatus() {
         var settings = loadSettingsOrThrow();
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
-        var tariffCalendar = new TariffCalendar(TariffWindowConfigParser.parse(settings.planning().cheapTariffWindows()));
-        var currentRate = tariffCalendar.rateAt(clockPort.nowLocal());
+        var currentRate = tariffCalendar(settings).rateAt(clockPort.nowLocal());
         return new EnergyStatus(battery, currentRate, historyPort.findLatest());
     }
 
@@ -112,6 +118,10 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
 
     private ProcessSettings loadSettingsOrThrow() {
         return settingsPort.load().orElseThrow(ProcessSettingsNotConfiguredException::new);
+    }
+
+    private static TariffCalendar tariffCalendar(ProcessSettings settings) {
+        return new TariffCalendar(TariffWindowConfigParser.parse(settings.planning().cheapTariffWindows()));
     }
 
     private static PlanningPolicyConfig policyConfig(ProcessSettings settings) {

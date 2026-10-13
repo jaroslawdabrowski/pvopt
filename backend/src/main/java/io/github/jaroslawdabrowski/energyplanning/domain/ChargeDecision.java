@@ -1,6 +1,7 @@
 package io.github.jaroslawdabrowski.energyplanning.domain;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,4 +16,11 @@ public record ChargeDecision(
         int targetSocPercent,
         DecisionReason reason,
         Map<String, Double> reasonParams) {
+
+    /** The same decision with extra reason parameters (e.g. context only the planner knows). */
+    public ChargeDecision withReasonParams(Map<String, Double> extra) {
+        var merged = new HashMap<>(reasonParams);
+        merged.putAll(extra);
+        return new ChargeDecision(decidedAt, window, chargeFromGrid, targetSocPercent, reason, Map.copyOf(merged));
+    }
 }

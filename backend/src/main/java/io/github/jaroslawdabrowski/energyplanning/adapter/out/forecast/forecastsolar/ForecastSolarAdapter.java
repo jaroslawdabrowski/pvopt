@@ -13,10 +13,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * The only adapter that knows about api.forecast.solar - outward (through
  * ForecastPort) only the domain-level ProductionForecast (date + kWh) is exposed.
+ * Only the hourly cumulative {@code watt_hours} series is used: the planner asks for
+ * production within specific hours (the expensive period after a cheap window), not
+ * whole-day totals.
  *
  * The installation can have up to 4 separate PV planes, one per {@link CompassDirection}
  * (see {@link ForecastSettings}) - every forecast sums one independent Forecast.Solar
@@ -26,7 +31,6 @@ import java.util.Map;
 @ApplicationScoped
 public class ForecastSolarAdapter implements ForecastPort {
 
-    private static final DateTimeFormatter DATE_KEY_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ForecastSolarRestClient restClient;
@@ -36,21 +40,11 @@ public class ForecastSolarAdapter implements ForecastPort {
     }
 
     @Override
-    public ProductionForecast forecastFor(LocalDate date, ForecastSettings settings) {
-        String dateKey = date.format(DATE_KEY_FORMAT);
+    public ProductionForecast productionBetween(LocalDateTime from, LocalDateTime to, ForecastSettings settings) {
         double wattHours = activeDirections(settings).stream()
-                .mapToLong(direction -> estimate(settings, direction).result().wattHoursDay().getOrDefault(dateKey, 0L))
+                .mapToLong(direction -> wattHoursBetween(estimate(settings, direction).result().wattHours(), from, to))
                 .sum();
-        return new ProductionForecast(date, wattHours / 1000.0);
-    }
-
-    @Override
-    public ProductionForecast remainingToday(LocalDateTime now, ForecastSettings settings) {
-        LocalDate today = now.toLocalDate();
-        double remainingWattHours = activeDirections(settings).stream()
-                .mapToLong(direction -> remainingWattHoursForDirection(settings, direction, today, now))
-                .sum();
-        return new ProductionForecast(today, remainingWattHours / 1000.0);
+        return new ProductionForecast(from.toLocalDate(), wattHours / 1000.0);
     }
 
     private List<CompassDirection> activeDirections(ForecastSettings settings) {
@@ -59,22 +53,27 @@ public class ForecastSolarAdapter implements ForecastPort {
                 .toList();
     }
 
-    private long remainingWattHoursForDirection(ForecastSettings settings, CompassDirection direction,
-            LocalDate today, LocalDateTime now) {
-        var result = estimate(settings, direction).result();
-        long totalToday = result.wattHoursDay().getOrDefault(today.format(DATE_KEY_FORMAT), 0L);
+    /**
+     * {@code watt_hours} is cumulative since midnight, per day - so production between two
+     * moments is, for each day they touch, the cumulative value at the later moment minus the
+     * value at the earlier one (taking the latest timestamp at or before each moment).
+     */
+    static long wattHoursBetween(Map<String, Long> cumulativeWattHours, LocalDateTime from, LocalDateTime to) {
+        var series = cumulativeWattHours.entrySet().stream()
+                .collect(Collectors.toMap(entry -> LocalDateTime.parse(entry.getKey(), TIMESTAMP_FORMAT),
+                        Map.Entry::getValue, (a, b) -> a, TreeMap::new));
+        long total = 0;
+        for (LocalDate day = from.toLocalDate(); !day.isAfter(to.toLocalDate()); day = day.plusDays(1)) {
+            LocalDateTime dayFrom = day.equals(from.toLocalDate()) ? from : day.atStartOfDay();
+            LocalDateTime dayTo = day.equals(to.toLocalDate()) ? to : day.plusDays(1).atStartOfDay().minusNanos(1);
+            total += Math.max(0, cumulativeAt(series, day, dayTo) - cumulativeAt(series, day, dayFrom));
+        }
+        return total;
+    }
 
-        // watt_hours is cumulative-since-midnight per timestamp; the value at the latest
-        // timestamp <= now is how much has already been produced today, so what's left
-        // is the day's total minus that.
-        long producedSoFar = result.wattHours().entrySet().stream()
-                .map(entry -> Map.entry(LocalDateTime.parse(entry.getKey(), TIMESTAMP_FORMAT), entry.getValue()))
-                .filter(entry -> !entry.getKey().toLocalDate().isAfter(today) && !entry.getKey().isAfter(now))
-                .max(Map.Entry.comparingByKey())
-                .map(Map.Entry::getValue)
-                .orElse(0L);
-
-        return Math.max(0, totalToday - producedSoFar);
+    private static long cumulativeAt(TreeMap<LocalDateTime, Long> series, LocalDate day, LocalDateTime moment) {
+        var entry = series.floorEntry(moment);
+        return entry != null && entry.getKey().toLocalDate().equals(day) ? entry.getValue() : 0L;
     }
 
     private ForecastSolarEstimateResponse estimate(ForecastSettings settings, CompassDirection direction) {

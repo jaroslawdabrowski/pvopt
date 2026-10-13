@@ -75,7 +75,7 @@
                 {{ (d.chargeFromGrid ? 'dashboard.chargeOn' : 'dashboard.chargeOff') | translate: { targetSoc: d.targetSocPercent } }}
               </p>
               <p class="list-sub">
-                {{ ('window.' + d.window) | translate }}, {{ dayAndTime(d.decidedAt) }}
+                {{ ('window.' + d.window) | translate }}, {{ dayAndTime(d.decidedAt) }}@if (period(d.reasonParams); as p) {, {{ 'common.periodLabel' | translate: p }}}
               </p>
             </div>
           </div>

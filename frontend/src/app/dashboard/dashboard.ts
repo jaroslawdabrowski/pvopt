@@ -5,7 +5,7 @@ import { ChargeWindow, EnergyPlanningApi, EnergyStatusDto } from '../core/energy
 import { ProcessSettingsApi, ProcessSettingsDto } from '../core/process-settings-api.service';
 import { settingsAwareErrorKey } from '../core/settings-error.util';
 import { LanguageService } from '../core/language.service';
-import { formatDayAndTime, formatTime } from '../core/format';
+import { decisionPeriod, formatDayAndTime, formatTime } from '../core/format';
 import { DayDial } from './day-dial';
 import { hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
 
@@ -97,6 +97,8 @@ export class Dashboard implements OnInit, OnDestroy {
   time(at: Date): string {
     return formatTime(at, this.language());
   }
+
+  readonly period = decisionPeriod;
 
   toneOf(window: ChargeWindow): string {
     return window === 'OVERNIGHT' ? 'tone-night' : 'tone-day';

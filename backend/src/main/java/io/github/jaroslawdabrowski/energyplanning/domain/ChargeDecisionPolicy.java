@@ -45,7 +45,7 @@ public class ChargeDecisionPolicy {
 
         if (shortfallKwh == 0) {
             return noCharge(now, window, DecisionReason.FORECAST_SUFFICIENT,
-                    Map.of("forecastKwh", forecast.expectedKwh(), "requiredKwh", requiredKwh), config.minSocPercent());
+                    Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)), config.minSocPercent());
         }
 
         if (battery.isAtOrAbove(targetSoc)) {
@@ -60,7 +60,7 @@ public class ChargeDecisionPolicy {
                 true,
                 targetSoc,
                 DecisionReason.FORECAST_INSUFFICIENT,
-                Map.of("forecastKwh", forecast.expectedKwh(), "requiredKwh", requiredKwh,
+                Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh),
                         "targetSoc", (double) targetSoc));
     }
 
@@ -74,6 +74,11 @@ public class ChargeDecisionPolicy {
         }
         int extraPercent = (int) Math.ceil(shortfallKwh / config.batteryCapacityKwh() * 100 - 1e-9);
         return Math.min(config.fullSocPercent(), config.minSocPercent() + extraPercent);
+    }
+
+    /** Reason params are shown to people - a tenth of a kWh is as precise as a forecast gets. */
+    private static double tenths(double kwh) {
+        return Math.round(kwh * 10) / 10.0;
     }
 
     private ChargeDecision noCharge(Instant now, ChargeWindow window, DecisionReason reason,

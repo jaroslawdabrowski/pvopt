@@ -45,18 +45,20 @@
             </div>
           </div>
           <div class="field">
-            <label for="dailyConsumption">{{ 'settings.planning.dailyConsumption' | translate }}</label>
+            <label for="consumptionAfterOvernight"><span class="material-symbols-rounded label-icon tone-night" aria-hidden="true">bedtime</span>{{ 'settings.planning.consumptionAfterOvernight' | translate }}</label>
             <div class="input-group">
-              <input id="dailyConsumption" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="dailyConsumptionEstimateKwh" />
+              <input id="consumptionAfterOvernight" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="consumptionAfterOvernightKwh" aria-describedby="consumptionAfterOvernightHint" />
               <span class="suffix">kWh</span>
             </div>
+            <span id="consumptionAfterOvernightHint" class="field-hint">{{ 'settings.planning.consumptionAfterOvernightHint' | translate }}</span>
           </div>
           <div class="field">
-            <label for="afternoonConsumption">{{ 'settings.planning.afternoonConsumption' | translate }}</label>
+            <label for="consumptionAfterAfternoon"><span class="material-symbols-rounded label-icon tone-day" aria-hidden="true">wb_sunny</span>{{ 'settings.planning.consumptionAfterAfternoon' | translate }}</label>
             <div class="input-group">
-              <input id="afternoonConsumption" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="afternoonConsumptionEstimateKwh" />
+              <input id="consumptionAfterAfternoon" class="input num" type="number" inputmode="decimal" step="0.1" formControlName="consumptionAfterAfternoonKwh" aria-describedby="consumptionAfterAfternoonHint" />
               <span class="suffix">kWh</span>
             </div>
+            <span id="consumptionAfterAfternoonHint" class="field-hint">{{ 'settings.planning.consumptionAfterAfternoonHint' | translate }}</span>
           </div>
           <div class="field">
             <label for="safetyMargin">{{ 'settings.planning.safetyMargin' | translate }}</label>
