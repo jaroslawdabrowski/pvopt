@@ -12,4 +12,7 @@ public interface ClockPort {
     Instant now();
 
     LocalDateTime nowLocal();
+
+    /** An instant on the same local clock as {@link #nowLocal()}. */
+    LocalDateTime toLocal(Instant instant);
 }

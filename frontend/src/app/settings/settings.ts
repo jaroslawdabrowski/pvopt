@@ -6,6 +6,7 @@ import {
   ProcessSettingsDto,
   blankProcessSettings
 } from '../core/process-settings-api.service';
+import { ChargeWindow, EnergyPlanningApi, LearnedConsumptionDto } from '../core/energy-planning-api.service';
 
 @Component({
   selector: 'app-settings',
@@ -17,6 +18,7 @@ import {
 export class Settings implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ProcessSettingsApi);
+  private readonly energyApi = inject(EnergyPlanningApi);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -25,6 +27,8 @@ export class Settings implements OnInit {
   readonly errorKey = signal<string | null>(null);
   readonly savedJustNow = signal(false);
   readonly directions = ['north', 'east', 'south', 'west'] as const;
+  /** Measured consumption per window - once there's enough of it, the planner uses it instead of the field. */
+  readonly learned = signal<Record<ChargeWindow, LearnedConsumptionDto | null> | null>(null);
 
   readonly form = this.fb.group({
     planning: this.fb.group({
@@ -57,6 +61,10 @@ export class Settings implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.energyApi.learnedConsumption().subscribe({
+      next: (learned) => this.learned.set(learned),
+      error: () => this.learned.set(null)
+    });
   }
 
   hasPanel(direction: (typeof this.directions)[number]): boolean {

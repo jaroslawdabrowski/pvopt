@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi } from '../core/energy-planning-api.service';
 import { LanguageService } from '../core/language.service';
-import { dayKey, decisionPeriod, decisionVerdict, formatDayHeader, formatTime } from '../core/format';
+import { dayKey, decisionPeriod, decisionVerdict, formatDayHeader, formatKwh, formatTime } from '../core/format';
 
 interface DayGroup {
   key: string;
@@ -75,6 +75,10 @@ export class History implements OnInit {
   }
 
   readonly period = decisionPeriod;
+
+  kwh(value: number): string {
+    return formatKwh(value, this.language());
+  }
   readonly verdict = decisionVerdict;
 
   toneOf(window: ChargeWindow): string {

@@ -10,10 +10,13 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettingsNotConfi
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetProcessSettingsUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.RecordEnergySnapshotUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.out.SchedulingPort;
 
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * G12 has exactly two cheap windows, so exactly two decisions are needed per day - not
@@ -40,13 +43,18 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     private final PlanOvernightChargeUseCase planOvernightChargeUseCase;
     private final PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase;
     private final GetProcessSettingsUseCase getProcessSettingsUseCase;
+    private final RecordEnergySnapshotUseCase recordEnergySnapshotUseCase;
+    /** Snapshot jobs are one per boundary time, so their identities change with the tariff windows. */
+    private final Set<String> snapshotJobs = new HashSet<>();
 
     public DynamicEnergyPlanningScheduler(Scheduler scheduler, PlanOvernightChargeUseCase planOvernightChargeUseCase,
-            PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetProcessSettingsUseCase getProcessSettingsUseCase) {
+            PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetProcessSettingsUseCase getProcessSettingsUseCase,
+            RecordEnergySnapshotUseCase recordEnergySnapshotUseCase) {
         this.scheduler = scheduler;
         this.planOvernightChargeUseCase = planOvernightChargeUseCase;
         this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getProcessSettingsUseCase = getProcessSettingsUseCase;
+        this.recordEnergySnapshotUseCase = recordEnergySnapshotUseCase;
     }
 
     void onStart(@Observes StartupEvent event) {
@@ -57,12 +65,20 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
     public void reschedule(Optional<ProcessSettings> settings) {
         unscheduleIfPresent(OVERNIGHT_JOB);
         unscheduleIfPresent(AFTERNOON_JOB);
+        snapshotJobs.forEach(this::unscheduleIfPresent);
+        snapshotJobs.clear();
 
         settings.ifPresentOrElse(s -> {
             scheduleDaily(OVERNIGHT_JOB, s.schedule().overnightTime(), this::runOvernight);
             scheduleDaily(AFTERNOON_JOB, s.schedule().afternoonTime(), this::runAfternoon);
-            LOG.infof("Scheduled jobs registered: overnight=%s, afternoon=%s",
-                    s.schedule().overnightTime(), s.schedule().afternoonTime());
+            var snapshotTimes = recordEnergySnapshotUseCase.snapshotTimes(s);
+            for (LocalTime time : snapshotTimes) {
+                String identity = "energy-snapshot-" + time;
+                scheduleDaily(identity, time, this::runSnapshot);
+                snapshotJobs.add(identity);
+            }
+            LOG.infof("Scheduled jobs registered: overnight=%s, afternoon=%s, energy snapshots at %s",
+                    s.schedule().overnightTime(), s.schedule().afternoonTime(), snapshotTimes);
         }, () -> LOG.info("No process settings configured - scheduled jobs are disabled until settings are saved"));
     }
 
@@ -84,6 +100,17 @@ public class DynamicEnergyPlanningScheduler implements SchedulingPort {
                     decision.chargeFromGrid(), decision.targetSocPercent(), decision.reason(), decision.reasonParams());
         } catch (ProcessSettingsNotConfiguredException e) {
             LOG.info("Overnight planning skipped - no process settings configured");
+        }
+    }
+
+    private void runSnapshot() {
+        try {
+            recordEnergySnapshotUseCase.recordSnapshot();
+        } catch (ProcessSettingsNotConfiguredException e) {
+            LOG.info("Energy snapshot skipped - no process settings configured");
+        } catch (RuntimeException e) {
+            // A missed snapshot only costs one measured period - never worth failing the job loudly.
+            LOG.warnf(e, "Energy snapshot failed");
         }
     }
 

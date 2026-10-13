@@ -66,7 +66,17 @@
     "yesterday": "Wczoraj",
     "chargeOn": "Ładowanie z sieci do {{targetSoc}}%",
     "chargeOff": "Bez ładowania z sieci",
-    "reserveHeld": "Bez ładowania, zapas {{targetSoc}}%"
+    "reserveHeld": "Bez ładowania, zapas {{targetSoc}}%",
+    "outcome": {
+      "label": "Wynik w drogich godzinach:",
+      "load": "Zużycie domu",
+      "loadValue": "zużycie {{kwh}} kWh",
+      "pv": "Produkcja PV",
+      "pvValue": "PV {{kwh}} kWh",
+      "grid": "Pobór z sieci w drogiej taryfie",
+      "gridValue": "z sieci {{kwh}} kWh",
+      "soc": "Bateria na początku i na końcu"
+    }
   },
   "touSchedule": {
     "title": "Harmonogram falownika",
@@ -101,7 +111,8 @@
       "consumptionAfterOvernight": "Zużycie rano",
       "consumptionAfterOvernightHint": "W drogich godzinach po nocnym oknie (6–13)",
       "consumptionAfterAfternoon": "Zużycie wieczorem",
-      "consumptionAfterAfternoonHint": "W drogich godzinach po popołudniowym oknie (15–22)"
+      "consumptionAfterAfternoonHint": "W drogich godzinach po popołudniowym oknie (15–22)",
+      "learned": "Zmierzone: {{kwh}} kWh, średnio z {{samples}} dni. Planowanie używa tej wartości zamiast wpisanej."
     },
     "schedule": {
       "title": "Harmonogram dobowy",

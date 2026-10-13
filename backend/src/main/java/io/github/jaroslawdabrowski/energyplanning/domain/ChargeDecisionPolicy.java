@@ -53,6 +53,13 @@ public class ChargeDecisionPolicy {
                     Map.of("forecastKwh", tenths(forecast.expectedKwh()), "requiredKwh", tenths(requiredKwh)), config.minSocPercent());
         }
 
+        if (battery.isAtOrAbove(targetSoc) && !config.knowsCapacity()) {
+            // Without a capacity the "reserve" is just fullSoc - holding that through the
+            // window would keep a full battery idle. Keep the old behaviour until it's entered.
+            return noCharge(now, window, DecisionReason.ALREADY_AT_TARGET_SOC,
+                    Map.of("targetSoc", (double) targetSoc), config.minSocPercent());
+        }
+
         if (battery.isAtOrAbove(targetSoc)) {
             // The battery already holds what the expensive hours need - no grid charge, but
             // keep that much in it through the cheap window (the house runs on cheap grid

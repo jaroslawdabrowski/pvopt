@@ -115,3 +115,16 @@ form {
     display: none;
   }
 }
+
+// The planner already uses the measured value - say so right under the field it overrides.
+.learned {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--cheap-on-tint);
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+}

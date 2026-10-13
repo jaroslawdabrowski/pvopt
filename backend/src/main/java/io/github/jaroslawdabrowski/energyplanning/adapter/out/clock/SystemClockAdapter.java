@@ -21,4 +21,9 @@ public class SystemClockAdapter implements ClockPort {
     public LocalDateTime nowLocal() {
         return LocalDateTime.now(zoneId);
     }
+
+    @Override
+    public LocalDateTime toLocal(Instant instant) {
+        return LocalDateTime.ofInstant(instant, zoneId);
+    }
 }

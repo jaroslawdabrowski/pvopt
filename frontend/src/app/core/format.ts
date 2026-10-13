@@ -49,3 +49,8 @@ export function decisionVerdict(d: ChargeDecisionDto): 'chargeOn' | 'reserveHeld
   if (d.chargeFromGrid) return 'chargeOn';
   return d.reasonCode === 'RESERVE_HELD' ? 'reserveHeld' : 'chargeOff';
 }
+
+/** "4,9" / "4.9" - kWh to one decimal in the UI language. */
+export function formatKwh(kwh: number, language: AppLanguage): string {
+  return new Intl.NumberFormat(LOCALES[language], { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(kwh);
+}

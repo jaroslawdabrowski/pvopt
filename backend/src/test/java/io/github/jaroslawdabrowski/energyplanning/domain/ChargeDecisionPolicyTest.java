@@ -121,6 +121,16 @@ class ChargeDecisionPolicyTest {
         assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
     }
 
+    @Test
+    void doesNotHoldAFullBatteryWhenCapacityIsUnknown() {
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), forecast(14.5),
+                REQUIRED_KWH, unknownCapacity);
+
+        assertThat(decision.chargeFromGrid()).isFalse();
+        assertThat(decision.reason()).isEqualTo(DecisionReason.ALREADY_AT_TARGET_SOC);
+        assertThat(decision.targetSocPercent()).isEqualTo(20);
+    }
+
     private ProductionForecast forecast(double expectedKwh) {
         return new ProductionForecast(LocalDate.of(2026, 1, 16), expectedKwh);
     }

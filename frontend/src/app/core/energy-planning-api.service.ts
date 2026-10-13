@@ -4,6 +4,23 @@ import { Observable } from 'rxjs';
 
 export type ChargeWindow = 'OVERNIGHT' | 'AFTERNOON';
 
+/** What was measured in the expensive period after a decision's window - null until that period is over. */
+export interface PeriodOutcomeDto {
+  from: string;
+  to: string;
+  loadKwh: number;
+  pvKwh: number;
+  gridImportKwh: number;
+  gridExportKwh: number;
+  socAtStartPercent: number;
+  socAtEndPercent: number;
+}
+
+export interface LearnedConsumptionDto {
+  kwh: number;
+  samples: number;
+}
+
 export interface ChargeDecisionDto {
   decidedAt: string;
   window: ChargeWindow;
@@ -11,6 +28,7 @@ export interface ChargeDecisionDto {
   targetSocPercent: number;
   reasonCode: string;
   reasonParams: Record<string, number>;
+  outcome: PeriodOutcomeDto | null;
 }
 
 export interface EnergyStatusDto {
@@ -50,6 +68,10 @@ export class EnergyPlanningApi {
 
   runAfternoonNow(): Observable<ChargeDecisionDto> {
     return this.http.post<ChargeDecisionDto>('/api/schedule/run-now/afternoon', {});
+  }
+
+  learnedConsumption(): Observable<Record<ChargeWindow, LearnedConsumptionDto | null>> {
+    return this.http.get<Record<ChargeWindow, LearnedConsumptionDto | null>>('/api/energy/learned-consumption');
   }
 
   touSchedule(): Observable<TouScheduleSlotDto[]> {

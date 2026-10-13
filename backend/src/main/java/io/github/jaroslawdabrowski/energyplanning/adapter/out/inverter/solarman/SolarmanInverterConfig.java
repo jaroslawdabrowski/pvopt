@@ -46,6 +46,36 @@ public interface SolarmanInverterConfig {
     @WithDefault("172")
     int touGridChargeEnableBaseRegister();
 
+    /*
+     * Daily energy counters (0.1 kWh units, reset at the inverter's midnight) - confirmed against
+     * real hardware: read at 13:51 they balanced exactly (PV 5.4 + bought 6.0 + discharged 2.9 =
+     * load 8.6 + sold 0.5 + charged 5.2). All six sit in 514-529, read as one block.
+     */
+
+    /** Today's battery charge, in 0.1 kWh. */
+    @WithDefault("514")
+    int dailyBatteryChargeRegister();
+
+    /** Today's battery discharge, in 0.1 kWh. */
+    @WithDefault("515")
+    int dailyBatteryDischargeRegister();
+
+    /** Today's energy bought from the grid, in 0.1 kWh. */
+    @WithDefault("520")
+    int dailyGridImportRegister();
+
+    /** Today's energy sold to the grid, in 0.1 kWh. */
+    @WithDefault("521")
+    int dailyGridExportRegister();
+
+    /** Today's house consumption, in 0.1 kWh. */
+    @WithDefault("526")
+    int dailyLoadRegister();
+
+    /** Today's PV production, in 0.1 kWh. */
+    @WithDefault("529")
+    int dailyPvRegister();
+
     /**
      * Safety switch: while false (the default), any Modbus write (including the TOU slot
      * setup) only logs what it *would* write instead of actually sending it. Keep this

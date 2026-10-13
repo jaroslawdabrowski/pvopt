@@ -85,4 +85,23 @@ class TariffCalendarTest {
 
         assertThat(period.from()).isEqualTo(LocalDateTime.of(2026, 1, 16, 15, 0));
     }
+
+    @Test
+    void findsThePeriodThatEndsAtAWindowStart() {
+        var overnight = calendar.windowFor(ChargeWindow.OVERNIGHT);
+        var afternoon = calendar.windowFor(ChargeWindow.AFTERNOON);
+
+        assertThat(calendar.expensivePeriodEndingAt(overnight, LocalDateTime.of(2026, 1, 16, 13, 0)))
+                .contains(new ExpensivePeriod(LocalDateTime.of(2026, 1, 16, 6, 0), LocalDateTime.of(2026, 1, 16, 13, 0)));
+        assertThat(calendar.expensivePeriodEndingAt(afternoon, LocalDateTime.of(2026, 1, 16, 22, 0)))
+                .contains(new ExpensivePeriod(LocalDateTime.of(2026, 1, 16, 15, 0), LocalDateTime.of(2026, 1, 16, 22, 0)));
+        assertThat(calendar.expensivePeriodEndingAt(afternoon, LocalDateTime.of(2026, 1, 16, 13, 0))).isEmpty();
+        assertThat(calendar.expensivePeriodEndingAt(overnight, LocalDateTime.of(2026, 1, 16, 6, 0))).isEmpty();
+    }
+
+    @Test
+    void listsEveryWindowBoundaryOnce() {
+        assertThat(calendar.boundaryTimes()).containsExactly(LocalTime.of(6, 0), LocalTime.of(13, 0),
+                LocalTime.of(15, 0), LocalTime.of(22, 0));
+    }
 }

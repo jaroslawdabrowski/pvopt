@@ -7,14 +7,18 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetEnergyStatusUseCase;
+import io.github.jaroslawdabrowski.energyplanning.port.in.GetLearnedConsumptionUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetPlanningHistoryUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.GetTouScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,15 +30,18 @@ public class EnergyPlanningResource {
     private final GetEnergyStatusUseCase getEnergyStatusUseCase;
     private final GetPlanningHistoryUseCase getPlanningHistoryUseCase;
     private final GetTouScheduleUseCase getTouScheduleUseCase;
+    private final GetLearnedConsumptionUseCase getLearnedConsumptionUseCase;
 
     public EnergyPlanningResource(PlanOvernightChargeUseCase planOvernightChargeUseCase,
             PlanAfternoonTopUpUseCase planAfternoonTopUpUseCase, GetEnergyStatusUseCase getEnergyStatusUseCase,
-            GetPlanningHistoryUseCase getPlanningHistoryUseCase, GetTouScheduleUseCase getTouScheduleUseCase) {
+            GetPlanningHistoryUseCase getPlanningHistoryUseCase, GetTouScheduleUseCase getTouScheduleUseCase,
+            GetLearnedConsumptionUseCase getLearnedConsumptionUseCase) {
         this.planOvernightChargeUseCase = planOvernightChargeUseCase;
         this.planAfternoonTopUpUseCase = planAfternoonTopUpUseCase;
         this.getEnergyStatusUseCase = getEnergyStatusUseCase;
         this.getPlanningHistoryUseCase = getPlanningHistoryUseCase;
         this.getTouScheduleUseCase = getTouScheduleUseCase;
+        this.getLearnedConsumptionUseCase = getLearnedConsumptionUseCase;
     }
 
     @GET
@@ -51,6 +58,22 @@ public class EnergyPlanningResource {
         return getPlanningHistoryUseCase.history(fromInstant, toInstant).stream()
                 .map(ChargeDecisionResponse::from)
                 .toList();
+    }
+
+    /** Measured consumption per window, or null for a window without enough measurements yet. */
+    @GET
+    @Path("/energy/learned-consumption")
+    public Map<String, LearnedConsumptionResponse> learnedConsumption() {
+        var result = new LinkedHashMap<String, LearnedConsumptionResponse>();
+        for (ChargeWindow window : ChargeWindow.values()) {
+            result.put(window.name(), getLearnedConsumptionUseCase.learnedConsumption(window)
+                    .map(l -> new LearnedConsumptionResponse(l.kwh(), l.samples()))
+                    .orElse(null));
+        }
+        return result;
+    }
+
+    public record LearnedConsumptionResponse(double kwh, int samples) {
     }
 
     @GET

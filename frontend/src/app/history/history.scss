@@ -36,3 +36,34 @@
 .time {
   font-weight: 700;
 }
+
+// What actually happened in the period after the window - grid import is the number that
+// says whether the decision was right, so it turns red-ish once it's more than a rounding error.
+.outcome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+
+  .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--text-tertiary);
+  }
+
+  &.bought {
+    color: var(--red-700);
+    font-weight: 600;
+
+    .material-symbols-rounded {
+      color: var(--red-600);
+    }
+  }
+}

@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 import io.github.jaroslawdabrowski.energyplanning.domain.BatteryStatus;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
+import io.github.jaroslawdabrowski.energyplanning.domain.DailyEnergyCounters;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
@@ -59,6 +60,27 @@ public class SolarmanInverterAdapter implements InverterPort {
         LOG.infof("Applied charge schedule to inverter: window=%s, enabled=%s, targetSoc=%d%%, slots=%s",
                 schedule.window(), schedule.gridChargeEnabled(), schedule.targetSocPercent(),
                 Arrays.toString(slots));
+    }
+
+    @Override
+    public DailyEnergyCounters readDailyEnergy(InverterConnectionSettings connection) {
+        int[] registers = {config.dailyPvRegister(), config.dailyLoadRegister(), config.dailyGridImportRegister(),
+                config.dailyGridExportRegister(), config.dailyBatteryChargeRegister(),
+                config.dailyBatteryDischargeRegister()};
+        int first = Arrays.stream(registers).min().orElseThrow();
+        int last = Arrays.stream(registers).max().orElseThrow();
+        int[] block = readRegisters(connection, first, last - first + 1);
+        return new DailyEnergyCounters(
+                tenthsOfKwh(block, config.dailyPvRegister() - first),
+                tenthsOfKwh(block, config.dailyLoadRegister() - first),
+                tenthsOfKwh(block, config.dailyGridImportRegister() - first),
+                tenthsOfKwh(block, config.dailyGridExportRegister() - first),
+                tenthsOfKwh(block, config.dailyBatteryChargeRegister() - first),
+                tenthsOfKwh(block, config.dailyBatteryDischargeRegister() - first));
+    }
+
+    private static double tenthsOfKwh(int[] block, int index) {
+        return block[index] / 10.0;
     }
 
     @Override

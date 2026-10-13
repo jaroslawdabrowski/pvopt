@@ -59,6 +59,36 @@ class SolarmanInverterAdapterTest {
             }
 
             @Override
+            public int dailyBatteryChargeRegister() {
+                return 514;
+            }
+
+            @Override
+            public int dailyBatteryDischargeRegister() {
+                return 515;
+            }
+
+            @Override
+            public int dailyGridImportRegister() {
+                return 520;
+            }
+
+            @Override
+            public int dailyGridExportRegister() {
+                return 521;
+            }
+
+            @Override
+            public int dailyLoadRegister() {
+                return 526;
+            }
+
+            @Override
+            public int dailyPvRegister() {
+                return 529;
+            }
+
+            @Override
             public boolean writeEnabled() {
                 return writeEnabled;
             }

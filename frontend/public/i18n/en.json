@@ -66,7 +66,17 @@
     "yesterday": "Yesterday",
     "chargeOn": "Grid charge to {{targetSoc}}%",
     "chargeOff": "No grid charge",
-    "reserveHeld": "No grid charge, holding {{targetSoc}}%"
+    "reserveHeld": "No grid charge, holding {{targetSoc}}%",
+    "outcome": {
+      "label": "Outcome in the expensive hours:",
+      "load": "House consumption",
+      "loadValue": "used {{kwh}} kWh",
+      "pv": "PV production",
+      "pvValue": "PV {{kwh}} kWh",
+      "grid": "Bought at the expensive rate",
+      "gridValue": "grid {{kwh}} kWh",
+      "soc": "Battery at the start and at the end"
+    }
   },
   "touSchedule": {
     "title": "Inverter schedule",
@@ -101,7 +111,8 @@
       "consumptionAfterOvernight": "Morning consumption",
       "consumptionAfterOvernightHint": "In the expensive hours after the overnight window (6–13)",
       "consumptionAfterAfternoon": "Evening consumption",
-      "consumptionAfterAfternoonHint": "In the expensive hours after the afternoon window (15–22)"
+      "consumptionAfterAfternoonHint": "In the expensive hours after the afternoon window (15–22)",
+      "learned": "Measured: {{kwh}} kWh, averaged over {{samples}} days. Planning uses this instead of the value entered."
     },
     "schedule": {
       "title": "Daily schedule",

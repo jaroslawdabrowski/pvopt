@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Pure G12 tariff logic: determines whether a given moment falls in a cheap window.
@@ -50,6 +51,27 @@ public class TariffCalendar {
                 .min(LocalDateTime::compareTo)
                 .orElseThrow();
         return new ExpensivePeriod(from, to);
+    }
+
+    /**
+     * The expensive period after {@code window} that ends exactly at {@code end}, if any -
+     * used when a snapshot is taken at a cheap window's start, to close the period before it.
+     */
+    public Optional<ExpensivePeriod> expensivePeriodEndingAt(TariffWindow window, LocalDateTime end) {
+        var period = expensivePeriodAfter(window, end.minusDays(1));
+        if (period.to().isBefore(end)) {
+            period = expensivePeriodAfter(window, period.from());
+        }
+        return period.to().equals(end) ? Optional.of(period) : Optional.empty();
+    }
+
+    /** Every clock time at which some cheap window starts or ends - where the expensive periods begin and end. */
+    public List<LocalTime> boundaryTimes() {
+        return cheapWindows.stream()
+                .flatMap(window -> Stream.of(window.start(), window.end()))
+                .distinct()
+                .sorted()
+                .toList();
     }
 
     /** The first moment strictly after {@code after} at which the clock shows {@code time}. */

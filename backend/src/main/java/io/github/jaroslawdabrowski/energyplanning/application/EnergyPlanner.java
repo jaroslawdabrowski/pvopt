@@ -5,6 +5,9 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecision;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeDecisionPolicy;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
+import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator;
+import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator.LearnedConsumption;
+import io.github.jaroslawdabrowski.energyplanning.domain.PlannedDecision;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningPolicyConfig;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettingsNotConfiguredException;
@@ -16,6 +19,7 @@ import io.github.jaroslawdabrowski.energyplanning.port.in.GetTouScheduleUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ClockPort;
+import io.github.jaroslawdabrowski.energyplanning.port.out.EnergyRecordPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.ForecastPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 import io.github.jaroslawdabrowski.energyplanning.port.out.PlanningHistoryPort;
@@ -25,6 +29,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The single orchestration point for both daily planning decisions: calls outbound
@@ -45,15 +50,17 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     private final PlanningHistoryPort historyPort;
     private final ClockPort clockPort;
     private final ProcessSettingsPort settingsPort;
+    private final EnergyRecordPort energyRecordPort;
     private final ChargeDecisionPolicy decisionPolicy = new ChargeDecisionPolicy();
 
     public EnergyPlanner(InverterPort inverterPort, ForecastPort forecastPort, PlanningHistoryPort historyPort,
-            ClockPort clockPort, ProcessSettingsPort settingsPort) {
+            ClockPort clockPort, ProcessSettingsPort settingsPort, EnergyRecordPort energyRecordPort) {
         this.inverterPort = inverterPort;
         this.forecastPort = forecastPort;
         this.historyPort = historyPort;
         this.clockPort = clockPort;
         this.settingsPort = settingsPort;
+        this.energyRecordPort = energyRecordPort;
     }
 
     @Override
@@ -77,14 +84,18 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
         var period = calendar.expensivePeriodAfter(calendar.windowFor(window), clockPort.nowLocal());
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
         var forecast = forecastPort.productionBetween(period.from(), period.to(), settings.forecast());
-        double requiredKwh = settings.planning().consumptionAfter(window)
-                * settings.planning().forecastSafetyMarginRatio();
+        var learned = learnedConsumption(window);
+        double consumptionKwh = learned.map(LearnedConsumption::kwh)
+                .orElse(settings.planning().consumptionAfter(window));
+        double requiredKwh = consumptionKwh * settings.planning().forecastSafetyMarginRatio();
 
         var decision = decisionPolicy.decide(clockPort.now(), window, battery, forecast, requiredKwh,
                 policyConfig(settings))
                 .withReasonParams(Map.of(
                         "periodFromHour", hourOf(period.from()),
-                        "periodToHour", hourOf(period.to())));
+                        "periodToHour", hourOf(period.to()),
+                        "consumptionKwh", consumptionKwh,
+                        "learnedSamples", (double) learned.map(LearnedConsumption::samples).orElse(0)));
 
         inverterPort.applyChargeSchedule(
                 new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
@@ -106,8 +117,30 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     }
 
     @Override
-    public List<ChargeDecision> history(Instant from, Instant to) {
-        return historyPort.findBetween(from, to);
+    public List<PlannedDecision> history(Instant from, Instant to) {
+        var decisions = historyPort.findBetween(from, to);
+        var settings = settingsPort.load();
+        if (settings.isEmpty() || decisions.isEmpty()) {
+            return decisions.stream().map(d -> new PlannedDecision(d, Optional.empty())).toList();
+        }
+        // Re-derive each decision's period from its time and window; an outcome matches when its
+        // period starts there (it won't if the tariff windows were changed since).
+        var calendar = tariffCalendar(settings.get());
+        var outcomes = energyRecordPort.findOutcomesSince(clockPort.toLocal(from));
+        return decisions.stream().map(decision -> {
+            var period = calendar.expensivePeriodAfter(calendar.windowFor(decision.window()),
+                    clockPort.toLocal(decision.decidedAt()));
+            var outcome = outcomes.stream()
+                    .filter(o -> o.window() == decision.window() && o.from().equals(period.from()))
+                    .findFirst();
+            return new PlannedDecision(decision, outcome);
+        }).toList();
+    }
+
+    /** Measured consumption of this window's period over recent days, when there's enough of it. */
+    private Optional<LearnedConsumption> learnedConsumption(ChargeWindow window) {
+        var since = clockPort.nowLocal().minus(EnergyRecorder.LEARNING_WINDOW);
+        return ConsumptionEstimator.learn(energyRecordPort.findOutcomes(window, since));
     }
 
     @Override

@@ -30,6 +30,27 @@
                   {{ ('history.' + verdict(d)) | translate: { targetSoc: d.targetSocPercent } }}
                 </span>
                 <span class="reason">{{ ('reason.' + d.reasonCode) | translate: d.reasonParams }}</span>
+                @if (d.outcome; as o) {
+                  <span class="outcome" data-testid="history-outcome">
+                    <span class="visually-hidden">{{ 'history.outcome.label' | translate }}</span>
+                    <span class="stat" [title]="'history.outcome.load' | translate">
+                      <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                      <span class="num">{{ 'history.outcome.loadValue' | translate: { kwh: kwh(o.loadKwh) } }}</span>
+                    </span>
+                    <span class="stat" [title]="'history.outcome.pv' | translate">
+                      <span class="material-symbols-rounded" aria-hidden="true">solar_power</span>
+                      <span class="num">{{ 'history.outcome.pvValue' | translate: { kwh: kwh(o.pvKwh) } }}</span>
+                    </span>
+                    <span class="stat" [class.bought]="o.gridImportKwh >= 0.5" [title]="'history.outcome.grid' | translate">
+                      <span class="material-symbols-rounded" aria-hidden="true">electric_meter</span>
+                      <span class="num">{{ 'history.outcome.gridValue' | translate: { kwh: kwh(o.gridImportKwh) } }}</span>
+                    </span>
+                    <span class="stat" [title]="'history.outcome.soc' | translate">
+                      <span class="material-symbols-rounded" aria-hidden="true">battery_horiz_050</span>
+                      <span class="num">{{ o.socAtStartPercent }}% → {{ o.socAtEndPercent }}%</span>
+                    </span>
+                  </span>
+                }
               </span>
               <span class="list-end">
                 <span class="time num">{{ time(d.decidedAt) }}</span>
