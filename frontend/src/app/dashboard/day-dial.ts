@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TariffWindowView, WindowTone } from './tariff-windows';
+import { shortClock } from '../core/format';
 
 const CENTER = 120;
 const DAY_RING_RADIUS = 104;
@@ -42,7 +43,7 @@ function arcPath(startHours: number, endHours: number, radius: number): string {
       @for (window of arcs(); track window.label) {
         <path class="window-arc" [class]="'tone-' + window.tone" [attr.d]="window.path" />
       }
-      @for (label of hourLabels; track label.text) {
+      @for (label of hourLabels(); track label.text) {
         <text class="hour-label" [attr.x]="label.x" [attr.y]="label.y">{{ label.text }}</text>
       }
       @for (tick of decisionTicks(); track $index) {
@@ -93,9 +94,14 @@ export class DayDial {
   protected readonly socRadius = SOC_RING_RADIUS;
   protected readonly socCircumference = SOC_CIRCUMFERENCE;
 
-  protected readonly hourLabels = [0, 6, 12, 18].map((hour) => {
-    const p = pointAt(hour, HOUR_LABEL_RADIUS);
-    return { text: String(hour).padStart(2, '0'), x: p.x, y: p.y };
+  /** The windows' start and end times - where the tariff actually changes - or the quarters until there are windows. */
+  protected readonly hourLabels = computed(() => {
+    const boundaries = this.windows().flatMap((w) => [w.startHours, w.endHours]);
+    const hours = boundaries.length > 0 ? [...new Set(boundaries)] : [0, 6, 12, 18];
+    return hours.map((hour) => {
+      const p = pointAt(hour, HOUR_LABEL_RADIUS);
+      return { text: shortClock(hour), x: p.x, y: p.y };
+    });
   });
 
   protected readonly arcs = computed(() =>

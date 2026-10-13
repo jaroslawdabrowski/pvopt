@@ -20,13 +20,28 @@
   }
 }
 
+// Slot boundaries under the bar, each centred on its position; 00 hugs the left edge.
 .timeline-hours {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 32px;
   margin-top: calc(-1 * var(--space-3));
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-tertiary);
+
+  span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+
+    &.edge-start {
+      transform: none;
+    }
+
+    &.lower {
+      top: 15px;
+    }
+  }
 }
 
 .list-row {

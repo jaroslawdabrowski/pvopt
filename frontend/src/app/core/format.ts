@@ -70,3 +70,10 @@ export function formatClock(hours: number): string {
   const minutes = Math.round((hours - Math.floor(hours)) * 60);
   return `${whole}:${String(minutes).padStart(2, '0')}`;
 }
+
+/** "22" / "6:30" - a boundary time as a short label: whole hours without minutes. */
+export function shortClock(hours: number): string {
+  const whole = Math.floor(hours) % 24;
+  const minutes = Math.round((hours - Math.floor(hours)) * 60);
+  return minutes === 0 ? String(whole).padStart(2, '0') : `${whole}:${String(minutes).padStart(2, '0')}`;
+}

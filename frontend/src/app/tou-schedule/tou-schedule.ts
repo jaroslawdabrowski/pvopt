@@ -5,6 +5,9 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { EnergyPlanningApi, TouScheduleSlotDto } from '../core/energy-planning-api.service';
 import { settingsAwareErrorKey } from '../core/settings-error.util';
 import { hoursOf } from '../dashboard/tariff-windows';
+import { shortClock } from '../core/format';
+
+const MIN_GAP_PERCENT = 8;
 
 /** One stretch of the 24h timeline bar, in percent of the day. */
 interface TimelineSegment {
@@ -40,6 +43,23 @@ export class TouSchedule implements OnInit {
       ].filter((s) => s.width > 0);
     })
   );
+
+  /**
+   * Every slot start as a label under the bar. A label closer than
+   * MIN_GAP to the previous one drops to a second line, so 21 and 22 don't overprint on a phone.
+   */
+  readonly boundaryLabels = computed(() => {
+    const starts = [...new Set(this.slots().map((slot) => hoursOf(slot.startTime)).filter((h): h is number => h !== null))]
+      .sort((a, b) => a - b);
+    if (starts.length === 0) return [];
+    let previousUpper = -Infinity;
+    return starts.map((hour) => {
+      const left = (hour / 24) * 100;
+      const lower = left - previousUpper < MIN_GAP_PERCENT;
+      if (!lower) previousUpper = left;
+      return { left, text: shortClock(hour), lower };
+    });
+  });
 
   constructor(private readonly api: EnergyPlanningApi) {}
 
