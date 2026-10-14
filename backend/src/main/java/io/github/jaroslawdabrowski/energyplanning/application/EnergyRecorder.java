@@ -44,6 +44,8 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
     static final Duration LEARNING_WINDOW = Duration.ofDays(14);
     /** A scheduled snapshot may land a little late; the period start must still be found. */
     private static final Duration SNAPSHOT_TOLERANCE = Duration.ofMinutes(15);
+    /** How late a snapshot may still be taken for its time - and how close two may be. */
+    static final Duration SNAPSHOT_LATENESS = Duration.ofMinutes(5);
 
     private final InverterPort inverterPort;
     private final EnergyRecordPort energyRecordPort;
@@ -65,6 +67,18 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
         // Truncated to the minute: the job fires on the boundary, and the period math compares
         // exact times (06:00, 13:00, ...).
         LocalDateTime now = clockPort.nowLocal().truncatedTo(ChronoUnit.MINUTES);
+        // A job that fires long after its time (the machine was asleep and runs the missed ones
+        // on waking) would stamp counters at 08:04 as if they were 06:00's - skip it, and skip a
+        // second job firing in the same burst.
+        var due = latestSnapshotTimeAtOrBefore(now, settings);
+        if (Duration.between(due, now).compareTo(SNAPSHOT_LATENESS) > 0) {
+            LOG.infof("Energy snapshot for %s skipped - running at %s, too late to stand for it", due, now);
+            return;
+        }
+        if (energyRecordPort.findSnapshotNear(now, SNAPSHOT_LATENESS).isPresent()) {
+            LOG.infof("Energy snapshot at %s skipped - one was already taken", now);
+            return;
+        }
         var snapshot = new EnergySnapshot(now, inverterPort.readDailyEnergy(connection),
                 inverterPort.readBatteryStatus(connection).socPercent());
         energyRecordPort.saveSnapshot(snapshot);
@@ -85,6 +99,20 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
                 }, () -> LOG.infof("No snapshot from %s - %s period not measured", period.from(), window));
             });
         }
+    }
+
+    private LocalDateTime latestSnapshotTimeAtOrBefore(LocalDateTime now, ProcessSettings settings) {
+        LocalDateTime latest = null;
+        for (LocalTime time : snapshotTimes(settings)) {
+            LocalDateTime candidate = now.toLocalDate().atTime(time);
+            if (candidate.isAfter(now)) {
+                candidate = candidate.minusDays(1);
+            }
+            if (latest == null || candidate.isAfter(latest)) {
+                latest = candidate;
+            }
+        }
+        return latest;
     }
 
     @Override

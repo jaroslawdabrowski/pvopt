@@ -86,6 +86,30 @@ final class ModbusRtuFrame {
         return withCrc(buffer.array());
     }
 
+    /**
+     * Strict variant for the live adapter: besides function and exception checks, the CRC must
+     * be valid and the frame must carry exactly {@code expectedCount} registers - a response
+     * meant for another request (or cut short) is rejected instead of being read as data.
+     * All three hold for every real response from this logger (checked 2026-10-14).
+     */
+    static int[] parseReadHoldingRegistersResponse(byte[] frame, int expectedCount) {
+        int[] values = parseReadRegistersResponse(frame, FUNCTION_READ_HOLDING_REGISTERS);
+        int byteCount = frame[2] & 0xFF;
+        if (frame.length != 3 + byteCount + 2) {
+            throw new IllegalArgumentException("Modbus response length " + frame.length + " doesn't match its byte count "
+                    + byteCount + ": " + toHex(frame));
+        }
+        int expectedCrc = (frame[frame.length - 2] & 0xFF) | ((frame[frame.length - 1] & 0xFF) << 8);
+        if (ModbusCrc16.compute(frame, 0, frame.length - 2) != expectedCrc) {
+            throw new IllegalArgumentException("Modbus response CRC mismatch: " + toHex(frame));
+        }
+        if (values.length != expectedCount) {
+            throw new IllegalArgumentException("Asked for " + expectedCount + " registers, response has "
+                    + values.length + ": " + toHex(frame));
+        }
+        return values;
+    }
+
     private static int[] parseReadRegistersResponse(byte[] frame, int expectedFunction) {
         if (frame.length >= 3 && (frame[1] & 0xFF) == (expectedFunction | 0x80)) {
             throw new IllegalArgumentException(

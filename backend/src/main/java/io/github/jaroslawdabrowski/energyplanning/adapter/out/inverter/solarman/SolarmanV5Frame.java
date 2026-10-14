@@ -92,6 +92,27 @@ final class SolarmanV5Frame {
         return modbusFrame;
     }
 
+    /** Bytes in a whole frame, from the declared length in its first 3 bytes (11-byte header + declared + 2). */
+    static int totalLength(byte[] headerStart) {
+        if (headerStart.length < 3 || (headerStart[0] & 0xFF) != START) {
+            throw new IllegalArgumentException("Not the start of a Solarman V5 frame");
+        }
+        int declared = (headerStart[1] & 0xFF) | ((headerStart[2] & 0xFF) << 8);
+        return 11 + declared + 2;
+    }
+
+    /**
+     * The logger echoes the low byte of the request's sequence number at offset 5 (offset 6 is
+     * its own counter) - confirmed on real hardware. A mismatch means this response answers
+     * some other request.
+     */
+    static void checkSequence(byte[] raw, int requestSequence) {
+        if (raw.length < 7 || (raw[5] & 0xFF) != (requestSequence & 0xFF)) {
+            throw new IllegalArgumentException("Response sequence " + (raw.length < 7 ? "?" : raw[5] & 0xFF)
+                    + " doesn't answer request " + (requestSequence & 0xFF));
+        }
+    }
+
     /** Sum of bytes[fromInclusive..toInclusive], truncated to 8 bits. */
     private static int checksum(byte[] data, int fromInclusive, int toInclusive) {
         int sum = 0;

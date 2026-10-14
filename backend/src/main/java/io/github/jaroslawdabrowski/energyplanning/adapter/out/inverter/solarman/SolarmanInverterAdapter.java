@@ -10,6 +10,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.LocalTime;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The only adapter that knows the Solarman V5 / Modbus RTU protocol and the
@@ -30,6 +32,12 @@ public class SolarmanInverterAdapter implements InverterPort {
 
     private final SolarmanInverterConfig config;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
+    /** Fair, so a waiting decision isn't starved by a burst of snapshot reads. */
+    private final ReentrantLock exchangeLock = new ReentrantLock(true);
+
+    private static final int READ_ATTEMPTS = 3;
+    private static final long READ_RETRY_PAUSE_MILLIS = 500;
+    private static final int MAX_FRAME_BYTES = 1024;
 
     public SolarmanInverterAdapter(SolarmanInverterConfig config) {
         this.config = config;
@@ -110,10 +118,35 @@ public class SolarmanInverterAdapter implements InverterPort {
         return slots;
     }
 
+    /**
+     * A read is retried a couple of times on a bad or foreign response - reads are harmless to
+     * repeat, and a garbled frame (the logger was busy, a response crossed with another one) is
+     * usually fine a moment later. Writes are not retried here: each one is echo-checked, and a
+     * failed decision is retried as a whole by the scheduler.
+     */
     private int[] readRegisters(InverterConnectionSettings connection, int baseRegister, int count) {
         byte[] modbusRequest = ModbusRtuFrame.readHoldingRegisters(config.modbusSlaveAddress(), baseRegister, count);
-        byte[] modbusResponse = sendAndReceive(connection, modbusRequest);
-        return ModbusRtuFrame.parseReadHoldingRegistersResponse(modbusResponse);
+        RuntimeException last = null;
+        for (int attempt = 1; attempt <= READ_ATTEMPTS; attempt++) {
+            try {
+                return ModbusRtuFrame.parseReadHoldingRegistersResponse(sendAndReceive(connection, modbusRequest), count);
+            } catch (InverterCommunicationException | IllegalArgumentException e) {
+                last = e;
+                LOG.warnf("Reading %d register(s) from %d failed (attempt %d of %d): %s", count, baseRegister, attempt,
+                        READ_ATTEMPTS, e.getMessage());
+                pause(READ_RETRY_PAUSE_MILLIS);
+            }
+        }
+        throw new InverterCommunicationException("Reading " + count + " register(s) from " + baseRegister
+                + " failed " + READ_ATTEMPTS + " times: " + last.getMessage(), last);
+    }
+
+    private static void pause(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void writeRegister(InverterConnectionSettings connection, int register, int value) {
@@ -126,31 +159,58 @@ public class SolarmanInverterAdapter implements InverterPort {
         ModbusRtuFrame.checkWriteMultipleRegistersResponse(response, register, 1);
     }
 
+    /**
+     * One request at a time, whole frames only. The stick logger serves a single TCP client:
+     * two jobs firing together (after the Mac woke up, the 04:28 decision and a snapshot) made
+     * their responses cross - a failed parse, a 1-register answer to a 16-register read, and a
+     * snapshot that stored SOC 2%. So every exchange holds {@link #exchangeLock}, the response is
+     * read until the length its header declares, and its sequence number must echo the request's.
+     */
     private byte[] sendAndReceive(InverterConnectionSettings connection, byte[] modbusRequest) {
-        byte[] v5Request = SolarmanV5Frame.encodeRequest(
-                connection.loggerSerial(), sequenceNumber.getAndIncrement() & 0xFFFF, modbusRequest);
+        exchangeLock.lock();
+        try {
+            int sequence = sequenceNumber.getAndIncrement() & 0xFFFF;
+            byte[] v5Request = SolarmanV5Frame.encodeRequest(connection.loggerSerial(), sequence, modbusRequest);
+            try (Socket socket = new Socket()) {
+                // connect() with an explicit timeout - the Socket(host, port) constructor connects
+                // with no timeout at all and can hang for a very long time when the logger is unreachable.
+                socket.connect(new InetSocketAddress(connection.host(), connection.port()), config.socketTimeoutMillis());
+                socket.setSoTimeout(config.socketTimeoutMillis());
+                socket.getOutputStream().write(v5Request);
+                socket.getOutputStream().flush();
 
-        try (Socket socket = new Socket()) {
-            // connect() with an explicit timeout - the Socket(host, port) constructor connects
-            // with no timeout at all and can hang for a very long time when the logger is unreachable.
-            socket.connect(new InetSocketAddress(connection.host(), connection.port()), config.socketTimeoutMillis());
-            socket.setSoTimeout(config.socketTimeoutMillis());
-            socket.getOutputStream().write(v5Request);
-            socket.getOutputStream().flush();
-
-            byte[] responseBuffer = new byte[1024];
-            int read = socket.getInputStream().read(responseBuffer);
-            if (read <= 0) {
-                throw new InverterCommunicationException("No response from Deye/Solarman logger at "
-                        + connection.host() + ":" + connection.port());
+                byte[] response = readFrame(socket.getInputStream(), connection);
+                SolarmanV5Frame.checkSequence(response, sequence);
+                return SolarmanV5Frame.decodeResponse(response);
+            } catch (IOException e) {
+                throw new InverterCommunicationException(
+                        "Failed to communicate with Deye/Solarman logger at " + connection.host() + ":"
+                                + connection.port(), e);
             }
-            byte[] response = new byte[read];
-            System.arraycopy(responseBuffer, 0, response, 0, read);
-            return SolarmanV5Frame.decodeResponse(response);
-        } catch (IOException e) {
-            throw new InverterCommunicationException(
-                    "Failed to communicate with Deye/Solarman logger at " + connection.host() + ":"
-                            + connection.port(), e);
+        } finally {
+            exchangeLock.unlock();
         }
+    }
+
+    /** Reads exactly one V5 frame: the 3-byte start tells its total length, the rest is read until complete. */
+    private static byte[] readFrame(InputStream in, InverterConnectionSettings connection) throws IOException {
+        byte[] header = in.readNBytes(3);
+        if (header.length < 3) {
+            throw new InverterCommunicationException("No response from Deye/Solarman logger at "
+                    + connection.host() + ":" + connection.port());
+        }
+        int total = SolarmanV5Frame.totalLength(header);
+        if (total > MAX_FRAME_BYTES) {
+            throw new InverterCommunicationException("Implausible frame length " + total + " from the logger");
+        }
+        byte[] rest = in.readNBytes(total - 3);
+        if (rest.length < total - 3) {
+            throw new InverterCommunicationException("Logger response cut short: " + (3 + rest.length) + " of "
+                    + total + " bytes");
+        }
+        byte[] frame = new byte[total];
+        System.arraycopy(header, 0, frame, 0, 3);
+        System.arraycopy(rest, 0, frame, 3, rest.length);
+        return frame;
     }
 }

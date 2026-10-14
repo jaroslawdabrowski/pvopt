@@ -183,4 +183,24 @@ class EnergyRecorderTest {
             return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         }
     }
+
+    @Test
+    void skipsASnapshotRunningLongAfterItsTime() {
+        // The machine woke at 08:20 and ran the missed jobs - those counters aren't 08:00's.
+        clock.at(LocalDateTime.of(2026, 1, 16, 8, 20));
+        inverter.counters = new DailyEnergyCounters(0.5, 3.9, 2.0, 0, 0, 1.0);
+        recorder.recordSnapshot();
+
+        assertThat(records.snapshots).isEmpty();
+    }
+
+    @Test
+    void takesOnlyOneSnapshotWhenJobsFireTogether() {
+        clock.at(LocalDateTime.of(2026, 1, 16, 9, 1));
+        inverter.counters = new DailyEnergyCounters(1.0, 4.5, 2.0, 0, 0, 1.2);
+        recorder.recordSnapshot();
+        recorder.recordSnapshot();
+
+        assertThat(records.snapshots).hasSize(1);
+    }
 }

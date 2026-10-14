@@ -66,4 +66,38 @@ class ModbusRtuFrameTest {
         System.arraycopy(crc, 0, frame, payload.length, 2);
         return frame;
     }
+
+    @Test
+    void strictParseAcceptsAResponseWithTheRequestedRegisterCount() {
+        assertThat(ModbusRtuFrame.parseReadHoldingRegistersResponse(withCrc(0x01, 0x03, 0x02, 0x00, 0x52), 1))
+                .containsExactly(82);
+    }
+
+    @Test
+    void strictParseRejectsAnAnswerToSomeOtherRead() {
+        // A 1-register answer where 16 were asked for - what a crossed response looked like.
+        assertThatThrownBy(() -> ModbusRtuFrame.parseReadHoldingRegistersResponse(withCrc(0x01, 0x03, 0x02, 0x00, 0x02), 16))
+                .hasMessageContaining("Asked for 16 registers");
+    }
+
+    @Test
+    void strictParseRejectsACorruptedResponse() {
+        byte[] response = withCrc(0x01, 0x03, 0x02, 0x00, 0x52);
+        response[4] = 0x02;
+
+        assertThatThrownBy(() -> ModbusRtuFrame.parseReadHoldingRegistersResponse(response, 1))
+                .hasMessageContaining("CRC mismatch");
+    }
+
+    private static byte[] withCrc(int... bytes) {
+        byte[] payload = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            payload[i] = (byte) bytes[i];
+        }
+        byte[] crc = ModbusCrc16.computeLittleEndian(payload, 0, payload.length);
+        byte[] frame = new byte[payload.length + 2];
+        System.arraycopy(payload, 0, frame, 0, payload.length);
+        System.arraycopy(crc, 0, frame, payload.length, 2);
+        return frame;
+    }
 }

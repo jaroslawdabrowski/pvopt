@@ -63,4 +63,28 @@ class SolarmanV5FrameTest {
         }
         return bytes;
     }
+
+    @Test
+    void readsTheTotalFrameLengthFromItsHeader() {
+        // Declared 21 (15 + a 6-byte Modbus frame): 11 header + 21 + checksum + end marker.
+        assertThat(SolarmanV5Frame.totalLength(new byte[] {(byte) 0xA5, 21, 0})).isEqualTo(34);
+    }
+
+    @Test
+    void acceptsAResponseEchoingTheRequestSequenceLowByte() {
+        byte[] response = new byte[34];
+        response[5] = 0x34;
+        response[6] = (byte) 0xA7; // the logger's own counter - not checked
+
+        SolarmanV5Frame.checkSequence(response, 0x1234);
+    }
+
+    @Test
+    void rejectsAResponseToAnotherRequest() {
+        byte[] response = new byte[34];
+        response[5] = 0x35;
+
+        assertThatThrownBy(() -> SolarmanV5Frame.checkSequence(response, 0x1234))
+                .hasMessageContaining("doesn't answer request");
+    }
 }
