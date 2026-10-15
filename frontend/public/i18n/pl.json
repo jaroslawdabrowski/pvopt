@@ -138,7 +138,9 @@
       "learned": "Zmierzone: {{kwh}} kWh, średnio z {{samples}} dni. Planowanie używa tej wartości zamiast wpisanej.",
       "batteryGroup": "Bateria",
       "consumptionGroup": "Zużycie w drogich godzinach",
-      "batteryCapacityHint": "Całkowita, odpowiadająca 0–100% SOC. Nie odejmuj minimalnego SOC - zapas jest liczony ponad nim."
+      "batteryCapacityHint": "Całkowita, odpowiadająca 0–100% SOC. Nie odejmuj minimalnego SOC - zapas jest liczony ponad nim.",
+      "learnedSince": "Zmierzone od {{date}}: {{kwh}} kWh, średnio z {{samples}} okresów. Planowanie używa tej wartości zamiast wpisanej.",
+      "relearning": "Zmieniłeś szacunek {{date}}, więc pomiary liczą się od nowa: {{samples}} z {{needed}}. Do tego czasu planowanie używa wpisanej wartości."
     },
     "schedule": {
       "title": "Harmonogram dobowy",

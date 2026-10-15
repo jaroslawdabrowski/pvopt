@@ -21,4 +21,8 @@ public record ProcessSettings(
         // Optional - settings saved before notifications existed simply have none.
         notifications = notifications == null ? NotificationSettings.NONE : notifications;
     }
+
+    public ProcessSettings withPlanning(PlanningSettings newPlanning) {
+        return new ProcessSettings(newPlanning, schedule, forecast, inverterConnection, notifications);
+    }
 }

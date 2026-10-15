@@ -57,10 +57,17 @@
             </div>
             <span id="consumptionAfterOvernightHint" class="field-hint">{{ 'settings.planning.consumptionAfterOvernightHint' | translate }}</span>
             @if (learned()?.OVERNIGHT; as l) {
-              <span class="learned" data-testid="learned-overnight">
-                <span class="material-symbols-rounded" aria-hidden="true">insights</span>
-                {{ 'settings.planning.learned' | translate: { kwh: l.kwh, samples: l.samples } }}
-              </span>
+              @if (l.kwh !== null) {
+                <span class="learned" data-testid="learned-overnight">
+                  <span class="material-symbols-rounded" aria-hidden="true">insights</span>
+                  {{ (l.countingFrom ? 'settings.planning.learnedSince' : 'settings.planning.learned') | translate: { kwh: l.kwh, samples: l.samples, date: day(l.countingFrom) } }}
+                </span>
+              } @else if (l.countingFrom) {
+                <span class="learned relearning" data-testid="relearning-overnight">
+                  <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>
+                  {{ 'settings.planning.relearning' | translate: { samples: l.samples, needed: 3, date: day(l.countingFrom) } }}
+                </span>
+              }
             }
           </div>
           <div class="field">
@@ -71,10 +78,17 @@
             </div>
             <span id="consumptionAfterAfternoonHint" class="field-hint">{{ 'settings.planning.consumptionAfterAfternoonHint' | translate }}</span>
             @if (learned()?.AFTERNOON; as l) {
-              <span class="learned" data-testid="learned-afternoon">
-                <span class="material-symbols-rounded" aria-hidden="true">insights</span>
-                {{ 'settings.planning.learned' | translate: { kwh: l.kwh, samples: l.samples } }}
-              </span>
+              @if (l.kwh !== null) {
+                <span class="learned" data-testid="learned-afternoon">
+                  <span class="material-symbols-rounded" aria-hidden="true">insights</span>
+                  {{ (l.countingFrom ? 'settings.planning.learnedSince' : 'settings.planning.learned') | translate: { kwh: l.kwh, samples: l.samples, date: day(l.countingFrom) } }}
+                </span>
+              } @else if (l.countingFrom) {
+                <span class="learned relearning" data-testid="relearning-afternoon">
+                  <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>
+                  {{ 'settings.planning.relearning' | translate: { samples: l.samples, needed: 3, date: day(l.countingFrom) } }}
+                </span>
+              }
             }
           </div>
           <div class="field">

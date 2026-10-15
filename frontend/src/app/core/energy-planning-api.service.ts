@@ -17,8 +17,11 @@ export interface PeriodOutcomeDto {
 }
 
 export interface LearnedConsumptionDto {
-  kwh: number;
+  /** Null until there are enough measured periods. */
+  kwh: number | null;
   samples: number;
+  /** Set when the estimate was changed recently: only periods from here on count. */
+  countingFrom: string | null;
 }
 
 export interface ChargeDecisionDto {

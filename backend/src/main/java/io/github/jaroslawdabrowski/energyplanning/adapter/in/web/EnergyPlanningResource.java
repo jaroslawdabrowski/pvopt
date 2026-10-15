@@ -19,6 +19,7 @@ import io.github.jaroslawdabrowski.energyplanning.port.in.PlanAfternoonTopUpUseC
 import io.github.jaroslawdabrowski.energyplanning.port.in.PlanOvernightChargeUseCase;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,20 +66,23 @@ public class EnergyPlanningResource {
                 .toList();
     }
 
-    /** Measured consumption per window, or null for a window without enough measurements yet. */
+    /** Measured consumption per window, and how far learning has got. */
     @GET
     @Path("/energy/learned-consumption")
     public Map<String, LearnedConsumptionResponse> learnedConsumption() {
         var result = new LinkedHashMap<String, LearnedConsumptionResponse>();
         for (ChargeWindow window : ChargeWindow.values()) {
-            result.put(window.name(), getLearnedConsumptionUseCase.learnedConsumption(window)
-                    .map(l -> new LearnedConsumptionResponse(l.kwh(), l.samples()))
-                    .orElse(null));
+            var learning = getLearnedConsumptionUseCase.learnedConsumption(window);
+            result.put(window.name(), new LearnedConsumptionResponse(
+                    learning.learned().map(l -> l.kwh()).orElse(null),
+                    learning.samples(),
+                    learning.countingFrom().orElse(null)));
         }
         return result;
     }
 
-    public record LearnedConsumptionResponse(double kwh, int samples) {
+    /** {@code kwh} is null until there are enough samples; {@code countingFrom} is set after a recent estimate change. */
+    public record LearnedConsumptionResponse(Double kwh, int samples, LocalDateTime countingFrom) {
     }
 
     /** Sends a test notification to the URL in the body - the Settings form can test it before saving. */

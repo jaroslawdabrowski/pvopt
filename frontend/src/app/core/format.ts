@@ -77,3 +77,8 @@ export function shortClock(hours: number): string {
   const minutes = Math.round((hours - Math.floor(hours)) * 60);
   return minutes === 0 ? String(whole).padStart(2, '0') : `${whole}:${String(minutes).padStart(2, '0')}`;
 }
+
+/** "15 października" / "15 October" - a day without the time. */
+export function formatDay(iso: string | Date, language: AppLanguage): string {
+  return new Intl.DateTimeFormat(LOCALES[language], { day: 'numeric', month: 'long' }).format(new Date(iso));
+}

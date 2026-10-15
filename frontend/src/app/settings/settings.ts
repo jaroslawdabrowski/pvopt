@@ -7,6 +7,8 @@ import {
   blankProcessSettings
 } from '../core/process-settings-api.service';
 import { ChargeWindow, EnergyPlanningApi, LearnedConsumptionDto } from '../core/energy-planning-api.service';
+import { LanguageService } from '../core/language.service';
+import { formatDay } from '../core/format';
 
 @Component({
   selector: 'app-settings',
@@ -28,6 +30,13 @@ export class Settings implements OnInit {
   readonly savedJustNow = signal(false);
   readonly directions = ['north', 'east', 'south', 'west'] as const;
   /** Measured consumption per window - once there's enough of it, the planner uses it instead of the field. */
+  private readonly language = inject(LanguageService).currentLanguage;
+
+  /** "15 października" - when re-learning started. */
+  day(iso: string | null): string {
+    return iso ? formatDay(iso, this.language()) : '';
+  }
+
   readonly learned = signal<Record<ChargeWindow, LearnedConsumptionDto | null> | null>(null);
 
   readonly form = this.fb.group({

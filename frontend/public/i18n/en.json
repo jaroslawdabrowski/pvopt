@@ -138,7 +138,9 @@
       "learned": "Measured: {{kwh}} kWh, averaged over {{samples}} days. Planning uses this instead of the value entered.",
       "batteryGroup": "Battery",
       "consumptionGroup": "Consumption in the expensive hours",
-      "batteryCapacityHint": "The full capacity, matching 0–100% SOC. Don't subtract the minimum SOC - the reserve is counted on top of it."
+      "batteryCapacityHint": "The full capacity, matching 0–100% SOC. Don't subtract the minimum SOC - the reserve is counted on top of it.",
+      "learnedSince": "Measured since {{date}}: {{kwh}} kWh, averaged over {{samples}} periods. Planning uses this instead of the value entered.",
+      "relearning": "You changed the estimate on {{date}}, so measurements count afresh: {{samples}} of {{needed}}. Until then planning uses the value entered."
     },
     "schedule": {
       "title": "Daily schedule",

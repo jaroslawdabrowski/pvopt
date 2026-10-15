@@ -117,6 +117,11 @@ form {
 }
 
 // The planner already uses the measured value - say so right under the field it overrides.
+// While re-learning after a change, the entered value is in charge again: neutral, not green.
+.learned.relearning {
+  color: var(--text-secondary);
+}
+
 .learned {
   display: flex;
   align-items: flex-start;

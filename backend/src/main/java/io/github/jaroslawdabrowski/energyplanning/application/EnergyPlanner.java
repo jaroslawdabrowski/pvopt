@@ -97,7 +97,7 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
         var period = calendar.expensivePeriodAfter(calendar.windowFor(window), clockPort.nowLocal());
         var battery = inverterPort.readBatteryStatus(settings.inverterConnection());
         var forecast = forecastOrNone(window, period, settings);
-        var learned = learnedConsumption(window);
+        var learned = learnedConsumption(window, settings);
         double consumptionKwh = learned.map(LearnedConsumption::kwh)
                 .orElse(settings.planning().consumptionAfter(window));
         double requiredKwh = consumptionKwh * settings.planning().forecastSafetyMarginRatio();
@@ -207,9 +207,9 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     }
 
     /** Measured consumption of this window's period over recent days, when there's enough of it. */
-    private Optional<LearnedConsumption> learnedConsumption(ChargeWindow window) {
-        var since = clockPort.nowLocal().minus(EnergyRecorder.LEARNING_WINDOW);
-        return ConsumptionEstimator.learn(energyRecordPort.findOutcomes(window, since));
+    private Optional<LearnedConsumption> learnedConsumption(ChargeWindow window, ProcessSettings settings) {
+        var from = settings.planning().learnFrom(window, clockPort.nowLocal(), EnergyRecorder.LEARNING_WINDOW);
+        return ConsumptionEstimator.learn(energyRecordPort.findOutcomes(window, from));
     }
 
     @Override

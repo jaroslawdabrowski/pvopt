@@ -2,7 +2,7 @@ package io.github.jaroslawdabrowski.energyplanning.application;
 
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeWindow;
 import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator;
-import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionEstimator.LearnedConsumption;
+import io.github.jaroslawdabrowski.energyplanning.domain.ConsumptionLearning;
 import io.github.jaroslawdabrowski.energyplanning.domain.EnergySnapshot;
 import io.github.jaroslawdabrowski.energyplanning.domain.PeriodOutcome;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
@@ -150,9 +150,13 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
     }
 
     @Override
-    public Optional<LearnedConsumption> learnedConsumption(ChargeWindow window) {
-        var since = clockPort.nowLocal().minus(LEARNING_WINDOW);
-        return ConsumptionEstimator.learn(energyRecordPort.findOutcomes(window, since));
+    public ConsumptionLearning learnedConsumption(ChargeWindow window) {
+        var settings = settingsPort.load().orElseThrow(ProcessSettingsNotConfiguredException::new);
+        var now = clockPort.nowLocal();
+        var from = settings.planning().learnFrom(window, now, LEARNING_WINDOW);
+        var outcomes = energyRecordPort.findOutcomes(window, from);
+        var countingFrom = settings.planning().consumptionChangedAt(window).filter(from::equals);
+        return new ConsumptionLearning(ConsumptionEstimator.learn(outcomes), outcomes.size(), countingFrom);
     }
 
     private static TariffCalendar calendar(ProcessSettings settings) {
