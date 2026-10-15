@@ -41,6 +41,8 @@ nb-configuration.xml
 
 # SQLite runtime data
 data/*.db
+data/*.db-wal
+data/*.db-shm
 
 # Plugin directory
 /.quarkus/cli/plugins/

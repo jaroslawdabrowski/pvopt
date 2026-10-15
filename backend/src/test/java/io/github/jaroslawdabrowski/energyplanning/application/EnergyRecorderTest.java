@@ -203,4 +203,24 @@ class EnergyRecorderTest {
 
         assertThat(records.snapshots).hasSize(1);
     }
+
+    @Test
+    void recoversAPeriodWhoseOutcomeWasNeverSaved() {
+        // 2026-10-14: both snapshots made it, the outcome hit a locked database at 22:00.
+        records.snapshots.add(new EnergySnapshot(LocalDateTime.of(2026, 1, 16, 15, 0),
+                new DailyEnergyCounters(4.0, 6.0, 2.0, 0, 1.0, 1.0), 70));
+        records.snapshots.add(new EnergySnapshot(LocalDateTime.of(2026, 1, 16, 22, 0),
+                new DailyEnergyCounters(4.6, 11.2, 3.1, 0, 1.0, 4.9), 31));
+
+        clock.at(LocalDateTime.of(2026, 1, 17, 11, 0));
+        inverter.counters = new DailyEnergyCounters(1.0, 3.0, 1.0, 0, 0, 1.0);
+        recorder.recordSnapshot();
+
+        assertThat(records.outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.window()).isEqualTo(ChargeWindow.AFTERNOON);
+            assertThat(outcome.from()).isEqualTo(LocalDateTime.of(2026, 1, 16, 15, 0));
+            assertThat(outcome.loadKwh()).isCloseTo(5.2, org.assertj.core.data.Offset.offset(1e-9));
+            assertThat(outcome.socAtEndPercent()).isEqualTo(31);
+        });
+    }
 }
