@@ -13,7 +13,7 @@ Monorepo: `backend/` (Quarkus, Java 21) + `frontend/` (Angular 21, standalone/si
 ## Commands
 
 Backend (run from `backend/`):
-- `./mvnw quarkus:dev` — dev mode; Quinoa also starts `ng serve` and proxies frontend requests, so this alone gives you the full stack on `http://localhost:8080`.
+- `./mvnw quarkus:dev` — dev mode; Quinoa also starts `ng serve` and proxies frontend requests, so this alone gives you the full stack on `http://localhost:8181` (`quarkus.http.port=8181` - not Quarkus's default 8080).
 - `./mvnw test` — full backend test suite.
 - `./mvnw test -Dtest=ChargeDecisionPolicyTest` — single test class; `-Dtest=ClassName#methodName` for a single method.
 - `./mvnw package` — builds `target/quarkus-app/quarkus-run.jar` (run with `java -jar target/quarkus-app/quarkus-run.jar`), embedding the built Angular app.
