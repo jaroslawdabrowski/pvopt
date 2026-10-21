@@ -34,6 +34,24 @@
       </p>
     }
 
+    @if (live(); as l) {
+      <div class="card live" data-testid="live-panel">
+        <div class="live-head">
+          <h2 class="card-title">{{ 'dashboard.flow.title' | translate }}</h2>
+          <span class="live-time" [class.stale]="liveStale()">
+            @if (liveStale()) {
+              <span class="material-symbols-rounded" aria-hidden="true">sync_problem</span>
+              {{ 'dashboard.flow.stale' | translate: { time: liveTime(l.readAt) } }}
+            } @else {
+              <span class="pulse" aria-hidden="true"></span>
+              {{ 'dashboard.flow.readAt' | translate: { time: liveTime(l.readAt) } }}
+            }
+          </span>
+        </div>
+        <app-power-flow [live]="l" [settings]="settings()" [cheapNow]="status()?.tariffRate === 'CHEAP'" [stale]="liveStale()" />
+      </div>
+    }
+
     @if (status(); as s) {
       <div class="card hero">
         <app-day-dial [socPercent]="s.batterySocPercent" [windows]="windows()" [decisions]="decisionMarks()" [now]="now()" [reserves]="reserves()" />

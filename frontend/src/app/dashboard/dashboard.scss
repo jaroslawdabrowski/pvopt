@@ -165,3 +165,50 @@
     color: var(--tone-strong, var(--text-tertiary));
   }
 }
+
+// Live power panel - the "now" of the dashboard, above the day dial.
+.live-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.live-time {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+
+  &.stale {
+    color: var(--amber-700);
+  }
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+}
+
+// A small green dot that breathes while readings arrive.
+.pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cheap);
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

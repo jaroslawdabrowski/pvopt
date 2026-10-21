@@ -168,6 +168,19 @@
                   <span class="suffix">&deg;</span>
                 </div>
               </div>
+              @if (hasPanel(direction)) {
+                <div class="field">
+                  <span class="field-label" [id]="direction + '-input-label'">{{ 'settings.forecast.inverterInput' | translate }}</span>
+                  <div class="segmented" role="radiogroup" [attr.aria-labelledby]="direction + '-input-label'">
+                    @for (input of inverterInputs; track input) {
+                      <label>
+                        <input type="radio" formControlName="inverterInput" [value]="input" />
+                        {{ input === null ? ('settings.forecast.inverterInputUnset' | translate) : 'PV' + input }}
+                      </label>
+                    }
+                  </div>
+                </div>
+              }
             </fieldset>
           }
         </div>

@@ -64,9 +64,26 @@ class SolarmanInverterAdapterExchangeTest {
         assertThat(status.socPercent()).isEqualTo(FakeLogger.SOC);
     }
 
-    /** Answers "read N registers" with value SOC for register 588 (and 0 elsewhere), V5-framed like the real logger. */
+    @Test
+    void readsLivePowerWithSignedBatteryAndGrid() {
+        var adapter = new SolarmanInverterAdapter(new TestConfig(1000));
+
+        var live = adapter.readLivePower(new InverterConnectionSettings("127.0.0.1", logger.port(), 1234L));
+
+        assertThat(live.pvInputWatts()).containsExactly(1800, 650);
+        assertThat(live.pvWatts()).isEqualTo(2450);
+        assertThat(live.loadWatts()).isEqualTo(900);
+        assertThat(live.batteryWatts()).isEqualTo(-1200);
+        assertThat(live.gridWatts()).isEqualTo(-350);
+        assertThat(live.batterySocPercent()).isEqualTo(FakeLogger.SOC);
+    }
+
+    /** Answers "read N registers" from {@link #REGISTERS} (0 elsewhere), V5-framed like the real logger. */
     private static final class FakeLogger implements AutoCloseable {
         static final int SOC = 82;
+        /** Midday: PV charges the battery and exports the rest. Negative values as the device sends them. */
+        static final java.util.Map<Integer, Integer> REGISTERS = java.util.Map.of(
+                588, SOC, 590, -1200 & 0xFFFF, 625, -350 & 0xFFFF, 653, 900, 672, 1800, 673, 650);
 
         private final ServerSocket server;
         final AtomicInteger active = new AtomicInteger();
@@ -138,7 +155,7 @@ class SolarmanInverterAdapterExchangeTest {
             modbus.write(3);
             modbus.write(count * 2);
             for (int i = 0; i < count; i++) {
-                int value = register + i == 588 ? SOC : 0;
+                int value = REGISTERS.getOrDefault(register + i, 0);
                 modbus.write(value >> 8);
                 modbus.write(value & 0xFF);
             }
@@ -187,6 +204,11 @@ class SolarmanInverterAdapterExchangeTest {
         public int dailyGridExportRegister() { return 521; }
         public int dailyLoadRegister() { return 526; }
         public int dailyPvRegister() { return 529; }
+        public int batteryPowerRegister() { return 590; }
+        public int gridPowerRegister() { return 625; }
+        public int loadPowerRegister() { return 653; }
+        public int pvPowerBaseRegister() { return 672; }
+        public int pvInputCount() { return 2; }
         public boolean writeEnabled() { return false; }
     }
 }

@@ -79,7 +79,31 @@
       "RECHECK": "Overnight recheck at {{time}}",
       "AFTERNOON": "Afternoon decision at {{time}}"
     },
-    "keyRecheck": "recheck"
+    "keyRecheck": "recheck",
+    "flow": {
+      "title": "Right now",
+      "readAt": "live · {{time}}",
+      "stale": "no reading since {{time}}",
+      "pv": "panels total",
+      "house": "house uses",
+      "battery": {
+        "charging": "charging {{power}}",
+        "discharging": "supplying {{power}}",
+        "idle": "idle"
+      },
+      "grid": {
+        "buying": "buying",
+        "buyingCheap": "buying cheap",
+        "selling": "selling",
+        "idle": "grid"
+      },
+      "direction": {
+        "north": "north",
+        "east": "east",
+        "south": "south",
+        "west": "west"
+      }
+    }
   },
   "history": {
     "title": "Decision history",
@@ -165,7 +189,9 @@
         "south": "South",
         "west": "West"
       },
-      "noPanel": "no panels"
+      "noPanel": "no panels",
+      "inverterInput": "Inverter input",
+      "inverterInputUnset": "not set"
     },
     "inverter": {
       "title": "Inverter connection",

@@ -82,3 +82,10 @@ export function shortClock(hours: number): string {
 export function formatDay(iso: string | Date, language: AppLanguage): string {
   return new Intl.DateTimeFormat(LOCALES[language], { day: 'numeric', month: 'long' }).format(new Date(iso));
 }
+
+/** "472 W" below a kilowatt, "2,4 kW" from there - power as a number people read at a glance. */
+export function formatPower(watts: number, language: AppLanguage): string {
+  const abs = Math.abs(watts);
+  if (abs < 1000) return `${Math.round(abs)} W`;
+  return `${new Intl.NumberFormat(LOCALES[language], { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(abs / 1000)} kW`;
+}

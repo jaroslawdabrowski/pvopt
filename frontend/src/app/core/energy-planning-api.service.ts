@@ -51,6 +51,18 @@ export interface EnergyStatusDto {
   latestIssue: RunIssueDto | null;
 }
 
+/** The power flows right now, in watts: battery > 0 = discharging, grid > 0 = buying. */
+export interface LivePowerDto {
+  readAt: string;
+  /** Per inverter PV input (MPPT 1, 2, ...). */
+  pvInputWatts: number[];
+  pvWatts: number;
+  loadWatts: number;
+  batteryWatts: number;
+  gridWatts: number;
+  batterySocPercent: number;
+}
+
 export interface TouScheduleSlotDto {
   slotIndex: number;
   startTime: string;
@@ -86,6 +98,10 @@ export class EnergyPlanningApi {
 
   learnedConsumption(): Observable<Record<ChargeWindow, LearnedConsumptionDto | null>> {
     return this.http.get<Record<ChargeWindow, LearnedConsumptionDto | null>>('/api/energy/learned-consumption');
+  }
+
+  live(): Observable<LivePowerDto> {
+    return this.http.get<LivePowerDto>('/api/energy/live');
   }
 
   touSchedule(): Observable<TouScheduleSlotDto[]> {

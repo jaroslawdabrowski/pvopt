@@ -1,0 +1,166 @@
+// Live power flow: SVG lines underneath, HTML nodes on top (see power-flow.ts).
+:host {
+  display: block;
+}
+
+.flow {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  // Room under the bottom row's labels.
+  padding-bottom: var(--space-6);
+  transition: opacity var(--dur-base) var(--ease-out);
+
+  &.stale {
+    opacity: 0.5;
+  }
+}
+
+svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.track {
+  fill: none;
+  stroke: var(--grey-100);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+// Idle flows show only the track; a moving one gets dashes in its source's colour.
+.dash {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 0 14;
+
+  &.active {
+    stroke: var(--flow);
+    animation: flow linear infinite;
+  }
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash.active {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}
+
+.tone-pv {
+  --flow: var(--day);
+  --chip-bg: var(--day-tint);
+  --chip-fg: var(--day-on-tint);
+}
+
+.tone-battery {
+  --flow: var(--grey-700);
+  --chip-bg: var(--grey-100);
+  --chip-fg: var(--grey-900);
+}
+
+.tone-house {
+  --chip-bg: var(--grey-900);
+  --chip-fg: #ffffff;
+}
+
+.tone-grid {
+  --flow: var(--grey-400);
+  --chip-bg: var(--grey-100);
+  --chip-fg: var(--grey-700);
+}
+
+.tone-grid-cheap {
+  --flow: var(--cheap);
+  --chip-bg: var(--cheap-tint);
+  --chip-fg: var(--cheap-on-tint);
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 112px;
+  // The chip's centre sits on the line ends; the label hangs below it.
+  transform: translate(-50%, -24px);
+  text-align: center;
+
+  &.idle .chip {
+    background: var(--grey-50);
+    color: var(--text-tertiary);
+  }
+}
+
+.chip {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  box-shadow: 0 0 0 4px var(--surface);
+  transition: background-color var(--dur-base), color var(--dur-base);
+
+  .material-symbols-rounded {
+    font-size: 26px;
+    font-variation-settings: 'FILL' 1, 'wght' 500;
+  }
+}
+
+.node.small {
+  transform: translate(-50%, -20px);
+
+  .chip {
+    width: 40px;
+    height: 40px;
+
+    .material-symbols-rounded {
+      font-size: 22px;
+    }
+  }
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+// The PV sum sits mid-diagram: its label goes beside the chip, clear of the line down to the house.
+.node:has(.label.side) {
+  flex-direction: row;
+  width: auto;
+  transform: translate(-24px, -24px);
+  text-align: left;
+  gap: var(--space-2);
+}
+
+.value {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.node.small .value {
+  font-size: var(--text-base);
+}
+
+.sub {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}

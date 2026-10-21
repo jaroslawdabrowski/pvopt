@@ -62,6 +62,15 @@ the Material toolbar/tables read as a component demo. Redesigned 2026-10-13.
   read as a time of day. The legend repeats it per window ("zapas 36%" /
   "bez ładowania") - the battery now and the plan for it in one picture. The SOC ring filling up once on load is the app's
   only orchestrated motion.
+- **Live panel ("Teraz") at the top of the dashboard** (`dashboard/power-flow.ts`): a power-flow
+  diagram - each PV input (labelled by the plane wired to it in the settings, east on the right and
+  west on the left as on a map, `PV1`/`PV2` until set) joins one PV point showing their sum, and PV,
+  battery and grid each join the house. Lines are grey tracks; a moving flow gets round dashes in its
+  source's colour (amber PV, ink battery, grey grid - green while the cheap tariff is on), running in
+  the direction energy moves and faster with more power. Every value is written out with a verb
+  ("ładuje 1,2 kW", "kupuje tanio"), so neither colour nor motion carries meaning alone; reduced
+  motion shows solid lines. Nodes are HTML chips over the SVG, like the dial's. Polled every 10 s
+  only while the page is visible; a failed poll fades the last reading and says since when.
 - **Costs page**: a month switcher, three figures (bought minus sold, the same consumption without
   panels and battery, the saving in green text), then the day-by-day chart, where the cost came from
   (cheap zone, expensive zone, export credit at its average price) and a table of all days as the

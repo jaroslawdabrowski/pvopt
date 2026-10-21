@@ -29,6 +29,8 @@ export class Settings implements OnInit {
   readonly errorKey = signal<string | null>(null);
   readonly savedJustNow = signal(false);
   readonly directions = ['north', 'east', 'south', 'west'] as const;
+  /** The inverter's PV inputs (MPPTs); null = not set. */
+  readonly inverterInputs = [null, 1, 2] as const;
   /** Measured consumption per window - once there's enough of it, the planner uses it instead of the field. */
   private readonly language = inject(LanguageService).currentLanguage;
 
@@ -114,7 +116,8 @@ export class Settings implements OnInit {
   private directionGroup() {
     return this.fb.group({
       declinationDegrees: [0, [Validators.required, Validators.min(0), Validators.max(90)]],
-      kwp: [0, [Validators.required, Validators.min(0)]]
+      kwp: [0, [Validators.required, Validators.min(0)]],
+      inverterInput: [null as number | null]
     });
   }
 

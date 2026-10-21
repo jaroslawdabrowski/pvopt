@@ -48,14 +48,15 @@ public record ProcessSettingsPayload(
             DirectionPayload south,
             DirectionPayload west) {
 
-        public record DirectionPayload(int declinationDegrees, double kwp) {
+        /** {@code inverterInput} is optional - null when the plane's PV input isn't set. */
+        public record DirectionPayload(int declinationDegrees, double kwp, Integer inverterInput) {
 
             static DirectionPayload from(DirectionPanelSettings settings) {
-                return new DirectionPayload(settings.declinationDegrees(), settings.kwp());
+                return new DirectionPayload(settings.declinationDegrees(), settings.kwp(), settings.inverterInput());
             }
 
             DirectionPanelSettings toDomain() {
-                return new DirectionPanelSettings(declinationDegrees, kwp);
+                return new DirectionPanelSettings(declinationDegrees, kwp, inverterInput);
             }
         }
     }

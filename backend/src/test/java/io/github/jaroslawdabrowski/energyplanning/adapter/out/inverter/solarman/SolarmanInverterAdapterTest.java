@@ -89,6 +89,31 @@ class SolarmanInverterAdapterTest {
             }
 
             @Override
+            public int batteryPowerRegister() {
+                return 590;
+            }
+
+            @Override
+            public int gridPowerRegister() {
+                return 625;
+            }
+
+            @Override
+            public int loadPowerRegister() {
+                return 653;
+            }
+
+            @Override
+            public int pvPowerBaseRegister() {
+                return 672;
+            }
+
+            @Override
+            public int pvInputCount() {
+                return 2;
+            }
+
+            @Override
             public boolean writeEnabled() {
                 return writeEnabled;
             }

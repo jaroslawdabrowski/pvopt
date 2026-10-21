@@ -79,7 +79,31 @@
       "RECHECK": "Ponowne przeliczenie nocy o {{time}}",
       "AFTERNOON": "Decyzja popołudniowa o {{time}}"
     },
-    "keyRecheck": "przeliczenie"
+    "keyRecheck": "przeliczenie",
+    "flow": {
+      "title": "Teraz",
+      "readAt": "na żywo · {{time}}",
+      "stale": "brak odczytu od {{time}}",
+      "pv": "panele razem",
+      "house": "dom zużywa",
+      "battery": {
+        "charging": "ładuje {{power}}",
+        "discharging": "oddaje {{power}}",
+        "idle": "czeka"
+      },
+      "grid": {
+        "buying": "kupuje",
+        "buyingCheap": "kupuje tanio",
+        "selling": "sprzedaje",
+        "idle": "sieć"
+      },
+      "direction": {
+        "north": "północ",
+        "east": "wschód",
+        "south": "południe",
+        "west": "zachód"
+      }
+    }
   },
   "history": {
     "title": "Historia decyzji",
@@ -165,7 +189,9 @@
         "south": "Południe",
         "west": "Zachód"
       },
-      "noPanel": "brak paneli"
+      "noPanel": "brak paneli",
+      "inverterInput": "Wejście falownika",
+      "inverterInputUnset": "brak"
     },
     "inverter": {
       "title": "Połączenie z falownikiem",

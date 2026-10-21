@@ -4,6 +4,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.BatteryStatus;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.DailyEnergyCounters;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.LivePower;
 import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 
 import java.util.List;
@@ -28,6 +29,9 @@ public interface InverterPort {
 
     /** The inverter's energy counters since its midnight. */
     DailyEnergyCounters readDailyEnergy(InverterConnectionSettings connection);
+
+    /** The power flows right now (PV per input, load, battery, grid) plus SOC. */
+    LivePower readLivePower(InverterConnectionSettings connection);
 
     /** Read-only view of the inverter's current 6-slot Time-of-Use schedule, for display. */
     List<TouScheduleSlot> readTouSchedule(InverterConnectionSettings connection);

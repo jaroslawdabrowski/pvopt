@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 export interface DirectionPanelDto {
   declinationDegrees: number;
   kwp: number;
+  /** The inverter PV input (1, 2) this plane is wired to - labels the live power flow; null = not set. */
+  inverterInput?: number | null;
 }
 
 export interface ProcessSettingsDto {
@@ -55,7 +57,7 @@ export interface ProcessSettingsStatusDto {
 }
 
 export function blankProcessSettings(): ProcessSettingsDto {
-  const blankDirection: DirectionPanelDto = { declinationDegrees: 0, kwp: 0 };
+  const blankDirection: DirectionPanelDto = { declinationDegrees: 0, kwp: 0, inverterInput: null };
   return {
     planning: {
       minSocPercent: 20,

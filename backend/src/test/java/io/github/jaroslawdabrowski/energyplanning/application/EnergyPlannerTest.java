@@ -11,6 +11,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.EnergySnapshot;
 import io.github.jaroslawdabrowski.energyplanning.domain.ExpensivePeriod;
 import io.github.jaroslawdabrowski.energyplanning.domain.ForecastSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.LivePower;
 import io.github.jaroslawdabrowski.energyplanning.domain.NotificationSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.PeriodOutcome;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningSettings;
@@ -105,6 +106,11 @@ class EnergyPlannerTest {
 
         @Override
         public DailyEnergyCounters readDailyEnergy(InverterConnectionSettings connection) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public LivePower readLivePower(InverterConnectionSettings connection) {
             throw new UnsupportedOperationException();
         }
 

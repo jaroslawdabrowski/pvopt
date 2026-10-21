@@ -1,16 +1,19 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi, EnergyStatusDto } from '../core/energy-planning-api.service';
+import { ChargeDecisionDto, ChargeWindow, EnergyPlanningApi, EnergyStatusDto, LivePowerDto } from '../core/energy-planning-api.service';
 import { ProcessSettingsApi, ProcessSettingsDto } from '../core/process-settings-api.service';
 import { settingsAwareErrorKey } from '../core/settings-error.util';
 import { LanguageService } from '../core/language.service';
 import { decisionPeriod, decisionReserve, decisionVerdict, formatDayAndTime, formatTime } from '../core/format';
+import { PowerFlow } from './power-flow';
 import { DayDial, DecisionMark, ReserveMark } from './day-dial';
 import { WindowTone, hoursOf, nextOccurrence, parseTariffWindows } from './tariff-windows';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
+/** The backend shares a reading for 5 s, so 10 s polling costs the logger one read per poll. */
+const LIVE_POLL_MS = 10_000;
 
 interface UpcomingDecision {
   window: ChargeWindow;
@@ -23,7 +26,7 @@ interface UpcomingDecision {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, DayDial],
+  imports: [RouterLink, TranslatePipe, DayDial, PowerFlow],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
@@ -41,6 +44,13 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly errorKey = signal<string | null>(null);
   readonly now = signal(new Date());
   private clock?: ReturnType<typeof setInterval>;
+
+  /** Power flows right now - null until the first reading (or if the inverter can't be read at all). */
+  readonly live = signal<LivePowerDto | null>(null);
+  /** The latest poll failed: the panel keeps the previous reading, faded. */
+  readonly liveStale = signal(false);
+  private livePoll?: ReturnType<typeof setInterval>;
+  private readonly onVisibility = () => this.pollWhileVisible();
 
   /**
    * A problem from the last day that nothing has fixed since: a decision for the same window
@@ -133,10 +143,37 @@ export class Dashboard implements OnInit, OnDestroy {
     });
     // The "now" dot and "today/tomorrow" only need minute precision.
     this.clock = setInterval(() => this.now.set(new Date()), 60_000);
+    this.pollWhileVisible();
+    document.addEventListener('visibilitychange', this.onVisibility);
   }
 
   ngOnDestroy(): void {
     clearInterval(this.clock);
+    clearInterval(this.livePoll);
+    document.removeEventListener('visibilitychange', this.onVisibility);
+  }
+
+  /** Polls only while the page is on screen - a phone in a pocket shouldn't keep the logger busy. */
+  private pollWhileVisible(): void {
+    clearInterval(this.livePoll);
+    this.livePoll = undefined;
+    if (document.visibilityState !== 'visible') return;
+    this.loadLive();
+    this.livePoll = setInterval(() => this.loadLive(), LIVE_POLL_MS);
+  }
+
+  private loadLive(): void {
+    this.api.live().subscribe({
+      next: (live) => {
+        this.live.set(live);
+        this.liveStale.set(false);
+      },
+      error: () => this.liveStale.set(true)
+    });
+  }
+
+  liveTime(iso: string): string {
+    return new Date(iso).toLocaleTimeString(this.language() === 'pl' ? 'pl-PL' : 'en-GB');
   }
 
   loadStatus(): void {

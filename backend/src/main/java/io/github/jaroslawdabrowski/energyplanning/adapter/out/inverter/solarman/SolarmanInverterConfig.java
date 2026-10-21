@@ -76,6 +76,33 @@ public interface SolarmanInverterConfig {
     @WithDefault("529")
     int dailyPvRegister();
 
+    /*
+     * Live power (W) - confirmed against real hardware on 2026-10-21: at night, discharging,
+     * battery 514 W (= 52.39 V x 9.83 A from 587/591) balanced load 472 W (the sum of the phases in
+     * 650-652) with the grid at -44 W; during the 22:00 grid charge the battery went negative and
+     * the grid positive. Signed registers are two's complement.
+     */
+
+    /** Battery power, signed: positive = discharging, negative = charging. */
+    @WithDefault("590")
+    int batteryPowerRegister();
+
+    /** Total grid power at the external CT, signed: positive = buying, negative = selling. */
+    @WithDefault("625")
+    int gridPowerRegister();
+
+    /** Total house load (all three phases). */
+    @WithDefault("653")
+    int loadPowerRegister();
+
+    /** PV input 1's power; input N is at {@code pvPowerBaseRegister + N - 1}. */
+    @WithDefault("672")
+    int pvPowerBaseRegister();
+
+    /** How many PV inputs (MPPTs) the inverter has. */
+    @WithDefault("2")
+    int pvInputCount();
+
     /**
      * Safety switch: while false (the default), any Modbus write (including the TOU slot
      * setup) only logs what it *would* write instead of actually sending it. Keep this

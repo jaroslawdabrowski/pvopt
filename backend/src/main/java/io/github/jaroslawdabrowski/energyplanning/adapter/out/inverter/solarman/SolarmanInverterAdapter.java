@@ -6,6 +6,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.BatteryStatus;
 import io.github.jaroslawdabrowski.energyplanning.domain.ChargeSchedule;
 import io.github.jaroslawdabrowski.energyplanning.domain.DailyEnergyCounters;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.LivePower;
 import io.github.jaroslawdabrowski.energyplanning.domain.TouScheduleSlot;
 import io.github.jaroslawdabrowski.energyplanning.port.out.InverterPort;
 
@@ -90,6 +91,31 @@ public class SolarmanInverterAdapter implements InverterPort {
                 tenthsOfKwh(block, config.dailyGridExportRegister() - first),
                 tenthsOfKwh(block, config.dailyBatteryChargeRegister() - first),
                 tenthsOfKwh(block, config.dailyBatteryDischargeRegister() - first));
+    }
+
+    /** Two reads: SOC to grid power (588-625), then load to the last PV input (653-673). */
+    @Override
+    public LivePower readLivePower(InverterConnectionSettings connection) {
+        int batteryFirst = config.batterySocRegister();
+        int[] battery = readRegisters(connection, batteryFirst, config.gridPowerRegister() - batteryFirst + 1);
+        int loadFirst = config.loadPowerRegister();
+        int lastPv = config.pvPowerBaseRegister() + config.pvInputCount() - 1;
+        int[] load = readRegisters(connection, loadFirst, lastPv - loadFirst + 1);
+
+        var pv = new ArrayList<Integer>(config.pvInputCount());
+        for (int input = 0; input < config.pvInputCount(); input++) {
+            pv.add(load[config.pvPowerBaseRegister() - loadFirst + input]);
+        }
+        return new LivePower(
+                pv,
+                load[0],
+                signed(battery[config.batteryPowerRegister() - batteryFirst]),
+                signed(battery[config.gridPowerRegister() - batteryFirst]),
+                battery[0]);
+    }
+
+    private static int signed(int register) {
+        return (short) register;
     }
 
     private static double tenthsOfKwh(int[] block, int index) {
