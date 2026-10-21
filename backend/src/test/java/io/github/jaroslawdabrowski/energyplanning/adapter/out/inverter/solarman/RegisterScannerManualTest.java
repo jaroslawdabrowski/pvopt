@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Run against real hardware with, e.g.:
  * <pre>
  * ./mvnw test -Dtest=RegisterScannerManualTest -DfailIfNoTests=false \
- *   -Dpvopt.scan.host=192.168.68.60 -Dpvopt.scan.loggerSerial=2965414814 \
+ *   -Dpvopt.scan.host=192.168.1.100 -Dpvopt.scan.loggerSerial=1234567890 \
  *   -Dpvopt.scan.from=0 -Dpvopt.scan.to=200 -Dpvopt.scan.expectedValue=48
  * </pre>
  * then look through the printed output for HOLDING/INPUT lines whose value matches
