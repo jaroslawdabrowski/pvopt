@@ -24,6 +24,7 @@ export class App {
     { path: '/dashboard', icon: 'home', labelKey: 'nav.dashboard', shortKey: 'nav.dashboardShort' },
     { path: '/tou-schedule', icon: 'schedule', labelKey: 'nav.touSchedule', shortKey: 'nav.touScheduleShort' },
     { path: '/history', icon: 'history', labelKey: 'nav.history', shortKey: 'nav.historyShort' },
+    { path: '/costs', icon: 'payments', labelKey: 'nav.costs', shortKey: 'nav.costsShort' },
     { path: '/settings', icon: 'tune', labelKey: 'nav.settings', shortKey: 'nav.settingsShort' }
   ];
 

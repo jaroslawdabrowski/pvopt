@@ -69,6 +69,10 @@
   --cheap-tint: var(--green-50);
   --cheap-on-tint: var(--green-700);
 
+  // The cost chart's one series - from the dataviz reference palette (slot 1), validated:
+  // in the lightness band, above the chroma floor, 3:1+ on the surface. Not a window colour.
+  --chart-cost: #2a78d6;
+
   // --- Scales -------------------------------------------------------------------------------
   --space-1: 4px;
   --space-2: 8px;

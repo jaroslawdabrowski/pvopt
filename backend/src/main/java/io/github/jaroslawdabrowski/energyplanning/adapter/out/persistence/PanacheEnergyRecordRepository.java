@@ -49,6 +49,12 @@ public class PanacheEnergyRecordRepository implements EnergyRecordPort {
     }
 
     @Override
+    public List<EnergySnapshot> findSnapshotsBetween(LocalDateTime from, LocalDateTime to) {
+        return EnergySnapshotEntity.<EnergySnapshotEntity>list("takenAt >= ?1 and takenAt < ?2 order by takenAt", from, to)
+                .stream().map(PanacheEnergyRecordRepository::toDomain).toList();
+    }
+
+    @Override
     @Transactional
     public void saveOutcome(PeriodOutcome outcome) {
         PeriodOutcomeEntity entity = PeriodOutcomeEntity

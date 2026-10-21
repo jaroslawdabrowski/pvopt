@@ -9,7 +9,9 @@
     "dashboardShort": "Pulpit",
     "touScheduleShort": "Falownik",
     "historyShort": "Historia",
-    "settingsShort": "Ustawienia"
+    "settingsShort": "Ustawienia",
+    "costs": "Koszty",
+    "costsShort": "Koszty"
   },
   "login": {
     "title": "PV Opt",
@@ -182,6 +184,15 @@
       "testing": "Wysyłam...",
       "testDelivered": "Wysłane - powinno być już na telefonie.",
       "testFailed": "Nie udało się wysłać. Sprawdź adres tematu."
+    },
+    "pricing": {
+      "title": "Ceny prądu",
+      "hint": "Z faktury, brutto. Cena za kWh to suma wszystkich opłat zmiennych w strefie: energia, opłata sieciowa zmienna, jakościowa, OZE i kogeneracyjna, z VAT. Sprzedaż do sieci liczy się sama z godzinowej ceny rynkowej (RCE).",
+      "cheapRate": "Strefa tania",
+      "expensiveRate": "Strefa droga",
+      "fixedMonthly": "Opłaty stałe",
+      "exportMultiplier": "Mnożnik depozytu",
+      "exportMultiplierHint": "Wartość sprzedanej energii to RCE z danej godziny razy ten mnożnik. Od lutego 2025 to 1,23."
     }
   },
   "window": {
@@ -199,5 +210,61 @@
     "label": "Język",
     "en": "English",
     "pl": "Polski"
+  },
+  "costs": {
+    "title": "Koszty prądu",
+    "lead": "Ile kosztował prąd z sieci po odjęciu sprzedaży, dzień po dniu, i ile to mniej niż bez paneli i baterii.",
+    "month": "Miesiąc",
+    "previousMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc",
+    "loading": "Liczę koszty...",
+    "error": "Nie udało się policzyć kosztów.",
+    "pricingNotConfigured": "Najpierw wpisz ceny prądu z faktury.",
+    "goToPrices": "Uzupełnij ceny w Ustawieniach",
+    "empty": "W tym miesiącu nie ma jeszcze pomiarów - aplikacja musi działać, żeby je zbierać.",
+    "marketPricesUnavailable": "Nie udało się pobrać cen rynkowych z PSE, więc sprzedaż jest na razie liczona jako 0 zł.",
+    "net": "Zakup minus sprzedaż",
+    "baseline": "Bez paneli i baterii",
+    "savings": "Oszczędność",
+    "coverage": "Policzone z {{days}} dni z pomiarami ({{complete}} pełnych).",
+    "fixedFees": "Opłaty stałe ({{fixed}} miesięcznie) są doliczane osobno na fakturze.",
+    "dayByDay": "Dzień po dniu",
+    "legendNet": "koszt dnia",
+    "legendBaseline": "bez paneli i baterii",
+    "chartLabel": "Koszt każdego dnia miesiąca w porównaniu z kosztem bez paneli i baterii.",
+    "tooltip": {
+      "net": "Koszt dnia",
+      "baseline": "Bez paneli i baterii",
+      "bought": "Kupione",
+      "sold": "Sprzedane"
+    },
+    "partialDay": "Pomiary tylko z {{hours}} godzin tego dnia.",
+    "partialShort": "częściowo",
+    "noData": "Brak pomiarów tego dnia.",
+    "breakdown": "Skąd ta kwota",
+    "cheapZone": "Zakup w taniej strefie",
+    "expensiveZone": "Zakup w drogiej strefie",
+    "sold": "Sprzedaż do sieci",
+    "averageExport": "średnio {{price}}",
+    "netTotal": "Razem",
+    "days": "Wszystkie dni",
+    "table": {
+      "day": "Dzień",
+      "bought": "Kupione",
+      "sold": "Sprzedane",
+      "net": "Koszt",
+      "savings": "Oszczędność",
+      "cheapShare": "Tanio"
+    },
+    "todaySoFar": "Dzisiejszy dzień jeszcze trwa - liczone do teraz.",
+    "todayShort": "dziś",
+    "cheapShare": {
+      "title": "Zakup z sieci w taniej taryfie",
+      "caption": "prądu z sieci kupione w taniej strefie - im bliżej 100%, tym lepiej działa planowanie",
+      "cheap": "Tanio",
+      "expensive": "Drogo",
+      "aria": "{{cheap}} kupione tanio, {{expensive}} drogo"
+    },
+    "baselineExplained": "„Bez paneli i baterii” to cena tego samego zużycia ({{kwh}}), gdyby cały prąd szedł z sieci po stawce strefy z godziny, w której był zużyty. Oszczędność to więc łączny efekt paneli, baterii i sprzedaży nadwyżek - sam wpływ planowania ładowania pokazuje karta niżej."
   }
 }

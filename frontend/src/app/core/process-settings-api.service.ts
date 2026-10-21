@@ -40,6 +40,13 @@ export interface ProcessSettingsDto {
     /** A full ntfy topic URL; blank = notifications off. */
     ntfyUrl: string;
   };
+  /** Gross zł/kWh per zone and zł/month fixed; null until entered (only the cost page needs it). */
+  pricing: {
+    cheapRateGross: number;
+    expensiveRateGross: number;
+    fixedMonthlyGross: number;
+    exportMultiplier: number;
+  } | null;
 }
 
 export interface ProcessSettingsStatusDto {
@@ -79,7 +86,8 @@ export function blankProcessSettings(): ProcessSettingsDto {
     },
     notifications: {
       ntfyUrl: ''
-    }
+    },
+    pricing: null
   };
 }
 

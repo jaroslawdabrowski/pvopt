@@ -1,5 +1,7 @@
 package io.github.jaroslawdabrowski.energyplanning.domain;
 
+import java.util.Optional;
+
 /**
  * The complete set of user-editable process configuration - planning policy, the daily
  * schedule, the PV forecast install, and the inverter connection - persisted as a single
@@ -12,7 +14,14 @@ public record ProcessSettings(
         ScheduleSettings schedule,
         ForecastSettings forecast,
         InverterConnectionSettings inverterConnection,
-        NotificationSettings notifications) {
+        NotificationSettings notifications,
+        PricingSettings pricing) {
+
+    /** Settings without electricity prices - they're optional and only needed for the cost page. */
+    public ProcessSettings(PlanningSettings planning, ScheduleSettings schedule, ForecastSettings forecast,
+            InverterConnectionSettings inverterConnection, NotificationSettings notifications) {
+        this(planning, schedule, forecast, inverterConnection, notifications, null);
+    }
 
     public ProcessSettings {
         if (planning == null || schedule == null || forecast == null || inverterConnection == null) {
@@ -22,7 +31,11 @@ public record ProcessSettings(
         notifications = notifications == null ? NotificationSettings.NONE : notifications;
     }
 
+    public Optional<PricingSettings> pricingSettings() {
+        return Optional.ofNullable(pricing);
+    }
+
     public ProcessSettings withPlanning(PlanningSettings newPlanning) {
-        return new ProcessSettings(newPlanning, schedule, forecast, inverterConnection, notifications);
+        return new ProcessSettings(newPlanning, schedule, forecast, inverterConnection, notifications, pricing);
     }
 }

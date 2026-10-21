@@ -20,6 +20,9 @@ public interface EnergyRecordPort {
     /** Every snapshot taken at or after {@code since}, oldest first. */
     List<EnergySnapshot> findSnapshotsSince(LocalDateTime since);
 
+    /** Snapshots taken in [from, to), oldest first. */
+    List<EnergySnapshot> findSnapshotsBetween(LocalDateTime from, LocalDateTime to);
+
     /** Saves an outcome, replacing one already recorded for the same window and period start. */
     void saveOutcome(PeriodOutcome outcome);
 

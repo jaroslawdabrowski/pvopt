@@ -9,7 +9,9 @@
     "dashboardShort": "Home",
     "touScheduleShort": "Inverter",
     "historyShort": "History",
-    "settingsShort": "Settings"
+    "settingsShort": "Settings",
+    "costs": "Costs",
+    "costsShort": "Costs"
   },
   "login": {
     "title": "PV Opt",
@@ -182,6 +184,15 @@
       "testing": "Sending...",
       "testDelivered": "Sent - it should be on your phone now.",
       "testFailed": "Couldn't send it. Check the topic address."
+    },
+    "pricing": {
+      "title": "Electricity prices",
+      "hint": "From the invoice, gross. The price per kWh is every variable charge of the zone added up: energy, variable network fee, quality, OZE and cogeneration fees, with VAT. Exported energy is valued automatically at the hourly market price (RCE).",
+      "cheapRate": "Cheap zone",
+      "expensiveRate": "Expensive zone",
+      "fixedMonthly": "Fixed fees",
+      "exportMultiplier": "Deposit multiplier",
+      "exportMultiplierHint": "Exported energy is worth that hour's RCE times this multiplier. Since February 2025 it is 1.23."
     }
   },
   "window": {
@@ -199,5 +210,61 @@
     "label": "Language",
     "en": "English",
     "pl": "Polski"
+  },
+  "costs": {
+    "title": "Electricity costs",
+    "lead": "What grid electricity cost after exports, day by day, and how much less that is than without panels and battery.",
+    "month": "Month",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "loading": "Working out the costs...",
+    "error": "Could not work out the costs.",
+    "pricingNotConfigured": "Enter the electricity prices from your invoice first.",
+    "goToPrices": "Add prices in Settings",
+    "empty": "No measurements this month yet - the app has to be running to collect them.",
+    "marketPricesUnavailable": "Market prices could not be fetched from PSE, so exports count as 0 zł for now.",
+    "net": "Bought minus sold",
+    "baseline": "Without panels and battery",
+    "savings": "Saved",
+    "coverage": "Worked out from {{days}} days with measurements ({{complete}} complete).",
+    "fixedFees": "Fixed fees ({{fixed}} a month) are added separately on the invoice.",
+    "dayByDay": "Day by day",
+    "legendNet": "cost of the day",
+    "legendBaseline": "without panels and battery",
+    "chartLabel": "Cost of each day of the month compared with the cost without panels and battery.",
+    "tooltip": {
+      "net": "Cost of the day",
+      "baseline": "Without panels and battery",
+      "bought": "Bought",
+      "sold": "Sold"
+    },
+    "partialDay": "Measurements from only {{hours}} hours of this day.",
+    "partialShort": "partial",
+    "noData": "No measurements this day.",
+    "breakdown": "Where the amount comes from",
+    "cheapZone": "Bought in the cheap zone",
+    "expensiveZone": "Bought in the expensive zone",
+    "sold": "Sold to the grid",
+    "averageExport": "{{price}} on average",
+    "netTotal": "Total",
+    "days": "All days",
+    "table": {
+      "day": "Day",
+      "bought": "Bought",
+      "sold": "Sold",
+      "net": "Cost",
+      "savings": "Saved",
+      "cheapShare": "Cheap"
+    },
+    "todaySoFar": "Today is still going - counted up to now.",
+    "todayShort": "today",
+    "cheapShare": {
+      "title": "Grid energy bought at the cheap rate",
+      "caption": "of grid energy bought in the cheap zone - the closer to 100%, the better the planning works",
+      "cheap": "Cheap",
+      "expensive": "Expensive",
+      "aria": "{{cheap}} bought cheap, {{expensive}} expensive"
+    },
+    "baselineExplained": "\"Without panels and battery\" is the same consumption ({{kwh}}) priced as if every kWh came from the grid at the rate of the hour it was used. So the saving is panels, battery and exports together - the card below shows what the charge planning alone achieves."
   }
 }

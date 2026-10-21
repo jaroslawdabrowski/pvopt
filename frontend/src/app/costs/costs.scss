@@ -1,0 +1,277 @@
+.month-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: calc(-1 * var(--space-3));
+}
+
+.month-label {
+  min-width: 11ch;
+  text-align: center;
+  font-size: var(--text-lg);
+  font-weight: 700;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+
+  &.secondary {
+    color: var(--text-secondary);
+  }
+
+  &.saving {
+    color: var(--cheap-on-tint);
+  }
+}
+
+.summary-note {
+  grid-column: 1 / -1;
+  max-width: 80ch;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
+
+.swatch-bar {
+  width: 10px;
+  height: 14px;
+  border-radius: 3px 3px 0 0;
+  background: var(--chart-cost);
+}
+
+.swatch-marker {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--grey-900);
+}
+
+.list-row {
+  align-items: center;
+}
+
+.amount {
+  font-weight: 700;
+
+  &.credit {
+    color: var(--cheap-on-tint);
+  }
+}
+
+.list-row.total {
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--border);
+
+  .list-title,
+  .amount {
+    font-size: var(--text-lg);
+    font-weight: 800;
+  }
+}
+
+.days-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-2);
+    border-top: 1px solid var(--border);
+    text-align: left;
+    font-weight: 500;
+  }
+
+  thead th {
+    border-top: 0;
+    color: var(--text-tertiary);
+    font-weight: 600;
+  }
+
+  .num-col {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  tbody th::first-letter {
+    text-transform: uppercase;
+  }
+
+  .saving {
+    color: var(--cheap-on-tint);
+    font-weight: 600;
+  }
+
+  tr.partial td {
+    color: var(--text-tertiary);
+  }
+}
+
+.partial-mark {
+  margin-left: var(--space-2);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--grey-100);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 720px) {
+  .summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .stat-value {
+    font-size: var(--text-2xl);
+  }
+}
+
+// Bought cheap vs expensive: one part-to-whole bar. Labels carry the meaning, the colours only
+// echo it (green = cheap across the app, grey = the rest); 2px surface gap between the parts.
+.share-headline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.share-value {
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--cheap-on-tint);
+}
+
+.share-caption {
+  color: var(--text-secondary);
+}
+
+.split-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+
+.split {
+  flex-basis: 0;
+  min-width: 0;
+  border-radius: 4px;
+
+  &.cheap {
+    background: var(--cheap);
+  }
+
+  &.expensive {
+    background: var(--grey-300);
+  }
+}
+
+.split-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .strong {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+
+  &.cheap {
+    background: var(--cheap);
+  }
+
+  &.expensive {
+    background: var(--grey-300);
+  }
+}
+
+.row-share {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mini-bar {
+  width: 48px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--grey-200);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--cheap);
+  }
+}

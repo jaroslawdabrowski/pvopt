@@ -1,0 +1,178 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'costs.title' | translate }}</h1>
+      <p class="page-lead">{{ 'costs.lead' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="month-switch" role="group" [attr.aria-label]="'costs.month' | translate">
+    <button class="icon-btn" type="button" (click)="shift(-1)" [attr.aria-label]="'costs.previousMonth' | translate">
+      <span class="material-symbols-rounded">chevron_left</span>
+    </button>
+    <span class="month-label" aria-live="polite">{{ monthLabel() }}</span>
+    <button class="icon-btn" type="button" (click)="shift(1)" [disabled]="isCurrentMonth()" [attr.aria-label]="'costs.nextMonth' | translate">
+      <span class="material-symbols-rounded">chevron_right</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-row" role="progressbar"><span class="spinner"></span>{{ 'costs.loading' | translate }}</div>
+  } @else if (errorKey(); as key) {
+    <p [class]="key === 'costs.pricingNotConfigured' ? 'empty-box' : 'error-box'" role="alert">
+      <span class="material-symbols-rounded" aria-hidden="true">{{ key === 'costs.pricingNotConfigured' ? 'payments' : 'error' }}</span>
+      <span>
+        {{ key | translate }}
+        @if (key === 'costs.pricingNotConfigured' || key === 'common.settingsNotConfigured') {
+          <a routerLink="/settings">{{ 'costs.goToPrices' | translate }}</a>
+        }
+      </span>
+    </p>
+  } @else if (data(); as d) {
+    @if (d.days.length === 0) {
+      <p class="empty-box">{{ 'costs.empty' | translate }}</p>
+    } @else {
+      @if (d.marketPricesUnavailable) {
+        <p class="warning-box">
+          <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+          <span>{{ 'costs.marketPricesUnavailable' | translate }}</span>
+        </p>
+      }
+
+      <div class="card summary">
+        <div class="stat">
+          <span class="stat-label">{{ 'costs.net' | translate }}</span>
+          <span class="stat-value num" data-testid="costs-net">{{ money(d.totals.netCost) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">{{ 'costs.baseline' | translate }}</span>
+          <span class="stat-value secondary num">{{ money(d.totals.baselineCost) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">{{ 'costs.savings' | translate }}</span>
+          <span class="stat-value saving num" data-testid="costs-savings">{{ money(d.totals.savings) }}</span>
+        </div>
+        <p class="summary-note">
+          {{ 'costs.baselineExplained' | translate: { kwh: kwh(d.totals.loadKwh) } }}
+        </p>
+        <p class="summary-note">
+          {{ 'costs.coverage' | translate: { days: d.totals.days, complete: d.totals.completeDays } }}
+          {{ 'costs.fixedFees' | translate: { fixed: money(d.pricing.fixedMonthlyGross) } }}
+        </p>
+      </div>
+
+      @if (cheapShare(d.totals); as share) {
+        <div class="card" data-testid="cheap-share">
+          <h2 class="card-title">{{ 'costs.cheapShare.title' | translate }}</h2>
+          <p class="share-headline">
+            <span class="share-value num">{{ percent(share.cheap) }}</span>
+            <span class="share-caption">{{ 'costs.cheapShare.caption' | translate }}</span>
+          </p>
+          <div class="split-bar" role="img"
+               [attr.aria-label]="'costs.cheapShare.aria' | translate: { cheap: percent(share.cheap), expensive: percent(share.expensive) }">
+            <span class="split cheap" [style.flex-grow]="share.cheap"></span>
+            <span class="split expensive" [style.flex-grow]="share.expensive"></span>
+          </div>
+          <ul class="split-legend">
+            <li><span class="dot cheap" aria-hidden="true"></span>{{ 'costs.cheapShare.cheap' | translate }}
+              <span class="num strong">{{ kwh(d.totals.importCheapKwh) }}</span><span class="num">{{ percent(share.cheap) }}</span></li>
+            <li><span class="dot expensive" aria-hidden="true"></span>{{ 'costs.cheapShare.expensive' | translate }}
+              <span class="num strong">{{ kwh(d.totals.importExpensiveKwh) }}</span><span class="num">{{ percent(share.expensive) }}</span></li>
+          </ul>
+        </div>
+      }
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">{{ 'costs.dayByDay' | translate }}</h2>
+          <ul class="legend" aria-hidden="true">
+            <li><span class="swatch-bar"></span>{{ 'costs.legendNet' | translate }}</li>
+            <li><span class="swatch-marker"></span>{{ 'costs.legendBaseline' | translate }}</li>
+          </ul>
+        </div>
+        <app-cost-chart [days]="d.days" [month]="d.month" [money]="moneyFn" [axisMoney]="axisMoneyFn" [kwh]="kwhFn" [dayLabel]="dayLabelFn" />
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">{{ 'costs.breakdown' | translate }}</h2>
+        <ul class="list">
+          <li class="list-row tone-cheap">
+            <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">savings</span></span>
+            <span class="list-main">
+              <span class="list-title">{{ 'costs.cheapZone' | translate }}</span>
+              <span class="list-sub num">{{ kwh(d.totals.importCheapKwh) }} × {{ rate(d.pricing.cheapRateGross) }}</span>
+            </span>
+            <span class="list-end num amount">{{ money(d.totals.importCheapKwh * d.pricing.cheapRateGross) }}</span>
+          </li>
+          <li class="list-row tone-neutral">
+            <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">bolt</span></span>
+            <span class="list-main">
+              <span class="list-title">{{ 'costs.expensiveZone' | translate }}</span>
+              <span class="list-sub num">{{ kwh(d.totals.importExpensiveKwh) }} × {{ rate(d.pricing.expensiveRateGross) }}</span>
+            </span>
+            <span class="list-end num amount">{{ money(d.totals.importExpensiveKwh * d.pricing.expensiveRateGross) }}</span>
+          </li>
+          <li class="list-row tone-day">
+            <span class="list-icon"><span class="material-symbols-rounded" aria-hidden="true">solar_power</span></span>
+            <span class="list-main">
+              <span class="list-title">{{ 'costs.sold' | translate }}</span>
+              <span class="list-sub num">
+                {{ kwh(d.totals.exportKwh) }}
+                @if (averageExportPrice(); as avg) { · {{ 'costs.averageExport' | translate: { price: rate(avg) } }} }
+              </span>
+            </span>
+            <span class="list-end num amount credit">−{{ money(d.totals.exportValue) }}</span>
+          </li>
+          <li class="list-row total">
+            <span class="list-main"><span class="list-title">{{ 'costs.netTotal' | translate }}</span></span>
+            <span class="list-end num amount">{{ money(d.totals.netCost) }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">{{ 'costs.days' | translate }}</h2>
+        <table class="days-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'costs.table.day' | translate }}</th>
+              <th scope="col" class="num-col">{{ 'costs.table.bought' | translate }}</th>
+              <th scope="col" class="num-col">{{ 'costs.table.cheapShare' | translate }}</th>
+              <th scope="col" class="num-col hide-mobile">{{ 'costs.table.sold' | translate }}</th>
+              <th scope="col" class="num-col">{{ 'costs.table.net' | translate }}</th>
+              <th scope="col" class="num-col">{{ 'costs.table.savings' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of sortedDays(); track day.date) {
+              <tr [class.partial]="!day.complete && !isToday(day)">
+                <th scope="row">
+                  {{ shortDay(day) }}
+                  @if (isToday(day)) {
+                    <span class="partial-mark">{{ 'costs.todayShort' | translate }}</span>
+                  } @else if (!day.complete) {
+                    <span class="partial-mark" [title]="'costs.partialDay' | translate: { hours: day.coveredHours }">{{ 'costs.partialShort' | translate }}</span>
+                  }
+                </th>
+                <td class="num num-col">{{ kwh(day.importCheapKwh + day.importExpensiveKwh) }}</td>
+                <td class="num num-col">
+                  @if (cheapShare(day); as share) {
+                    <span class="row-share">
+                      <span class="mini-bar hide-mobile" aria-hidden="true"><span [style.width.%]="share.cheap * 100"></span></span>
+                      {{ percent(share.cheap) }}
+                    </span>
+                  } @else {
+                    –
+                  }
+                </td>
+                <td class="num num-col hide-mobile">{{ kwh(day.exportKwh) }}</td>
+                <td class="num num-col">{{ money(day.netCost) }}</td>
+                <td class="num num-col saving">{{ money(day.savings) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

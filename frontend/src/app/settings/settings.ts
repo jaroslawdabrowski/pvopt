@@ -69,6 +69,13 @@ export class Settings implements OnInit {
     }),
     notifications: this.fb.group({
       ntfyUrl: ['', Validators.pattern(/^\s*(https?:\/\/\S+)?\s*$/)]
+    }),
+    // Optional as a whole: left empty, the cost page just asks for it.
+    pricing: this.fb.group({
+      cheapRateGross: [null as number | null, Validators.min(0.01)],
+      expensiveRateGross: [null as number | null, Validators.min(0.01)],
+      fixedMonthlyGross: [null as number | null, Validators.min(0)],
+      exportMultiplier: [1.23 as number | null, Validators.min(0.01)]
     })
   });
 
@@ -151,6 +158,18 @@ export class Settings implements OnInit {
     });
   }
 
+  /** Both zone rates entered = prices configured; otherwise nothing is sent. */
+  private pricingOf(p: { cheapRateGross?: number | null; expensiveRateGross?: number | null;
+    fixedMonthlyGross?: number | null; exportMultiplier?: number | null } | undefined): ProcessSettingsDto['pricing'] {
+    if (!p?.cheapRateGross || !p?.expensiveRateGross) return null;
+    return {
+      cheapRateGross: Number(p.cheapRateGross),
+      expensiveRateGross: Number(p.expensiveRateGross),
+      fixedMonthlyGross: Number(p.fixedMonthlyGross ?? 0),
+      exportMultiplier: Number(p.exportMultiplier || 1.23)
+    };
+  }
+
   private patchForm(settings: ProcessSettingsDto): void {
     this.form.patchValue({
       planning: {
@@ -160,7 +179,8 @@ export class Settings implements OnInit {
       schedule: settings.schedule,
       forecast: settings.forecast,
       inverterConnection: settings.inverterConnection,
-      notifications: settings.notifications ?? { ntfyUrl: '' }
+      notifications: settings.notifications ?? { ntfyUrl: '' },
+      pricing: settings.pricing ?? { cheapRateGross: null, expensiveRateGross: null, fixedMonthlyGross: null, exportMultiplier: 1.23 }
     });
   }
 
@@ -177,7 +197,8 @@ export class Settings implements OnInit {
       schedule: value.schedule!,
       forecast: value.forecast!,
       inverterConnection: value.inverterConnection!,
-      notifications: { ntfyUrl: (value.notifications?.ntfyUrl ?? '').trim() }
+      notifications: { ntfyUrl: (value.notifications?.ntfyUrl ?? '').trim() },
+      pricing: this.pricingOf(value.pricing)
     } as ProcessSettingsDto;
   }
 }

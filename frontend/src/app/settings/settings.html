@@ -194,6 +194,46 @@
         </div>
       </div>
 
+      <div class="card" formGroupName="pricing" id="pricing">
+        <div>
+          <h2 class="card-title">{{ 'settings.pricing.title' | translate }}</h2>
+          <p class="card-hint">{{ 'settings.pricing.hint' | translate }}</p>
+        </div>
+        <div class="field-grid three">
+          <div class="field tone-cheap">
+            <label for="cheapRate">{{ 'settings.pricing.cheapRate' | translate }}</label>
+            <div class="input-group">
+              <input id="cheapRate" class="input num" type="number" inputmode="decimal" step="0.001" formControlName="cheapRateGross" placeholder="0,611" />
+              <span class="suffix">zł/kWh</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="expensiveRate">{{ 'settings.pricing.expensiveRate' | translate }}</label>
+            <div class="input-group">
+              <input id="expensiveRate" class="input num" type="number" inputmode="decimal" step="0.001" formControlName="expensiveRateGross" placeholder="1,249" />
+              <span class="suffix">zł/kWh</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="fixedMonthly">{{ 'settings.pricing.fixedMonthly' | translate }}</label>
+            <div class="input-group">
+              <input id="fixedMonthly" class="input num" type="number" inputmode="decimal" step="0.01" formControlName="fixedMonthlyGross" placeholder="44,38" />
+              <span class="suffix">zł/mies.</span>
+            </div>
+          </div>
+        </div>
+        <div class="field-grid three">
+          <div class="field">
+            <label for="exportMultiplier">{{ 'settings.pricing.exportMultiplier' | translate }}</label>
+            <div class="input-group">
+              <input id="exportMultiplier" class="input num" type="number" inputmode="decimal" step="0.01" formControlName="exportMultiplier" aria-describedby="exportMultiplierHint" />
+              <span class="suffix">×</span>
+            </div>
+            <span id="exportMultiplierHint" class="field-hint">{{ 'settings.pricing.exportMultiplierHint' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="card" formGroupName="notifications">
         <div>
           <h2 class="card-title">{{ 'settings.notifications.title' | translate }}</h2>

@@ -74,7 +74,7 @@ class EnergyRecorderTest {
     void takesSnapshotsEveryHourIncludingEveryWindowBoundary() {
         var times = recorder.snapshotTimes(new FixedSettings().load().orElseThrow());
 
-        assertThat(times).hasSize(24).contains(LocalTime.of(6, 0), LocalTime.of(13, 0), LocalTime.of(15, 0),
+        assertThat(times).hasSize(25).contains(LocalTime.of(23, 58), LocalTime.of(6, 0), LocalTime.of(13, 0), LocalTime.of(15, 0),
                 LocalTime.of(22, 0));
     }
 
@@ -142,6 +142,11 @@ class EnergyRecorderTest {
         @Override
         public List<EnergySnapshot> findSnapshotsSince(LocalDateTime since) {
             return snapshots.stream().filter(s -> !s.takenAt().isBefore(since)).toList();
+        }
+
+        @Override
+        public List<EnergySnapshot> findSnapshotsBetween(LocalDateTime from, LocalDateTime to) {
+            return snapshots.stream().filter(s -> !s.takenAt().isBefore(from) && s.takenAt().isBefore(to)).toList();
         }
 
         @Override

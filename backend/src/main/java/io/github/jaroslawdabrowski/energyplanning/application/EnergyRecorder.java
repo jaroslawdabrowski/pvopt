@@ -47,6 +47,7 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
     private static final Duration SNAPSHOT_TOLERANCE = Duration.ofMinutes(15);
     /** How late a snapshot may still be taken for its time - and how close two may be. */
     static final Duration SNAPSHOT_LATENESS = Duration.ofMinutes(5);
+    static final LocalTime DAY_CLOSING_SNAPSHOT = LocalTime.of(23, 58);
     /** How far back a period without an outcome is still measured from its snapshots. */
     private static final Duration BACKFILL_WINDOW = Duration.ofDays(3);
 
@@ -146,6 +147,8 @@ public class EnergyRecorder implements RecordEnergySnapshotUseCase, GetLearnedCo
             times.add(LocalTime.of(hour, 0));
         }
         times.addAll(calendar(settings).boundaryTimes());
+        // Just before midnight, when the counters reset - the last hour of the day would be lost otherwise.
+        times.add(DAY_CLOSING_SNAPSHOT);
         return List.copyOf(times);
     }
 

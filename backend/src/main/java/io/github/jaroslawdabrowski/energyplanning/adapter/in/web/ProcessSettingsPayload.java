@@ -5,6 +5,7 @@ import io.github.jaroslawdabrowski.energyplanning.domain.ForecastSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.InverterConnectionSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.NotificationSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.PlanningSettings;
+import io.github.jaroslawdabrowski.energyplanning.domain.PricingSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ProcessSettings;
 import io.github.jaroslawdabrowski.energyplanning.domain.ScheduleSettings;
 
@@ -22,7 +23,8 @@ public record ProcessSettingsPayload(
         SchedulePayload schedule,
         ForecastPayload forecast,
         InverterConnectionPayload inverterConnection,
-        NotificationsPayload notifications) {
+        NotificationsPayload notifications,
+        PricingPayload pricing) {
 
     public record PlanningPayload(
             int minSocPercent,
@@ -61,6 +63,11 @@ public record ProcessSettingsPayload(
     public record InverterConnectionPayload(String host, int port, long loggerSerial) {
     }
 
+    /** Gross zł/kWh per zone and zł/month fixed; null = prices not entered (the cost page asks for them). */
+    public record PricingPayload(double cheapRateGross, double expensiveRateGross, double fixedMonthlyGross,
+            Double exportMultiplier) {
+    }
+
     /** {@code ntfyUrl} blank = off; the whole object may be missing from older clients. */
     public record NotificationsPayload(String ntfyUrl) {
     }
@@ -82,7 +89,9 @@ public record ProcessSettingsPayload(
                         ForecastPayload.DirectionPayload.from(forecast.south()),
                         ForecastPayload.DirectionPayload.from(forecast.west())),
                 new InverterConnectionPayload(connection.host(), connection.port(), connection.loggerSerial()),
-                new NotificationsPayload(settings.notifications().ntfyUrl()));
+                new NotificationsPayload(settings.notifications().ntfyUrl()),
+                settings.pricingSettings().map(p -> new PricingPayload(p.cheapRateGross(), p.expensiveRateGross(),
+                        p.fixedMonthlyGross(), p.exportMultiplier())).orElse(null));
     }
 
     public ProcessSettings toDomain() {
@@ -98,6 +107,9 @@ public record ProcessSettingsPayload(
                         forecast.south().toDomain(), forecast.west().toDomain()),
                 new InverterConnectionSettings(inverterConnection.host(), inverterConnection.port(),
                         inverterConnection.loggerSerial()),
-                notifications == null ? NotificationSettings.NONE : new NotificationSettings(notifications.ntfyUrl()));
+                notifications == null ? NotificationSettings.NONE : new NotificationSettings(notifications.ntfyUrl()),
+                pricing == null ? null : new PricingSettings(pricing.cheapRateGross(), pricing.expensiveRateGross(),
+                        pricing.fixedMonthlyGross(),
+                        pricing.exportMultiplier() == null ? PricingSettings.DEFAULT_EXPORT_MULTIPLIER : pricing.exportMultiplier()));
     }
 }

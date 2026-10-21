@@ -159,6 +159,11 @@ class EnergyPlannerTest {
         }
 
         @Override
+        public List<EnergySnapshot> findSnapshotsBetween(LocalDateTime from, LocalDateTime to) {
+            return List.of();
+        }
+
+        @Override
         public void saveOutcome(PeriodOutcome outcome) {
         }
 

@@ -1,0 +1,94 @@
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+svg {
+  display: block;
+  overflow: visible;
+}
+
+// Recessive structure: hairline grid, the zero line a touch stronger.
+.grid {
+  stroke: var(--grey-100);
+  stroke-width: 1;
+
+  &.zero {
+    stroke: var(--grey-300);
+  }
+}
+
+.axis-label {
+  fill: var(--text-tertiary);
+  font: 500 11px var(--font);
+  font-variant-numeric: tabular-nums;
+  text-anchor: end;
+  dominant-baseline: central;
+
+  &.day {
+    text-anchor: middle;
+  }
+}
+
+.bar {
+  fill: var(--chart-cost);
+
+  &.partial {
+    fill-opacity: 0.4;
+  }
+}
+
+.baseline-marker {
+  stroke: var(--grey-900);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.hover-band {
+  fill: var(--grey-50);
+}
+
+.hit {
+  fill: transparent;
+  cursor: default;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  width: 236px;
+  padding: var(--space-3);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  box-shadow: var(--shadow-4);
+  pointer-events: none;
+  font-size: var(--text-sm);
+  z-index: 2;
+
+  dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px var(--space-3);
+    margin: var(--space-2) 0 0;
+  }
+
+  dt {
+    color: var(--text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+  }
+}
+
+.tooltip-title {
+  font-weight: 700;
+}
+
+.tooltip-note {
+  margin-top: var(--space-2);
+  color: var(--text-tertiary);
+}

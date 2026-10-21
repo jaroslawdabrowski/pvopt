@@ -62,6 +62,16 @@ the Material toolbar/tables read as a component demo. Redesigned 2026-10-13.
   read as a time of day. The legend repeats it per window ("zapas 36%" /
   "bez ładowania") - the battery now and the plan for it in one picture. The SOC ring filling up once on load is the app's
   only orchestrated motion.
+- **Costs page**: a month switcher, three figures (bought minus sold, the same consumption without
+  panels and battery, the saving in green text), then the day-by-day chart, where the cost came from
+  (cheap zone, expensive zone, export credit at its average price) and a table of all days as the
+  chart's table view. The chart is **one series**, so one colour: `--chart-cost` `#2a78d6`, the
+  dataviz reference palette's slot 1, validated (lightness band, chroma floor, 3:1 on the surface),
+  deliberately not a window colour. Columns grow from a zero line (below it when exports paid for
+  more than was bought), ≤ 16 px, 4 px rounded at the data end only; the no-PV baseline is a short
+  ink marker per day, a reference rather than a second series, so the saving reads as the gap.
+  Whole-złoty axis, hairline grid, a tooltip beside the hovered day (never over it), partial days
+  faded and named in the tooltip and the table, today marked "dziś".
 - **TOU page**: a thin 00-24 bar of the six slots (governed slots tinted in their window's
   colour, solid when the slot charges from the grid) above the slot list.
 - **History**: grouped by day ("Dziś", "Wczoraj", "niedziela, 11 października"); dates are

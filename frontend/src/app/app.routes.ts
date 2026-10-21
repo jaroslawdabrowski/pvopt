@@ -23,6 +23,11 @@ export const routes: Routes = [
     loadComponent: () => import('./tou-schedule/tou-schedule').then((m) => m.TouSchedule)
   },
   {
+    path: 'costs',
+    canActivate: [authGuard],
+    loadComponent: () => import('./costs/costs').then((m) => m.Costs)
+  },
+  {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () => import('./settings/settings').then((m) => m.Settings)

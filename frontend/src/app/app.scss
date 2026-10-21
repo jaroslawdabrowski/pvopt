@@ -168,7 +168,7 @@
     right: var(--space-3);
     bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     padding: var(--space-1);
     border-radius: 24px;
     background: var(--surface);
