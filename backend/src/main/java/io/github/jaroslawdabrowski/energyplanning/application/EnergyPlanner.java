@@ -126,7 +126,8 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
                         "hourlyShape", shape.covers(period.from(), slotHours.size()) ? 1.0 : 0.0,
                         "forecastRawKwh", Math.round(rawProduction.totalKwh() * 10) / 10.0,
                         "calibrationFactor", calibration.map(ForecastCalibration.Factor::value).orElse(1.0),
-                        "calibrationSamples", (double) calibration.map(ForecastCalibration.Factor::samples).orElse(0)));
+                        "calibrationSamples", (double) calibration.map(ForecastCalibration.Factor::samples).orElse(0)))
+                .withReasonParams(Map.of("forecastModel", (double) forecastPort.modelVersion()));
 
         inverterPort.applyChargeSchedule(
                 new ChargeSchedule(window, decision.chargeFromGrid(), decision.targetSocPercent()),
@@ -186,7 +187,8 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
     /**
      * Pairs recent measured periods of this window with the forecast the last decision for
      * each of them used - the raw, uncalibrated one (otherwise the correction would feed on
-     * itself). Decisions without a forecast, or from before forecasts were per period, don't count.
+     * itself). Decisions without a forecast, from before forecasts were per period, or from another
+     * forecast model (Forecast.Solar's decisions carry none) don't count.
      */
     private Optional<ForecastCalibration.Factor> forecastCalibration(ChargeWindow window) {
         var now = clockPort.now();
@@ -195,7 +197,8 @@ public class EnergyPlanner implements PlanOvernightChargeUseCase, PlanAfternoonT
             var decision = planned.decision();
             var params = decision.reasonParams();
             if (decision.window() != window || planned.outcome().isEmpty()
-                    || params.getOrDefault("forecastUnavailable", 0.0) == 1.0 || !params.containsKey("periodFromHour")) {
+                    || params.getOrDefault("forecastUnavailable", 0.0) == 1.0 || !params.containsKey("periodFromHour")
+                    || params.getOrDefault("forecastModel", 1.0) != forecastPort.modelVersion()) {
                 continue;
             }
             double forecastKwh = params.getOrDefault("forecastRawKwh", params.getOrDefault("forecastKwh", 0.0));

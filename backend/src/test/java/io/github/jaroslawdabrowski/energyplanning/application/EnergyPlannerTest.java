@@ -53,6 +53,7 @@ class EnergyPlannerTest {
     private final List<ChargeSchedule> written = new ArrayList<>();
     /** Tomorrow morning, 06-13: the sun only catches up after 09:00 (4.9 kWh in total). */
     private List<Double> forecastPerHour = List.of(0.0, 0.3, 0.59, 0.83, 0.99, 1.08, 1.1);
+    private static final int FORECAST_MODEL = 2;
 
     private final EnergyPlanner planner = new EnergyPlanner(new FakeInverter(), new FakeForecast(), new History(),
             new FixedClock(), new FixedSettings(), new Records(),
@@ -71,21 +72,35 @@ class EnergyPlannerTest {
 
     @Test
     void scalesTheForecastByHowFarItHasBeenOff() {
-        // Three past mornings where PV made half of what was forecast.
-        for (int day = 1; day <= 3; day++) {
-            var decidedAt = evening.minusDays(day + 1);
-            history.add(new ChargeDecision(decidedAt.toInstant(ZoneOffset.UTC), ChargeWindow.OVERNIGHT, false, 20,
-                    DecisionReason.FORECAST_SUFFICIENT, Map.of("periodFromHour", 6.0, "forecastRawKwh", 6.0)));
-            var morning = decidedAt.toLocalDate().plusDays(1);
-            outcomes.add(new PeriodOutcome(ChargeWindow.OVERNIGHT, morning.atTime(6, 0), morning.atTime(13, 0),
-                    4.5, 3.0, 1.0, 0, 50, 25));
-        }
+        threePastMorningsAtHalfTheForecast(Map.of("periodFromHour", 6.0, "forecastRawKwh", 6.0, "forecastModel", 2.0));
 
         var decision = planner.planOvernightCharge();
 
         assertThat(decision.reasonParams()).containsEntry("calibrationFactor", 0.5).containsEntry("calibrationSamples", 3.0)
                 .containsEntry("forecastRawKwh", 4.9).containsEntry("forecastKwh", 2.4);
         assertThat(decision.targetSocPercent()).isGreaterThan(36);
+        assertThat(decision.reasonParams()).containsEntry("forecastModel", 2.0);
+    }
+
+    @Test
+    void neverCalibratesWithAnotherForecastModelsErrors() {
+        // Decisions from before the model was recorded were Forecast.Solar's (model 1).
+        threePastMorningsAtHalfTheForecast(Map.of("periodFromHour", 6.0, "forecastRawKwh", 6.0));
+
+        var decision = planner.planOvernightCharge();
+
+        assertThat(decision.reasonParams()).containsEntry("calibrationFactor", 1.0).containsEntry("calibrationSamples", 0.0);
+    }
+
+    private void threePastMorningsAtHalfTheForecast(Map<String, Double> params) {
+        for (int day = 1; day <= 3; day++) {
+            var decidedAt = evening.minusDays(day + 1);
+            history.add(new ChargeDecision(decidedAt.toInstant(ZoneOffset.UTC), ChargeWindow.OVERNIGHT, false, 20,
+                    DecisionReason.FORECAST_SUFFICIENT, params));
+            var morning = decidedAt.toLocalDate().plusDays(1);
+            outcomes.add(new PeriodOutcome(ChargeWindow.OVERNIGHT, morning.atTime(6, 0), morning.atTime(13, 0),
+                    4.5, 3.0, 1.0, 0, 50, 25));
+        }
     }
 
     private final class FakeInverter implements InverterPort {
@@ -124,6 +139,11 @@ class EnergyPlannerTest {
         @Override
         public ProductionProfile productionProfile(ExpensivePeriod period, ForecastSettings settings) {
             return new ProductionProfile(period.from(), forecastPerHour, Collections.nCopies(7, 1.0));
+        }
+
+        @Override
+        public int modelVersion() {
+            return FORECAST_MODEL;
         }
     }
 
