@@ -13,7 +13,9 @@ import org.jboss.logging.Logger;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * panel's kWp is rated at. Replaced Forecast.Solar, whose free tier gave nearly the same
  * morning figure on a clear day (9.5 kWh measured) and an overcast one (0.8 kWh); Open-Meteo's
  * day-ahead forecast had 10.3 and 0.3 (2026-10-21/22). Whatever the ratio misses (inverter,
- * temperature, shading) the planner's forecast calibration learns from measured PV.
+ * temperature, shading, morning fog the models miss) the planner learns per hour of the day by
+ * comparing measured PV with {@link #pastHourlyProduction} - the archived forecast for the same
+ * hours (historical-forecast-api.open-meteo.com).
+ *
+ * Every request asks for UTC and converts to the clock's zone: given a local time zone, Open-Meteo
+ * stamps a whole response with one UTC offset, so across a DST change (and in an archive spanning
+ * one) every hour on the other side would be an hour off.
  *
  * Open-Meteo refreshes its models about hourly and allows thousands of calls a day, but a
  * response is still cached for {@link #FRESH_FOR}, and when a call fails the last good one is
@@ -43,29 +51,37 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class OpenMeteoAdapter implements ForecastPort {
 
-    /** Bumped from Forecast.Solar's 1 - see {@link ForecastPort#modelVersion()}. */
-    static final int MODEL_VERSION = 2;
     static final double PERFORMANCE_RATIO = 0.85;
     static final Duration FRESH_FOR = Duration.ofHours(1);
     static final Duration USABLE_FOR = Duration.ofHours(24);
     private static final String HOURLY = "global_tilted_irradiance";
     private static final int FORECAST_DAYS = 2;
+    private static final String UTC = "GMT";
+    /** A past day's forecast doesn't change; the range only moves on by a day. */
+    static final Duration PAST_FRESH_FOR = Duration.ofHours(6);
 
     private static final Logger LOG = Logger.getLogger(OpenMeteoAdapter.class);
 
     private final OpenMeteoRestClient restClient;
+    private final OpenMeteoHistoricalRestClient historicalClient;
     private final Clock clock;
     /** Last good response per plane - keyed by everything that goes into the request. */
     private final Map<Plane, Fetched> cache = new ConcurrentHashMap<>();
+    private final Map<PastRequest, Fetched> pastCache = new ConcurrentHashMap<>();
 
     @Inject
-    public OpenMeteoAdapter(@RestClient OpenMeteoRestClient restClient) {
-        this(restClient, Clock.systemDefaultZone());
+    public OpenMeteoAdapter(@RestClient OpenMeteoRestClient restClient,
+            @RestClient OpenMeteoHistoricalRestClient historicalClient) {
+        this(restClient, historicalClient, Clock.systemDefaultZone());
     }
 
-    OpenMeteoAdapter(OpenMeteoRestClient restClient, Clock clock) {
+    OpenMeteoAdapter(OpenMeteoRestClient restClient, OpenMeteoHistoricalRestClient historicalClient, Clock clock) {
         this.restClient = restClient;
+        this.historicalClient = historicalClient;
         this.clock = clock;
+    }
+
+    private record PastRequest(Plane plane, LocalDate from, LocalDate to) {
     }
 
     private record Plane(double latitude, double longitude, int tilt, int azimuth) {
@@ -73,11 +89,6 @@ public class OpenMeteoAdapter implements ForecastPort {
 
     /** Irradiance (W/m²) by the hour each value ends at. */
     private record Fetched(Instant at, Map<LocalDateTime, Double> irradiance) {
-    }
-
-    @Override
-    public int modelVersion() {
-        return MODEL_VERSION;
     }
 
     @Override
@@ -95,6 +106,27 @@ public class OpenMeteoAdapter implements ForecastPort {
             }
         }
         return new ProductionProfile(period.from(), Arrays.stream(kwh).boxed().toList(), slotHours);
+    }
+
+    @Override
+    public Map<LocalDateTime, Double> pastHourlyProduction(LocalDate from, LocalDate to, ForecastSettings settings) {
+        var kwhByHourStart = new HashMap<LocalDateTime, Double>();
+        for (CompassDirection direction : activeDirections(settings)) {
+            var panel = settings.panelFor(direction);
+            var plane = new Plane(settings.latitude(), settings.longitude(), panel.declinationDegrees(),
+                    direction.azimuthDegrees());
+            var request = new PastRequest(plane, from, to);
+            Instant now = clock.instant();
+            Fetched cached = pastCache.get(request);
+            if (cached == null || age(cached, now).compareTo(PAST_FRESH_FOR) >= 0) {
+                cached = new Fetched(now, byHour(historicalClient.tiltedIrradiance(plane.latitude(),
+                        plane.longitude(), plane.tilt(), plane.azimuth(), HOURLY, from.toString(), to.toString(), UTC)));
+                pastCache.put(request, cached);
+            }
+            cached.irradiance().forEach((hourEnd, wattsPerSquareMetre) -> kwhByHourStart.merge(hourEnd.minusHours(1),
+                    wattsPerSquareMetre / 1000.0 * PERFORMANCE_RATIO * panel.kwp(), Double::sum));
+        }
+        return kwhByHourStart;
     }
 
     /**
@@ -128,7 +160,7 @@ public class OpenMeteoAdapter implements ForecastPort {
         }
         try {
             var response = restClient.tiltedIrradiance(plane.latitude(), plane.longitude(), plane.tilt(),
-                    plane.azimuth(), HOURLY, FORECAST_DAYS, clock.getZone().getId());
+                    plane.azimuth(), HOURLY, FORECAST_DAYS, UTC);
             var fetched = new Fetched(now, byHour(response));
             cache.put(plane, fetched);
             if (!covers(fetched.irradiance(), period)) {
@@ -145,13 +177,16 @@ public class OpenMeteoAdapter implements ForecastPort {
         }
     }
 
-    private static Map<LocalDateTime, Double> byHour(OpenMeteoResponse response) {
+    /** UTC stamps turned into the clock's local time. */
+    private Map<LocalDateTime, Double> byHour(OpenMeteoResponse response) {
         var hourly = response.hourly();
         var result = new HashMap<LocalDateTime, Double>();
         for (int i = 0; i < hourly.time().size(); i++) {
             Double value = hourly.globalTiltedIrradiance().get(i);
             if (value != null) {
-                result.put(LocalDateTime.parse(hourly.time().get(i)), value);
+                var local = LocalDateTime.parse(hourly.time().get(i)).atOffset(ZoneOffset.UTC)
+                        .atZoneSameInstant(clock.getZone()).toLocalDateTime();
+                result.put(local, value);
             }
         }
         return result;

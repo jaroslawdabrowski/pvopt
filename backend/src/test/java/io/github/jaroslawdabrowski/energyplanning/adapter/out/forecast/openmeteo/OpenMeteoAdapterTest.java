@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ class OpenMeteoAdapterTest {
 
     private final MovableClock clock = new MovableClock();
     private final FakeOpenMeteo api = new FakeOpenMeteo();
-    private final OpenMeteoAdapter adapter = new OpenMeteoAdapter(api, clock);
+    private final FakeArchive archive = new FakeArchive();
+    private final OpenMeteoAdapter adapter = new OpenMeteoAdapter(api, archive, clock);
 
     @Test
     void eachHourIsTheIrradianceOfTheHourEndingAfterItTimesKwpAndThePerformanceRatio() {
@@ -54,7 +56,7 @@ class OpenMeteoAdapterTest {
 
     @Test
     void aMissingHourFailsInsteadOfReadingAsNoSun() {
-        api.lastHour = 11;
+        api.lastHour = 9; // UTC: 11:00 in Warsaw, the period runs to 13:00
 
         assertThatThrownBy(() -> adapter.productionProfile(MORNING, SETTINGS)).isInstanceOf(IllegalStateException.class);
     }
@@ -84,10 +86,23 @@ class OpenMeteoAdapterTest {
     }
 
     @Test
-    void asksInTheClocksTimeZoneSoTheHoursLineUp() {
-        adapter.productionProfile(MORNING, SETTINGS);
+    void asksInUtcAndConvertsToTheClocksZone() {
+        api.peakUtcHour = 10; // 12:00 in Warsaw (CEST): the slot 11-12
+        var profile = adapter.productionProfile(MORNING, SETTINGS);
 
-        assertThat(api.timezones).containsOnly("Europe/Warsaw");
+        assertThat(api.timezones).containsOnly("GMT");
+        assertThat(profile.kwhPerSlot().get(5)).isGreaterThan(profile.kwhPerSlot().get(4));
+    }
+
+    @Test
+    void pastProductionIsKeyedByEachHoursLocalStartAcrossADstChange() {
+        // 25 October: clocks go back at 03:00 CEST. 09:00 UTC is 11:00 before and 10:00 after.
+        var past = adapter.pastHourlyProduction(LocalDate.of(2026, 10, 24), LocalDate.of(2026, 10, 25), SETTINGS);
+
+        assertThat(archive.timezones).containsOnly("GMT");
+        assertThat(past.get(LocalDateTime.of(2026, 10, 24, 10, 0))).isCloseTo((0.5 * 3 + 0.5 * 5) * 0.85, offset(1e-9));
+        assertThat(past.get(LocalDateTime.of(2026, 10, 25, 9, 0))).isCloseTo((0.5 * 3 + 0.5 * 5) * 0.85, offset(1e-9));
+        assertThat(past.get(LocalDateTime.of(2026, 10, 24, 9, 0))).isZero();
     }
 
     /** East gets 100 W/m² every hour of the day, west 40; hours run up to {@link #lastHour}. */
@@ -95,6 +110,7 @@ class OpenMeteoAdapterTest {
         final List<Integer> calls = new ArrayList<>();
         final List<String> timezones = new ArrayList<>();
         int lastHour = 23;
+        int peakUtcHour = -1;
         boolean failing;
 
         @Override
@@ -109,7 +125,27 @@ class OpenMeteoAdapterTest {
             var values = new ArrayList<Double>();
             for (int hour = 0; hour <= lastHour; hour++) {
                 times.add(LocalDateTime.of(2026, 10, 22, hour, 0).toString());
-                values.add(azimuth < 0 ? 100.0 : 40.0);
+                values.add(hour == peakUtcHour ? 500.0 : azimuth < 0 ? 100.0 : 40.0);
+            }
+            return new OpenMeteoResponse(new OpenMeteoResponse.Hourly(times, values));
+        }
+    }
+
+    /** 500 W/m² on both planes in the hour ending 09:00 UTC each day, nothing otherwise. */
+    private static final class FakeArchive implements OpenMeteoHistoricalRestClient {
+        final List<String> timezones = new ArrayList<>();
+
+        @Override
+        public OpenMeteoResponse tiltedIrradiance(double latitude, double longitude, int tilt, int azimuth,
+                String hourly, String startDate, String endDate, String timezone) {
+            timezones.add(timezone);
+            var times = new ArrayList<String>();
+            var values = new ArrayList<Double>();
+            for (var day = LocalDate.parse(startDate); !day.isAfter(LocalDate.parse(endDate)); day = day.plusDays(1)) {
+                for (int hour = 0; hour < 24; hour++) {
+                    times.add(day.atTime(hour, 0).toString());
+                    values.add(hour == 9 ? 500.0 : 0.0);
+                }
             }
             return new OpenMeteoResponse(new OpenMeteoResponse.Hourly(times, values));
         }

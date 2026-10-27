@@ -1,15 +1,11 @@
 package io.github.jaroslawdabrowski.energyplanning.domain;
 
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * When in the day the house uses its energy, learned from hourly counter snapshots: the
@@ -31,21 +27,9 @@ public final class HourlyConsumptionProfile {
 
     /** Consecutive snapshots an hour apart (±5 min) on the same day give that hour's load. */
     public static HourlyConsumptionProfile learn(List<EnergySnapshot> snapshots) {
-        var byDay = snapshots.stream().collect(Collectors.groupingBy(s -> s.takenAt().toLocalDate()));
         Map<Integer, List<Double>> samples = new HashMap<>();
-        for (Map.Entry<LocalDate, List<EnergySnapshot>> day : byDay.entrySet()) {
-            var sorted = new ArrayList<>(day.getValue());
-            sorted.sort(Comparator.comparing(EnergySnapshot::takenAt));
-            for (int i = 1; i < sorted.size(); i++) {
-                var earlier = sorted.get(i - 1);
-                var later = sorted.get(i);
-                long minutes = Duration.between(earlier.takenAt(), later.takenAt()).toMinutes();
-                if (Math.abs(minutes - 60) <= 5 && earlier.takenAt().getMinute() == 0) {
-                    double load = later.counters().minus(earlier.counters()).loadKwh();
-                    samples.computeIfAbsent(earlier.takenAt().getHour(), h -> new ArrayList<>()).add(load);
-                }
-            }
-        }
+        HourlyDeltas.of(snapshots).forEach((hourStart, delta) ->
+                samples.computeIfAbsent(hourStart.getHour(), h -> new ArrayList<>()).add(delta.loadKwh()));
         Map<Integer, Double> means = new HashMap<>();
         samples.forEach((hour, loads) -> {
             if (loads.size() >= MIN_SAMPLES) {
