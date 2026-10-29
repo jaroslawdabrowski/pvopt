@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jaroslawdabrowski.energyplanning.port.out.MarketPricePort;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
@@ -16,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -27,13 +30,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The market price (RCE) from PSE's public report API, {@code /api/rce-pln}: one row per 15
- * minutes in PLN/MWh, {@code dtime} being the END of the quarter in local time. There's no
+ * minutes in PLN/MWh, {@code dtime_utc} being the END of the quarter in UTC. There's no
  * endpoint for the monthly RCEm (checked against PSE's EndpointsMap.pdf) - and the invoice
  * doesn't use a plain monthly mean anyway, it weights hourly RCE by when energy was exported.
  * So this gives hourly prices: the mean of each hour's four quarters, in zł/kWh.
  *
  * A day's prices never change once published (day-ahead), so complete days are cached for the
  * life of the process. Note: macOS curl doesn't trust this host's certificate chain; Java does.
+ *
+ * Times are read from {@code dtime_utc}, not the local {@code dtime}: on the autumn DST day the
+ * repeated hour is written "2026-10-25 02a:15:00" there, which broke the whole month's prices.
+ * The two 02:00-03:00 hours of that night fold into one local hour, like the counter snapshots.
  */
 @ApplicationScoped
 public class PseRceAdapter implements MarketPricePort {
@@ -45,13 +52,20 @@ public class PseRceAdapter implements MarketPricePort {
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     private final ObjectMapper objectMapper;
     private final String baseUrl;
+    private final ZoneId zone;
     private final Map<LocalDate, Map<LocalDateTime, Double>> completeDays = new ConcurrentHashMap<>();
 
+    @Inject
     public PseRceAdapter(ObjectMapper objectMapper,
             @ConfigProperty(name = "pvopt.market-price.pse-url", defaultValue = "https://api.raporty.pse.pl/api/rce-pln")
             String baseUrl) {
+        this(objectMapper, baseUrl, ZoneId.systemDefault());
+    }
+
+    PseRceAdapter(ObjectMapper objectMapper, String baseUrl, ZoneId zone) {
         this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
+        this.zone = zone;
     }
 
     @Override
@@ -86,7 +100,8 @@ public class PseRceAdapter implements MarketPricePort {
                 }
                 JsonNode body = objectMapper.readTree(response.body());
                 for (JsonNode row : body.path("value")) {
-                    var quarterEnd = LocalDateTime.parse(row.path("dtime").asText(), DTIME);
+                    var quarterEnd = LocalDateTime.parse(row.path("dtime_utc").asText(), DTIME)
+                            .atOffset(ZoneOffset.UTC).atZoneSameInstant(zone).toLocalDateTime();
                     var hour = quarterEnd.minusMinutes(15).truncatedTo(ChronoUnit.HOURS);
                     quarters.computeIfAbsent(hour, h -> new ArrayList<>()).add(row.path("rce_pln").asDouble());
                     quartersPerDay.merge(LocalDate.parse(row.path("business_date").asText()), 1, Integer::sum);
