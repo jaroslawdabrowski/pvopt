@@ -12,6 +12,8 @@ public enum DecisionReason {
     RESERVE_HELD,
     BELOW_MIN_SOC,
     FORECAST_SUFFICIENT,
-    /** Forecast falls short - grid charge on, target = the reserve; the inverter tops up only if below it during the window. */
-    FORECAST_INSUFFICIENT
+    /** Only in older history: grid charge sized to the reserve alone (before the battery was filled, leaving room for sun). */
+    FORECAST_INSUFFICIENT,
+    /** The period needs the battery - fill it from the cheap grid, leaving room only for the PV surplus the forecast expects. */
+    FILL_LEAVING_SOLAR_ROOM
 }

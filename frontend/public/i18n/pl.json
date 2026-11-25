@@ -230,6 +230,7 @@
     "BELOW_MIN_SOC": "SOC ({{soc}}%) poniżej minimum bezpieczeństwa ({{minSoc}}%) - ładujemy z sieci niezależnie od prognozy.",
     "FORECAST_SUFFICIENT": "Prognoza produkcji ({{forecastKwh}} kWh) pokrywa szacowane zużycie z marginesem (wymagane {{requiredKwh}} kWh) - pomijamy ładowanie z sieci.",
     "FORECAST_INSUFFICIENT": "Prognoza na drogie godziny to {{forecastKwh}} kWh przy zużyciu {{requiredKwh}} kWh, a słońce nie zdąży pokryć wszystkiego na czas. W tanim oknie bateria trzyma więc co najmniej {{targetSoc}}%. Jeśli będzie miała mniej, falownik doładuje ją z sieci, ale tylko do tego poziomu.",
+    "FILL_LEAVING_SOLAR_ROOM": "Prąd z taniego okna ma wystarczyć na drogie godziny: ładujemy do {{targetSoc}}%. Miejsce zostawione na nadwyżkę ze słońca: {{solarRoomKwh}} kWh (prognoza {{forecastKwh}} kWh przy zużyciu {{requiredKwh}} kWh). Co zostanie, zmniejszy następne ładowanie z sieci.",
     "RESERVE_HELD": "Bateria ({{soc}}%) ma już zapas na drogie godziny (potrzeba {{targetSoc}}%, prognoza {{forecastKwh}} kWh przy wymaganych {{requiredKwh}} kWh). Bez ładowania z sieci, ale w tanich godzinach bateria nie zejdzie poniżej {{targetSoc}}% - dom korzysta wtedy z taniej sieci."
   },
   "language": {

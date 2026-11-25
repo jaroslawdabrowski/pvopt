@@ -27,16 +27,7 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void chargesForTheShortfallWhenBelowSafetyFloorAndForecastFallsShort() {
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(10), balance(15.0), config);
-
-        assertThat(decision.chargeFromGrid()).isTrue();
-        assertThat(decision.targetSocPercent()).isEqualTo(50);
-        assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
-    }
-
-    @Test
-    void skipsGridChargeWhenForecastIsSufficient() {
+    void skipsGridChargeWhenThePeriodNeedsNothingFromTheBattery() {
         var decision = policy.decide(now, ChargeWindow.AFTERNOON, new BatteryStatus(50), balance(20.0), config);
 
         assertThat(decision.chargeFromGrid()).isFalse();
@@ -46,22 +37,56 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void chargesOnlyForTheEnergyTheForecastWontCover() {
-        // 18 kWh needed, 14.5 kWh forecast -> 3.5 kWh short -> 35 points above the 20% minimum.
+    void fillsTheBatteryWhenNoSurplusIsForecast() {
+        // An overcast November morning: whatever is left at 13:00 only saves the afternoon charge.
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(30), balance(14.5), config);
 
         assertThat(decision.chargeFromGrid()).isTrue();
-        assertThat(decision.targetSocPercent()).isEqualTo(55);
-        assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
-        assertThat(decision.reasonParams()).containsEntry("targetSoc", 55.0);
+        assertThat(decision.targetSocPercent()).isEqualTo(100);
+        assertThat(decision.reason()).isEqualTo(DecisionReason.FILL_LEAVING_SOLAR_ROOM);
+        assertThat(decision.reasonParams()).containsEntry("targetSoc", 100.0).containsEntry("solarRoomKwh", 0.0)
+                .containsEntry("reserveKwh", 3.5);
     }
 
     @Test
-    void roundsTheShortfallUpToAWholePercent() {
-        // 0.31 kWh short on a 10 kWh battery is 3.1 points - charge to 24%, not 23%.
-        var decision = policy.decide(now, ChargeWindow.AFTERNOON, new BatteryStatus(20), balance(17.69), config);
+    void leavesRoomForPartOfTheForecastSurplus() {
+        // A sunny morning (like 2026-11-08): 1.5 kWh short by 08:00, then the panels push the
+        // battery 2.5 kWh above where it started. 60% of that is kept free: 1.5 kWh -> 85%.
+        var sunny = PeriodBalance.of(
+                Collections.nCopies(7, 1.0),
+                List.of(0.0, 0.5, 1.0, 2.0, 2.0, 2.0, 2.0),
+                Collections.nCopies(7, 1.0));
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), sunny, config);
 
-        assertThat(decision.targetSocPercent()).isEqualTo(24);
+        assertThat(decision.chargeFromGrid()).isTrue();
+        assertThat(decision.targetSocPercent()).isEqualTo(85);
+        assertThat(decision.reasonParams()).containsEntry("solarRoomKwh", 1.5).containsEntry("reserveKwh", 1.5);
+    }
+
+    @Test
+    void neverLeavesSoMuchRoomThatTheReserveIsMissing() {
+        // The sun ends 4 kWh above the start - room for 2.4 kWh would mean 76% - but the 6 kWh
+        // the house needs before it comes still has to be there: 20% + 60%.
+        var lateSun = PeriodBalance.of(
+                List.of(2.0, 2.0, 2.0, 1.0, 1.0),
+                List.of(0.0, 0.0, 0.0, 6.0, 6.0),
+                Collections.nCopies(5, 1.0));
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), lateSun, config);
+
+        assertThat(decision.targetSocPercent()).isEqualTo(80);
+    }
+
+    @Test
+    void keepsOnlyTheReserveWhenTheSunWouldFillTheWholeBattery() {
+        // 0.1 kWh short in the first hour, then a surplus bigger than the battery.
+        var summer = PeriodBalance.of(
+                List.of(0.5, 0.5, 0.5, 0.5),
+                List.of(0.4, 6.0, 6.0, 6.0),
+                Collections.nCopies(4, 1.0));
+        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), summer, config);
+
+        assertThat(decision.chargeFromGrid()).isTrue();
+        assertThat(decision.targetSocPercent()).isEqualTo(21);
     }
 
     @Test
@@ -73,57 +98,33 @@ class ChargeDecisionPolicyTest {
     }
 
     @Test
-    void letsTheBatteryDrainToMinimumWhenTheForecastCoversEverything() {
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(80), balance(25.0), config);
-
-        assertThat(decision.chargeFromGrid()).isFalse();
-        assertThat(decision.targetSocPercent()).isEqualTo(20);
-    }
-
-    @Test
     void chargesToFullWhenBatteryCapacityIsUnknown() {
         var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(50), balance(14.5), unknownCapacity);
 
         assertThat(decision.chargeFromGrid()).isTrue();
         assertThat(decision.targetSocPercent()).isEqualTo(100);
-        assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
+        assertThat(decision.reason()).isEqualTo(DecisionReason.FILL_LEAVING_SOLAR_ROOM);
     }
 
     @Test
     void decidesTheSameWhateverTheBatteryHoldsAtDecisionTime() {
-        // A decision made at 14:00 with a full battery must still protect the reserve: by the
-        // time the window starts the battery may have drained. The inverter compares SOC with
+        // A decision made at 14:00 with a full battery must still protect the expensive hours: by
+        // the time the window starts the battery may have drained. The inverter compares SOC with
         // the target itself, during the window.
         for (int soc : new int[] {30, 55, 60, 100}) {
             var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(soc), balance(14.5), config);
 
             assertThat(decision.chargeFromGrid()).as("soc %d", soc).isTrue();
-            assertThat(decision.targetSocPercent()).as("soc %d", soc).isEqualTo(55);
-            assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
+            assertThat(decision.targetSocPercent()).as("soc %d", soc).isEqualTo(100);
             assertThat(decision.reasonParams()).containsEntry("soc", (double) soc);
         }
     }
 
     @Test
-    void keepsAFullReserveWhenNothingIsForecastEvenIfTheBatteryIsFullNow() {
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(100), balance(0.0), config);
-
-        assertThat(decision.chargeFromGrid()).isTrue();
-        assertThat(decision.targetSocPercent()).isEqualTo(100);
-    }
-
-    @Test
-    void sizesTheReserveToTheRunningDeficitNotThePeriodTotal() {
-        // Morning: 5.6 kWh needed, 4.9 kWh of PV - but the sun arrives after 08:00, so the
-        // battery has to carry ~1.5 kWh first. 1.53 kWh on 10 kWh -> 16 points over 20%.
-        var morning = PeriodBalance.of(
-                Collections.nCopies(7, 0.806),
-                List.of(0.0, 0.3, 0.59, 0.83, 0.99, 1.08, 1.1),
-                Collections.nCopies(7, 1.0));
-        var decision = policy.decide(now, ChargeWindow.OVERNIGHT, new BatteryStatus(60), morning, config);
-
-        assertThat(decision.targetSocPercent()).isEqualTo(36);
-        assertThat(decision.reasonParams()).containsEntry("reserveKwh", 1.5);
+    void theTargetRoundsTheRoomDownAndTheReserveUp() {
+        assertThat(ChargeDecisionPolicy.targetSocFor(0.31, 0.0, config)).isEqualTo(100);
+        assertThat(ChargeDecisionPolicy.targetSocFor(0.0, 2.45, config)).isEqualTo(76);
+        assertThat(ChargeDecisionPolicy.targetSocFor(7.01, 9.0, config)).isEqualTo(91);
     }
 
     /** A flat period: the reserve is simply what the forecast doesn't cover. */

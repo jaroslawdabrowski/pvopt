@@ -28,6 +28,19 @@ class PeriodBalanceTest {
         var balance = PeriodBalance.of(Collections.nCopies(7, 0.5), Collections.nCopies(7, 0.8), HOURS);
 
         assertThat(balance.reserveKwh()).isZero();
+        assertThat(balance.batteryNeedKwh()).isZero();
+        assertThat(balance.surplusKwh()).isCloseTo(2.1, offset(1e-9));
+    }
+
+    @Test
+    void theSurplusIsTheLargestRunningSurplusAfterAnyEarlyDeficit() {
+        // 1 kWh short by 08:00, then 1.5 kWh a hour ahead for three hours, then even.
+        var balance = PeriodBalance.of(List.of(1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0),
+                List.of(0.0, 0.0, 2.0, 2.0, 2.0, 1.0, 1.0), HOURS);
+
+        assertThat(balance.reserveKwh()).isCloseTo(2.0, offset(1e-9));
+        assertThat(balance.surplusKwh()).isCloseTo(2.5, offset(1e-9));
+        assertThat(balance.batteryNeedKwh()).isCloseTo(2.0, offset(1e-9));
     }
 
     @Test

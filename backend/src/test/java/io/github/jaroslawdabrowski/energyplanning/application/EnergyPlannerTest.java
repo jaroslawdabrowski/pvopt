@@ -67,11 +67,26 @@ class EnergyPlannerTest {
     void reservesForTheMorningDeficitBeforeTheSunCatchesUp() {
         var decision = planner.planOvernightCharge();
 
-        // 4.7 kWh x 1.2 spread flat over 7 hours against the forecast above: ~1.53 kWh short by 09:00.
-        assertThat(decision.reason()).isEqualTo(DecisionReason.FORECAST_INSUFFICIENT);
-        assertThat(decision.targetSocPercent()).isEqualTo(36);
-        assertThat(decision.reasonParams()).containsEntry("reservePeakHour", 9.0).containsEntry("calibrationFactor", 1.0);
-        assertThat(written).singleElement().isEqualTo(new ChargeSchedule(ChargeWindow.OVERNIGHT, true, 36));
+        // 4.7 kWh x 1.2 spread flat over 7 hours against the forecast above: ~1.53 kWh short by 09:00,
+        // and no surplus to leave room for - so the battery is filled.
+        assertThat(decision.reason()).isEqualTo(DecisionReason.FILL_LEAVING_SOLAR_ROOM);
+        assertThat(decision.targetSocPercent()).isEqualTo(100);
+        assertThat(decision.reasonParams()).containsEntry("reservePeakHour", 9.0).containsEntry("calibrationFactor", 1.0)
+                .containsEntry("reserveKwh", 1.5).containsEntry("solarRoomKwh", 0.0);
+        assertThat(written).singleElement().isEqualTo(new ChargeSchedule(ChargeWindow.OVERNIGHT, true, 100));
+    }
+
+    @Test
+    void leavesRoomForTheSunOnASunnyMorning() {
+        forecastPerHour = List.of(0.0, 0.5, 1.5, 2.0, 2.0, 2.0, 2.0);
+
+        var decision = planner.planOvernightCharge();
+
+        // 0.806 kWh a hour against that: the panels end ~4.36 kWh above the start; 60% of it
+        // (2.62 kWh, 26 points on the 10 kWh battery) stays free.
+        assertThat(decision.reason()).isEqualTo(DecisionReason.FILL_LEAVING_SOLAR_ROOM);
+        assertThat(decision.targetSocPercent()).isEqualTo(74);
+        assertThat(written).singleElement().isEqualTo(new ChargeSchedule(ChargeWindow.OVERNIGHT, true, 74));
     }
 
     @Test
@@ -97,8 +112,7 @@ class EnergyPlannerTest {
         // 07-09 forecast 0.89 kWh becomes 0.445: the 09:00 deficit grows from 1.53 to 1.97 kWh.
         assertThat(decision.reasonParams()).containsEntry("calibrationSamples", 3.0)
                 .containsEntry("forecastRawKwh", 4.9).containsEntry("forecastKwh", 4.4)
-                .containsEntry("calibrationFactor", 0.91);
-        assertThat(decision.targetSocPercent()).isEqualTo(40);
+                .containsEntry("calibrationFactor", 0.91).containsEntry("reserveKwh", 2.0);
     }
 
     @Test
@@ -107,8 +121,7 @@ class EnergyPlannerTest {
 
         var decision = planner.planOvernightCharge();
 
-        assertThat(decision.targetSocPercent()).isEqualTo(36);
-        assertThat(decision.reasonParams()).containsEntry("calibrationSamples", 0.0);
+        assertThat(decision.reasonParams()).containsEntry("calibrationSamples", 0.0).containsEntry("reserveKwh", 1.5);
     }
 
     private final class FakeInverter implements InverterPort {

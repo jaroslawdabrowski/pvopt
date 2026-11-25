@@ -230,6 +230,7 @@
     "BELOW_MIN_SOC": "SOC ({{soc}}%) is below the safety minimum ({{minSoc}}%) - charging from the grid regardless of forecast.",
     "FORECAST_SUFFICIENT": "Production forecast ({{forecastKwh}} kWh) covers estimated consumption with margin (required {{requiredKwh}} kWh) - skipping grid charging.",
     "FORECAST_INSUFFICIENT": "The forecast for the expensive hours is {{forecastKwh}} kWh against {{requiredKwh}} kWh of consumption, and the sun won't cover it all in time. So during the cheap window the battery keeps at least {{targetSoc}}%. If it has less, the inverter tops it up from the grid - only to that level.",
+    "FILL_LEAVING_SOLAR_ROOM": "Cheap-window energy should carry the expensive hours: charging to {{targetSoc}}%. Room left for surplus sun: {{solarRoomKwh}} kWh (forecast {{forecastKwh}} kWh against {{requiredKwh}} kWh of consumption). Whatever is left over reduces the next grid charge.",
     "RESERVE_HELD": "The battery ({{soc}}%) already holds enough for the expensive hours ({{targetSoc}}% needed, forecast {{forecastKwh}} kWh against {{requiredKwh}} kWh required). No grid charge, but it won't drop below {{targetSoc}}% during the cheap hours - the house runs on the cheap grid meanwhile."
   },
   "language": {
